@@ -189,6 +189,8 @@ async def init_db():
             ("email_recipients",              "",      "Destinatários das notificações",     "E-mails separados por vírgula ou quebra de linha"),
             # ── Testes ─────────────────────────────────────────────────
             ("test_phone_numbers",            "",      "Números de teste",                   "Números separados por vírgula que SEMPRE recebem resposta do bot (ignora horário)"),
+            # ── Encaminhamento para fila ────────────────────────────────
+            ("escalation_flow_id",            "",      "ID do fluxo de escalonamento",       "ID do fluxo RD Conversas para onde o lead é encaminhado após qualificação (POST /v2/forward-to-customer)"),
         ]
         for key, val, label, desc in defaults:
             await db.execute(

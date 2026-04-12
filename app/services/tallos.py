@@ -353,6 +353,74 @@ class TallosService:
         )
         return imported
 
+    async def forward_to_flow(
+        self,
+        contact_id: str,
+        flow_id: str,
+    ) -> bool:
+        """
+        Encaminha o lead para um fluxo do RD Conversas (fila de atendimento humano).
+
+        Endpoint: POST /v2/forward-to-customer
+        Body: { "customer": contact_id, "flow": flow_id }
+
+        Retorna True se encaminhado com sucesso, False caso contrário.
+        """
+        if not self.token:
+            logger.warning("[Tallos] TALLOS_API_TOKEN não configurado — encaminhamento ignorado.")
+            return False
+
+        if not contact_id or not flow_id:
+            logger.warning(
+                f"[Tallos] forward_to_flow: contact_id={contact_id!r} flow_id={flow_id!r} — "
+                "parâmetros inválidos, encaminhamento ignorado."
+            )
+            return False
+
+        url = f"{self.base_url}/forward-to-customer"
+        payload = {"customer": contact_id, "flow": flow_id}
+
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                response = await client.post(
+                    url,
+                    headers={**self._headers, "Content-Type": "application/json"},
+                    json=payload,
+                )
+
+                logger.debug(
+                    f"[Tallos] POST /forward-to-customer → {response.status_code} "
+                    f"| contact_id={contact_id} flow_id={flow_id}"
+                )
+
+                if response.status_code in (200, 201):
+                    logger.info(
+                        f"[Tallos] ✅ Lead encaminhado para fila | "
+                        f"contact_id={contact_id} | flow_id={flow_id}"
+                    )
+                    return True
+
+                if response.status_code == 401:
+                    logger.error("[Tallos] 401 Unauthorized no forward_to_flow.")
+                    return False
+
+                if response.status_code == 404:
+                    logger.error(
+                        f"[Tallos] 404 no forward_to_flow — "
+                        f"verifique contact_id={contact_id} e flow_id={flow_id}"
+                    )
+                    return False
+
+                logger.error(
+                    f"[Tallos] Erro {response.status_code} no forward_to_flow: "
+                    f"{response.text[:200]}"
+                )
+                return False
+
+        except Exception as e:
+            logger.error(f"[Tallos] Exceção no forward_to_flow: {e}", exc_info=True)
+            return False
+
     async def get_status(self) -> Dict[str, Any]:
         """Verifica conectividade com a API Tallos."""
         if not self.token:

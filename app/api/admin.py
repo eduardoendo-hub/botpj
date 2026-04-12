@@ -440,6 +440,9 @@ async def bot_config_save(request: Request):
         phones = [p.strip() for p in raw.replace("\n", ",").split(",") if p.strip()]
         updates["test_phone_numbers"] = ", ".join(phones)
 
+    if "escalation_flow_id" in form:
+        updates["escalation_flow_id"] = str(form["escalation_flow_id"]).strip()
+
     await set_bot_config_bulk(updates)
     return RedirectResponse(url="/admin/bot-config?saved=true", status_code=HTTP_303_SEE_OTHER)
 

@@ -187,6 +187,9 @@ async def _respond(
             )
             logger.info(f"[{phone_number}] Escalonado para consultor — bot pausado.")
 
+            # Encaminha para fila de atendimento humano no RD Conversas
+            await _forward_to_queue(phone_number, session_id, cfg)
+
             await _notify_lead_escalation(phone_number, contact_name, cfg, history)
             return
 
@@ -206,6 +209,38 @@ async def _respond(
 
     except Exception as e:
         logger.error(f"[{phone_number}] Erro ao responder: {e}")
+
+
+async def _forward_to_queue(
+    phone_number: str,
+    contact_id: str,
+    cfg: dict,
+) -> None:
+    """
+    Encaminha o lead para a fila de atendimento humano no RD Conversas.
+    Usa POST /v2/forward-to-customer com o flow_id configurado no admin.
+    """
+    flow_id = cfg.get("escalation_flow_id", "").strip()
+    if not flow_id:
+        logger.info(f"[{phone_number}] escalation_flow_id não configurado — encaminhamento de fila ignorado.")
+        return
+
+    # Resolve contact_id: usa o session_id passado pelo webhook ou busca pelo telefone
+    cid = contact_id.strip() if contact_id else ""
+    if not cid:
+        from app.services.tallos import tallos_service
+        cid = await tallos_service.get_contact_id_by_phone(phone_number)
+
+    if not cid:
+        logger.warning(f"[{phone_number}] Não foi possível resolver contact_id para encaminhamento de fila.")
+        return
+
+    from app.services.tallos import tallos_service
+    ok = await tallos_service.forward_to_flow(contact_id=cid, flow_id=flow_id)
+    if ok:
+        logger.info(f"[{phone_number}] ✅ Lead encaminhado para fila flow_id={flow_id}")
+    else:
+        logger.warning(f"[{phone_number}] ⚠️ Falha ao encaminhar para fila flow_id={flow_id}")
 
 
 async def _run_lead_analysis(phone_number: str, contact_name: str) -> None:

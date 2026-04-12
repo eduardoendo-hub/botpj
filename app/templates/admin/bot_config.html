@@ -177,6 +177,34 @@
           <textarea name="escalation_message" style="min-height:100px;">{{ config.escalation_message }}</textarea>
         </div>
       </div>
+
+      <div class="config-row">
+        <div class="config-meta">
+          <div class="label">ID do fluxo de encaminhamento</div>
+          <div class="desc">
+            ID do fluxo RD Conversas para onde o lead é enviado após qualificação
+            (via <code>POST /v2/forward-to-customer</code>).
+            Deixe em branco para desativar o encaminhamento automático.
+            <br><br>
+            <strong>Fluxos disponíveis na sua conta:</strong><br>
+            <span style="font-size:11px; font-family:monospace; color:#374151; line-height:1.8;">
+              692f297adeaa00aa28144ba5 → [Treinamentos] [WhatsApp] - 1.0<br>
+              6971827916cea764fbc8375d → [Campanha] Treinamentos PJ<br>
+              690e18f9a12a84e332eef5e8 → [Treinamentos e Faculdade] [Webchat] - 1.1 - Treinamentos<br>
+              693087c5fca4a266547c4b02 → [Treinamentos] [Webchat] - 1.0
+            </span>
+          </div>
+        </div>
+        <div class="config-control" style="width:380px">
+          <input type="text" name="escalation_flow_id"
+                 value="{{ config.escalation_flow_id or '' }}"
+                 placeholder="ex: 692f297adeaa00aa28144ba5"
+                 style="font-family:monospace; font-size:13px;">
+          <div style="font-size:11px; color:#9ca3af; margin-top:4px;">
+            Cole aqui o ID do fluxo onde os consultores de Vendas PJ irão atender.
+          </div>
+        </div>
+      </div>
     </div>
 
   </div><!-- /card -->
