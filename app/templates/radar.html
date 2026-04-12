@@ -227,7 +227,10 @@ function Radar() {
 
   const fetchData = useCallback(async () => {
     try {
-      const res  = await fetch("/radar/data");
+      // URL relativa ao path atual — funciona tanto direto na porta 8001
+      // quanto via nginx com prefixo /pj (ex: /pj/radar → /pj/radar/data)
+      const basePath = window.location.pathname.replace(/\/+$/, "");
+      const res  = await fetch(basePath + "/data");
       const json = await res.json();
       setLeads(json.leads || []);
       setLastUpd(new Date().toLocaleTimeString("pt-BR", {hour:"2-digit",minute:"2-digit"}));
@@ -336,7 +339,7 @@ function Radar() {
               className="flex items-center gap-1.5 text-xs text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-2 rounded-lg hover:bg-indigo-100 transition-colors font-semibold">
               <Icon name="refresh-cw" size={13} /> Atualizar
             </button>
-            <a href="/admin" className="flex items-center gap-1.5 text-xs text-slate-500 bg-white border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
+            <a href={window.location.pathname.replace(/\/radar.*$/, "/admin")} className="flex items-center gap-1.5 text-xs text-slate-500 bg-white border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
               <Icon name="settings" size={13} /> Admin
             </a>
           </div>
