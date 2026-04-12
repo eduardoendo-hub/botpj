@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% set active_page = "email_config" %}
+{% block title %}Notificações por Email - Bot SDR PJ{% endblock %}
+
+{% block content %}
+<style>
+  .config-section { margin-bottom: 32px; }
+  .config-section h3 { font-size: 15px; font-weight: 600; color: #4f46e5; margin-bottom: 16px;
+                        padding-bottom: 8px; border-bottom: 2px solid #e0e7ff; }
+  .config-row { display: flex; align-items: flex-start; gap: 24px; padding: 16px 0;
+                border-bottom: 1px solid #f3f4f6; }
+  .config-row:last-child { border-bottom: none; }
+  .config-meta { flex: 1; min-width: 0; }
+  .config-meta .label { font-size: 14px; font-weight: 500; color: #111827; margin-bottom: 3px; }
+  .config-meta .desc  { font-size: 12px; color: #6b7280; }
+  .config-control { width: 340px; flex-shrink: 0; }
+  .config-control input[type="text"],
+  .config-control input[type="email"],
+  .config-control input[type="password"] {
+    width: 100%; padding: 8px 12px; border: 1px solid #d1d5db;
+    border-radius: 8px; font-size: 14px; font-family: inherit;
+  }
+  .config-control textarea {
+    width: 100%; padding: 8px 12px; border: 1px solid #d1d5db;
+    border-radius: 8px; font-size: 14px; resize: vertical; min-height: 90px;
+    font-family: inherit;
+  }
+  .config-control input:focus, .config-control textarea:focus {
+    outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+  }
+
+  .toggle-wrap { display: flex; align-items: center; gap: 10px; }
+  .toggle { position: relative; display: inline-block; width: 48px; height: 26px; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #d1d5db; border-radius: 26px; transition: .3s; }
+  .slider:before { position: absolute; content: ""; height: 20px; width: 20px;
+                   left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .3s; }
+  input:checked + .slider { background-color: #4f46e5; }
+  input:checked + .slider:before { transform: translateX(22px); }
+  .toggle-label { font-size: 13px; color: #374151; font-weight: 500; }
+
+  .info-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px;
+              padding: 16px 18px; margin-bottom: 24px; font-size: 13px; color: #1e40af; }
+  .info-box strong { display: block; margin-bottom: 6px; font-size: 14px; }
+  .info-box ol { margin: 8px 0 0 18px; }
+  .info-box li { margin-bottom: 4px; }
+  .info-box a { color: #4f46e5; }
+
+  .save-bar { position: sticky; bottom: 0; background: #fff; border-top: 1px solid #e5e7eb;
+              padding: 16px 0; margin-top: 24px; display: flex; gap: 12px; align-items: center; }
+
+  .test-result { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-top: 12px;
+                 display: none; }
+  .test-result.ok  { background: #d1fae5; color: #065f46; display: block; }
+  .test-result.err { background: #fee2e2; color: #991b1b; display: block; }
+</style>
+
+<div class="header">
+  <h1>📧 Notificações por Email</h1>
+</div>
+
+{% if saved %}
+<div class="alert alert-success">✅ Configurações salvas com sucesso!</div>
+{% endif %}
+{% if error %}
+<div class="alert alert-error">❌ {{ error }}</div>
+{% endif %}
+
+<div class="info-box">
+  <strong>ℹ️ Como configurar o Gmail para envio automático</strong>
+  O Gmail exige uma <strong>Senha de Aplicativo</strong> (não a senha normal da conta).
+  <ol>
+    <li>Acesse <a href="https://myaccount.google.com/security" target="_blank">myaccount.google.com/security</a></li>
+    <li>Ative a <strong>Verificação em duas etapas</strong> (se ainda não estiver ativa)</li>
+    <li>Pesquise por <strong>"Senhas de app"</strong> e crie uma nova senha para "Outro (nome personalizado)"</li>
+    <li>Cole a senha gerada (16 caracteres) no campo abaixo</li>
+  </ol>
+</div>
+
+<form method="POST" action="/admin/email-config/save">
+  <div class="card">
+
+    <!-- ── LIGA/DESLIGA ── -->
+    <div class="config-section">
+      <h3>🔔 Ativação</h3>
+      <div class="config-row">
+        <div class="config-meta">
+          <div class="label">Notificações habilitadas</div>
+          <div class="desc">Quando ativado, o bot envia um email a cada lead PJ qualificado — com nome, empresa, cargo e treinamento de interesse — para os consultores designados.</div>
+        </div>
+        <div class="config-control">
+          <div class="toggle-wrap">
+            <label class="toggle">
+              <input type="checkbox" name="email_notifications_enabled" value="true"
+                     {% if config.email_notifications_enabled == 'true' %}checked{% endif %}>
+              <span class="slider"></span>
+            </label>
+            <span class="toggle-label">Habilitado</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONTA REMETENTE ── -->
+    <div class="config-section">
+      <h3>📤 Conta Remetente (Gmail)</h3>
+
+      <div class="config-row">
+        <div class="config-meta">
+          <div class="label">Endereço Gmail</div>
+          <div class="desc">Conta Gmail que enviará as notificações. Ex: bot.treinamentos@gmail.com</div>
+        </div>
+        <div class="config-control">
+          <input type="email" name="gmail_sender" placeholder="sua.conta@gmail.com"
+                 value="{{ config.gmail_sender or '' }}">
+        </div>
+      </div>
+
+      <div class="config-row">
+        <div class="config-meta">
+          <div class="label">Senha de aplicativo</div>
+          <div class="desc">Senha de 16 caracteres gerada nas configurações de segurança do Google (não é a senha da conta).</div>
+        </div>
+        <div class="config-control">
+          <input type="password" name="gmail_app_password" placeholder="xxxx xxxx xxxx xxxx"
+                 value="{{ config.gmail_app_password or '' }}" autocomplete="new-password">
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DESTINATÁRIOS ── -->
+    <div class="config-section">
+      <h3>📬 Destinatários</h3>
+
+      <div class="config-row">
+        <div class="config-meta">
+          <div class="label">E-mails dos consultores PJ</div>
+          <div class="desc">Um email por linha ou separados por vírgula. Todos receberão a notificação quando um lead PJ for qualificado pelo bot.</div>
+        </div>
+        <div class="config-control">
+          <textarea name="email_recipients"
+                    placeholder="consultor.pj@empresa.com&#10;coordenador.treinamentos@empresa.com&#10;gerente.comercial@empresa.com">{{ config.email_recipients or '' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /card -->
+
+  <div class="save-bar">
+    <button type="submit" class="btn btn-primary">💾 Salvar configurações</button>
+    <button type="button" class="btn btn-secondary" onclick="testEmail()">🧪 Enviar email de teste</button>
+    <a href="/admin" class="btn btn-secondary">Cancelar</a>
+  </div>
+
+  <div id="testResult" class="test-result"></div>
+</form>
+
+<script>
+async function testEmail() {
+  const btn = document.querySelector('button[onclick="testEmail()"]');
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando...';
+  const result = document.getElementById('testResult');
+  result.className = 'test-result';
+  result.style.display = 'none';
+
+  try {
+    const resp = await fetch('/admin/email-config/test', { method: 'POST' });
+    const data = await resp.json();
+    if (data.ok) {
+      result.className = 'test-result ok';
+      result.textContent = '✅ ' + data.message;
+    } else {
+      result.className = 'test-result err';
+      result.textContent = '❌ ' + data.message;
+    }
+  } catch (e) {
+    result.className = 'test-result err';
+    result.textContent = '❌ Erro de conexão: ' + e.message;
+  }
+  result.style.display = 'block';
+  btn.disabled = false;
+  btn.textContent = '🧪 Enviar email de teste';
+}
+</script>
+{% endblock %}

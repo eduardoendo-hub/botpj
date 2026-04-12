@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% set active_page = "conversations" %}
+
+{% block title %}Conversas - Bot SDR PJ{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>💬 Conversas</h1>
+</div>
+
+<div class="card" style="overflow-x: auto;">
+    {% if conversations %}
+    <table>
+        <thead>
+            <tr>
+                <th>Telefone</th>
+                <th>Nome</th>
+                <th>Canal</th>
+                <th>Última mensagem</th>
+                <th>Total mensagens</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for conv in conversations %}
+            <tr>
+                <td>
+                    <a href="/admin/conversations/{{ conv.phone_number }}"
+                       style="color:#4f46e5; text-decoration:none; font-weight:500;">
+                        {{ conv.phone_number }}
+                    </a>
+                </td>
+                <td>{{ conv.contact_name or '—' }}</td>
+                <td>
+                    {% if conv.channel == 'tallos_pj' %}
+                        <span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">🏢 Lead PJ</span>
+                    {% elif conv.channel == 'tallos_form_pj' %}
+                        <span style="background:#ede9fe;color:#6d28d9;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">📋 Formulário PJ</span>
+                    {% elif conv.channel == 'tallos_chat' or conv.channel == 'tallos' %}
+                        <span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">💬 RD Conversas</span>
+                    {% elif conv.channel == 'tallos_monitor' %}
+                        <span style="background:#f3f4f6;color:#6b7280;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">📡 Monitor</span>
+                    {% elif conv.channel == 'test' %}
+                        <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">🧪 Teste</span>
+                    {% else %}
+                        <span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">{{ conv.channel or '—' }}</span>
+                    {% endif %}
+                </td>
+                <td style="font-size:12px; color:#6b7280;">{{ conv.last_message_at | brt }}</td>
+                <td style="text-align:center;">{{ conv.total_messages }}</td>
+                <td>
+                    <a href="/admin/conversations/{{ conv.phone_number }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">Ver conversa</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div style="padding: 12px 16px; font-size: 13px; color: #6b7280; border-top: 1px solid #f3f4f6;">
+        Total: {{ conversations|length }} conversa(s)
+    </div>
+    {% else %}
+    <div class="empty">
+        <p style="font-size: 32px; margin-bottom: 12px;">💬</p>
+        <p style="font-weight: 600;">Nenhuma conversa registrada ainda.</p>
+        <p style="margin-top: 8px; color: #9ca3af;">
+            As conversas aparecerão aqui quando o bot começar a receber mensagens dos leads PJ.
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

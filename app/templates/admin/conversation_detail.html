@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% set active_page = "conversations" %}
+
+{% block title %}Conversa {{ phone_number }} - Bot SDR PJ{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>💬 Conversa com {{ phone_number }}</h1>
+    <a href="{{ back_url | default('/admin/conversations') }}" class="btn btn-secondary">← Voltar</a>
+</div>
+
+<!-- Legenda -->
+<div style="display:flex; gap:16px; margin-bottom:16px; font-size:12px; color:#6b7280; align-items:center; flex-wrap:wrap;">
+  <span style="display:flex;align-items:center;gap:6px;">
+    <span style="width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid #d1d5db;display:inline-block;"></span>
+    Lead PJ
+  </span>
+  <span style="display:flex;align-items:center;gap:6px;">
+    <span style="width:12px;height:12px;border-radius:50%;background:#dcf8c6;border:2px solid #a7f3d0;display:inline-block;"></span>
+    Bot SDR PJ
+  </span>
+  <span style="display:flex;align-items:center;gap:6px;">
+    <span style="width:12px;height:12px;border-radius:50%;background:#fef9c3;border:2px solid #fde68a;display:inline-block;"></span>
+    Consultor Humano
+  </span>
+</div>
+
+<div class="card" style="max-height: 72vh; overflow-y: auto; background: #e5ddd5; padding: 20px;">
+    {% if messages %}
+    {% for msg in messages %}
+
+    {% if msg.role == 'user' %}
+      {# ── Lead / Cliente ── #}
+      <div style="max-width:70%; margin-bottom:14px; padding:10px 14px; border-radius:10px;
+                  border-top-left-radius:0; background:#fff; margin-right:auto; font-size:14px; line-height:1.5;">
+        <div style="font-size:11px; font-weight:700; margin-bottom:4px; color:#4f46e5;">
+          🏢 {{ msg.contact_name or 'Lead PJ' }}
+        </div>
+        <div style="white-space:pre-wrap;">{{ msg.message }}</div>
+        <div style="font-size:10px; color:#999; text-align:right; margin-top:4px; display:flex; justify-content:flex-end; align-items:center; gap:6px;">
+          {% if msg.channel == 'tallos_pj' %}<span style="background:#d1fae5;color:#065f46;padding:1px 6px;border-radius:8px;font-size:10px;">Lead PJ</span>
+          {% elif msg.channel == 'tallos_form_pj' %}<span style="background:#ede9fe;color:#6d28d9;padding:1px 6px;border-radius:8px;font-size:10px;">Formulário PJ</span>
+          {% elif msg.channel in ['tallos_chat', 'tallos', 'tallos_monitor'] %}<span style="background:#dbeafe;color:#1d4ed8;padding:1px 6px;border-radius:8px;font-size:10px;">RD Conversas</span>
+          {% endif %}
+          {{ msg.created_at | brt }}
+        </div>
+      </div>
+
+    {% elif msg.role == 'consultant' %}
+      {# ── Consultor humano ── #}
+      <div style="max-width:70%; margin-bottom:14px; padding:10px 14px; border-radius:10px;
+                  border-top-right-radius:0; background:#fef9c3; margin-left:auto; font-size:14px; line-height:1.5;">
+        <div style="font-size:11px; font-weight:700; margin-bottom:4px; color:#b45309;">
+          👨‍💼 {{ msg.contact_name or 'Consultor' }}
+        </div>
+        <div style="white-space:pre-wrap;">{{ msg.message }}</div>
+        <div style="font-size:10px; color:#999; text-align:right; margin-top:4px;">
+          {{ msg.created_at | brt }}
+        </div>
+      </div>
+
+    {% else %}
+      {# ── Bot SDR PJ ── #}
+      <div style="max-width:70%; margin-bottom:14px; padding:10px 14px; border-radius:10px;
+                  border-top-right-radius:0; background:#dcf8c6; margin-left:auto; font-size:14px; line-height:1.5;">
+        <div style="font-size:11px; font-weight:700; margin-bottom:4px; color:#10b981;">
+          🤖 {{ msg.contact_name or 'Bot SDR PJ' }}
+        </div>
+        <div style="white-space:pre-wrap;">{{ msg.message }}</div>
+        <div style="font-size:10px; color:#999; text-align:right; margin-top:4px;">
+          {{ msg.created_at | brt }}
+        </div>
+      </div>
+    {% endif %}
+
+    {% endfor %}
+    {% else %}
+    <div class="empty" style="color:#666;">Nenhuma mensagem encontrada.</div>
+    {% endif %}
+</div>
+
+<div style="margin-top:12px; font-size:12px; color:#9ca3af; text-align:right;">
+  {{ messages|length }} mensagem(ns) no total
+  {% if source == 'tallos_api' %}
+    · <span style="color:#6d28d9;">🔗 via API RD Conversas (contact_id: {{ contact_id }})</span>
+  {% else %}
+    · <span style="color:#6b7280;">📦 banco local</span>
+  {% endif %}
+</div>
+{% endblock %}

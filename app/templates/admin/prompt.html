@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% set active_page = "prompt" %}
+
+{% block title %}Prompt do Sistema - Bot SDR PJ{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>🤖 Prompt do Sistema</h1>
+</div>
+
+{% if saved %}
+<div class="alert alert-success">✅ Prompt salvo com sucesso!</div>
+{% endif %}
+
+<div class="card">
+    <p style="margin-bottom: 16px; color: #6b7280; font-size: 14px;">
+        O prompt do sistema define a personalidade e o comportamento do bot no atendimento a leads PJ.
+        Ele é enviado junto com cada conversa para guiar as respostas da IA.
+    </p>
+
+    <form method="post" action="/admin/prompt/save">
+        <div class="field">
+            <label>System Prompt</label>
+            <textarea name="prompt" style="min-height: 400px; font-family: monospace; font-size: 13px; line-height: 1.6;">{{ prompt }}</textarea>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">💾 Salvar Alterações</button>
+            <a href="/admin" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<div class="card" style="background: #f0f7ff; border: 1px solid #bfdbfe;">
+    <h3 style="margin-bottom: 12px; font-size: 14px; color: #1e40af;">💡 Dicas para o System Prompt — Contexto PJ</h3>
+    <div style="font-size: 13px; color: #1e40af; line-height: 2;">
+        <p>• Defina o tom da conversa (consultivo, profissional, acolhedor para decisores corporativos)</p>
+        <p>• Especifique o fluxo de qualificação: Nome → WhatsApp → Email → Empresa → Cargo → Treinamento</p>
+        <p>• Instrua como lidar com perguntas sobre preços, turmas fechadas e customizações</p>
+        <p>• Defina quando escalar para consultor humano (ex: após coletar os dados completos do lead)</p>
+        <p>• Oriente sobre como responder para tomadores de decisão (diretores, gerentes de RH, etc.)</p>
+        <p>• A base de conhecimento e o histórico de conversa são adicionados automaticamente pelo sistema</p>
+    </div>
+</div>
+{% endblock %}

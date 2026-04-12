@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% set active_page = "knowledge" %}
+
+{% block title %}{% if item %}Editar{% else %}Novo{% endif %} Conhecimento - Bot SDR PJ{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>{% if item %}Editar{% else %}Adicionar{% endif %} Conhecimento</h1>
+</div>
+
+{% if error %}
+<div class="alert alert-error">{{ error }}</div>
+{% endif %}
+{% if success %}
+<div class="alert alert-success">{{ success }}</div>
+{% endif %}
+
+<div class="card">
+
+    <!-- Abas: Manual ou URL -->
+    <div style="display: flex; gap: 0; margin-bottom: 24px; border-bottom: 2px solid #e5e7eb;">
+        <button onclick="switchTab('manual')" id="tab-manual"
+            style="padding: 10px 20px; border: none; background: none; font-size: 14px; font-weight: 600; cursor: pointer; color: #4f46e5; border-bottom: 2px solid #4f46e5; margin-bottom: -2px;">
+            ✍️ Inserir manualmente
+        </button>
+        <button onclick="switchTab('url')" id="tab-url"
+            style="padding: 10px 20px; border: none; background: none; font-size: 14px; font-weight: 600; cursor: pointer; color: #6b7280; border-bottom: 2px solid transparent; margin-bottom: -2px;">
+            🔗 Importar de URL
+        </button>
+        <button onclick="switchTab('html')" id="tab-html"
+            style="padding: 10px 20px; border: none; background: none; font-size: 14px; font-weight: 600; cursor: pointer; color: #6b7280; border-bottom: 2px solid transparent; margin-bottom: -2px;">
+            📋 Colar HTML
+        </button>
+    </div>
+
+    <!-- ABA: Importar de URL -->
+    <div id="panel-url" style="display: none;">
+        <p style="color: #6b7280; font-size: 14px; margin-bottom: 16px;">
+            Cole a URL de uma página de treinamento ou curso e o sistema vai extrair o conteúdo automaticamente.
+            Ideal para importar dados diretamente da página do curso/treinamento.
+        </p>
+        <div class="field">
+            <label>URL da página do treinamento</label>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="url-input" placeholder="https://www.suaempresa.com.br/treinamentos/lideranca"
+                    style="flex: 1;" oninput="clearPreview()"/>
+                <button type="button" onclick="fetchUrl()" id="fetch-btn" class="btn btn-primary" style="white-space: nowrap;">
+                    Buscar conteúdo
+                </button>
+            </div>
+        </div>
+        <div id="url-result" style="display: none; margin-top: 16px;">
+            <div id="url-error" style="display: none;" class="alert alert-error"></div>
+            <div id="url-preview" style="display: none;">
+                <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                    <p style="font-size: 13px; color: #166534; font-weight: 600; margin-bottom: 8px;">✅ Conteúdo extraído! Revise antes de salvar.</p>
+                    <p style="font-size: 13px; color: #166534;">Título detectado: <strong id="detected-title"></strong></p>
+                </div>
+                <button type="button" onclick="useUrlContent()" class="btn btn-primary">Usar este conteúdo →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABA: Colar HTML -->
+    <div id="panel-html" style="display: none;">
+        <p style="color: #6b7280; font-size: 14px; margin-bottom: 16px;">
+            Cole o HTML da página do curso/treinamento. O sistema irá extrair o texto relevante automaticamente.
+        </p>
+        <div class="field">
+            <label>HTML da página</label>
+            <textarea id="html-input" placeholder="Cole o código HTML aqui..." style="min-height: 200px; font-family: monospace; font-size: 12px;"></textarea>
+        </div>
+        <button type="button" onclick="parseHtml()" class="btn btn-primary">Extrair conteúdo do HTML</button>
+        <div id="html-result" style="display: none; margin-top: 16px;">
+            <div id="html-error" style="display: none;" class="alert alert-error"></div>
+            <div id="html-preview" style="display: none;">
+                <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                    <p style="font-size: 13px; color: #166534; font-weight: 600;">✅ Texto extraído! Revise antes de usar.</p>
+                </div>
+                <button type="button" onclick="useHtmlContent()" class="btn btn-primary">Usar este conteúdo →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABA: Formulário Manual -->
+    <form method="post" action="/admin/knowledge/save" id="main-form">
+        {% if item %}
+        <input type="hidden" name="item_id" value="{{ item.id }}">
+        {% endif %}
+
+        <div class="field">
+            <label>Categoria</label>
+            <select name="category" id="field-category" required>
+                <option value="">Selecione...</option>
+                {% for cat in [
+                    "Treinamentos Online ao Vivo",
+                    "Treinamentos Presenciais",
+                    "Treinamentos Gravados",
+                    "Formações (Plataformas)",
+                    "Locação de Espaços",
+                    "Turmas Regulares (PJ)",
+                    "Turmas Fechadas / Customizadas",
+                    "Catálogo de Cursos",
+                    "Diferenciais e Infraestrutura",
+                    "Prêmios e Reconhecimentos",
+                    "Empresas e Cases",
+                    "Campanhas e Descontos",
+                    "FAQ",
+                    "Institucional",
+                    "Outro"
+                ] %}
+                <option value="{{ cat }}" {% if item and item.category == cat %}selected{% endif %}>{{ cat }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="field">
+            <label>Título</label>
+            <input type="text" name="title" id="field-title"
+                value="{{ item.title if item else '' }}"
+                placeholder="Ex: Treinamento de Liderança — Módulo Presencial" required>
+        </div>
+
+        <div class="field">
+            <label>Conteúdo</label>
+            <textarea name="content" id="field-content"
+                placeholder="Descreva as informações que o bot deve saber sobre este tópico. Quanto mais detalhado, melhor as respostas para leads PJ." required>{{ item.content if item else '' }}</textarea>
+            <p style="font-size: 12px; color: #6b7280; margin-top: 4px;">
+                Inclua: descrição, público-alvo, carga horária, formato, diferenciais, preço (se aplicável).
+            </p>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a href="/admin/knowledge" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    let _fetchedContent = { title: '', content: '' };
+    let _htmlContent = { title: '', content: '' };
+
+    function switchTab(tab) {
+        ['manual', 'url', 'html'].forEach(t => {
+            const isActive = t === tab;
+            document.getElementById('panel-' + t).style.display = (isActive && t !== 'manual') ? 'block' : 'none';
+            const btn = document.getElementById('tab-' + t);
+            btn.style.color = isActive ? '#4f46e5' : '#6b7280';
+            btn.style.borderBottomColor = isActive ? '#4f46e5' : 'transparent';
+        });
+        // O formulário manual fica sempre visível
+        document.getElementById('main-form').style.display = 'block';
+    }
+
+    function clearPreview() {
+        document.getElementById('url-result').style.display = 'none';
+    }
+
+    async function fetchUrl() {
+        const url = document.getElementById('url-input').value.trim();
+        if (!url) { alert('Digite uma URL primeiro.'); return; }
+
+        const btn = document.getElementById('fetch-btn');
+        btn.textContent = 'Buscando...';
+        btn.disabled = true;
+        document.getElementById('url-result').style.display = 'block';
+        document.getElementById('url-error').style.display = 'none';
+        document.getElementById('url-preview').style.display = 'none';
+
+        try {
+            const res = await fetch('/admin/knowledge/fetch-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                _fetchedContent = { title: data.title, content: data.content };
+                document.getElementById('detected-title').textContent = data.title;
+                document.getElementById('url-preview').style.display = 'block';
+            } else {
+                document.getElementById('url-error').textContent = '❌ ' + data.error;
+                document.getElementById('url-error').style.display = 'block';
+            }
+        } catch (err) {
+            document.getElementById('url-error').textContent = '❌ Erro: ' + err.message;
+            document.getElementById('url-error').style.display = 'block';
+        }
+
+        btn.textContent = 'Buscar conteúdo';
+        btn.disabled = false;
+    }
+
+    function useUrlContent() {
+        document.getElementById('field-title').value = _fetchedContent.title;
+        document.getElementById('field-content').value = _fetchedContent.content;
+        switchTab('manual');
+        document.getElementById('field-title').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function parseHtml() {
+        const html = document.getElementById('html-input').value.trim();
+        if (!html) { alert('Cole o HTML primeiro.'); return; }
+
+        // Extração simples de texto do HTML no lado cliente
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        // Remove scripts e estilos
+        doc.querySelectorAll('script, style, nav, footer, header, aside').forEach(el => el.remove());
+
+        // Extrai título
+        const title = doc.querySelector('title')?.textContent?.trim()
+            || doc.querySelector('h1')?.textContent?.trim()
+            || 'Conteúdo importado';
+
+        // Extrai texto
+        const text = (doc.body?.innerText || doc.body?.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
+
+        if (!text) {
+            document.getElementById('html-error').textContent = '❌ Não foi possível extrair texto do HTML.';
+            document.getElementById('html-error').style.display = 'block';
+            document.getElementById('html-result').style.display = 'block';
+            return;
+        }
+
+        _htmlContent = { title, content: 'Fonte: (HTML importado)\n\n' + text.substring(0, 10000) };
+        document.getElementById('html-result').style.display = 'block';
+        document.getElementById('html-preview').style.display = 'block';
+        document.getElementById('html-error').style.display = 'none';
+    }
+
+    function useHtmlContent() {
+        document.getElementById('field-title').value = _htmlContent.title;
+        document.getElementById('field-content').value = _htmlContent.content;
+        switchTab('manual');
+        document.getElementById('field-title').scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+{% endblock %}

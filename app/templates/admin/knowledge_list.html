@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% set active_page = "knowledge" %}
+
+{% block title %}Base de Conhecimento - Bot SDR PJ{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>📚 Base de Conhecimento</h1>
+    <a href="/admin/knowledge/new" class="btn btn-primary">+ Adicionar</a>
+</div>
+
+<div class="card" style="padding: 16px 24px; background: #f0f7ff; border: 1px solid #bfdbfe; margin-bottom: 20px;">
+    <p style="font-size: 13px; color: #1e40af;">
+        💡 <strong>Dica:</strong> Adicione todos os treinamentos, diferenciais, infraestrutura, cases e campanhas para que o bot responda com precisão aos leads PJ.
+        Use a importação de URL para extrair automaticamente o conteúdo das páginas dos cursos.
+    </p>
+</div>
+
+<div class="card" style="overflow-x: auto;">
+    {% if items %}
+    <table>
+        <thead>
+            <tr>
+                <th>Categoria</th>
+                <th>Título</th>
+                <th>Status</th>
+                <th>Atualizado</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>
+                    <span class="badge badge-indigo">{{ item.category }}</span>
+                </td>
+                <td style="max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ item.title }}">
+                    {{ item.title }}
+                </td>
+                <td>
+                    {% if item.is_active %}
+                    <span class="badge badge-green">Ativo</span>
+                    {% else %}
+                    <span class="badge" style="background:#f3f4f6; color:#6b7280;">Inativo</span>
+                    {% endif %}
+                </td>
+                <td style="font-size: 12px; color: #9ca3af;">{{ item.updated_at | brt }}</td>
+                <td>
+                    <a href="/admin/knowledge/{{ item.id }}/edit" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">Editar</a>
+                    <form method="post" action="/admin/knowledge/{{ item.id }}/delete" style="display: inline;" onsubmit="return confirm('Excluir este item?')">
+                        <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;">Excluir</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div style="padding: 12px 16px; font-size: 13px; color: #6b7280; border-top: 1px solid #f3f4f6;">
+        Total: {{ items|length }} item(s)
+    </div>
+    {% else %}
+    <div class="empty">
+        <p style="font-size: 32px; margin-bottom: 12px;">📚</p>
+        <p style="font-weight: 600;">Base de conhecimento vazia</p>
+        <p style="margin-top: 8px; color: #9ca3af;">
+            Adicione informações sobre treinamentos, diferenciais, preços e muito mais para o bot responder com precisão.
+        </p>
+        <a href="/admin/knowledge/new" class="btn btn-primary" style="margin-top: 16px; display: inline-block;">+ Adicionar primeiro item</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3 style="font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 12px;">💡 Categorias sugeridas para Treinamentos PJ</h3>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        {% for cat in [
+            "Treinamentos Online ao Vivo",
+            "Treinamentos Presenciais",
+            "Treinamentos Gravados",
+            "Formações (Plataformas)",
+            "Locação de Espaços",
+            "Turmas Regulares (PJ)",
+            "Turmas Fechadas / Customizadas",
+            "Catálogo de Cursos",
+            "Diferenciais e Infraestrutura",
+            "Prêmios e Reconhecimentos",
+            "Empresas e Cases",
+            "Campanhas e Descontos",
+            "FAQ",
+            "Institucional"
+        ] %}
+        <span class="badge badge-indigo">{{ cat }}</span>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

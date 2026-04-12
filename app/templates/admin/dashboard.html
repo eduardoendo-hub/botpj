@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% set active_page = "dashboard" %}
+
+{% block title %}Dashboard - Bot SDR PJ{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>📊 Dashboard</h1>
+    <span style="font-size:13px; color:#6b7280; background:#f3f4f6; padding:6px 14px; border-radius:20px;">
+        Bot SDR <strong style="color:#4f46e5;">PJ</strong> — Treinamentos Corporativos
+    </span>
+</div>
+
+<div class="stats">
+    <div class="stat-card">
+        <div class="label">RD Conversas (Tallos)</div>
+        <div class="value {% if tallos_status.get('connected') %}green{% endif %}">
+            {% if tallos_status.get('connected') %}
+                Conectado
+            {% elif tallos_status.get('error') %}
+                Erro
+            {% else %}
+                {{ tallos_status.get('status', 'Verificando...') }}
+            {% endif %}
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Leads PJ Capturados</div>
+        <div class="value blue">{{ leads_count }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Conversas</div>
+        <div class="value purple">{{ conversations_count }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Itens na Base de Conhecimento</div>
+        <div class="value indigo">{{ knowledge_count }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <h3 style="margin-bottom: 8px; font-size: 15px; color: #374151;">🏢 Sobre este Bot</h3>
+    <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">
+        O <strong>Bot SDR PJ</strong> atende leads corporativos interessados em treinamentos.
+        Identifica necessidades, qualifica e encaminha para consultores especializados.
+    </p>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="/admin/knowledge/new" class="btn btn-primary">+ Adicionar Conhecimento</a>
+        <a href="/admin/conversations" class="btn btn-secondary">Ver Conversas</a>
+        <a href="/admin/leads" class="btn btn-secondary">Ver Leads PJ</a>
+        <a href="/admin/prompt" class="btn btn-secondary">Editar Prompt</a>
+        <a href="/test" target="_blank" class="btn btn-secondary">🧪 Testar Bot</a>
+    </div>
+</div>
+
+<div class="card">
+    <h3 style="margin-bottom: 16px; font-size: 15px; color: #374151;">📡 Webhooks Configurados</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Endpoint</th>
+                <th>Função</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code style="font-size:12px; background:#f3f4f6; padding:2px 6px; border-radius:4px;">/webhook/tallos</code></td>
+                <td>Monitoramento geral — processa mensagens de leads PJ registrados</td>
+                <td><span class="badge badge-green">Ativo</span></td>
+            </tr>
+            <tr>
+                <td><code style="font-size:12px; background:#f3f4f6; padding:2px 6px; border-radius:4px;">/webhook/tallospj</code></td>
+                <td>Registro de novos leads PJ — chamado pelas automações do RD Conversas</td>
+                <td><span class="badge badge-blue">Registro PJ</span></td>
+            </tr>
+        </tbody>
+    </table>
+    <p style="font-size: 12px; color: #9ca3af; margin-top: 12px;">
+        💡 Configure o BOT MBA para repassar eventos ao BOT SDR PJ (porta 8001) via nginx ou forward interno.
+    </p>
+</div>
+{% endblock %}

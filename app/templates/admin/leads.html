@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% set active_page = "leads" %}
+
+{% block title %}Leads PJ - Bot SDR PJ{% endblock %}
+
+{% block content %}
+<style>
+  td.truncate { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  th, td { vertical-align: middle; }
+  .export-btn { font-size: 13px; }
+</style>
+
+<div class="header">
+    <h1>🏢 Leads PJ Capturados</h1>
+    <a href="/admin/leads/export" class="btn btn-secondary export-btn">⬇️ Exportar CSV</a>
+</div>
+
+<div class="card" style="padding: 14px 20px; background: #f0fdf4; border: 1px solid #86efac; margin-bottom: 20px;">
+    <p style="font-size: 13px; color: #166534;">
+        💼 <strong>Leads PJ</strong> são contatos corporativos registrados via webhook <code>/webhook/tallospj</code> ou formulário de interesse PJ.
+        Clique no telefone para ver a conversa completa.
+    </p>
+</div>
+
+<div class="card" style="overflow-x: auto;">
+    {% if leads %}
+    <table>
+        <thead>
+            <tr>
+                <th>Telefone</th>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Empresa</th>
+                <th>Cargo</th>
+                <th>Treinamento de Interesse</th>
+                <th>Estágio</th>
+                <th>1º Contato</th>
+                <th>Última Atualização</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for lead in leads %}
+            <tr>
+                <td>
+                  <a href="/admin/conversations/{{ lead.phone_number }}"
+                     style="color:#4f46e5; text-decoration:none; font-weight:500; font-family:monospace; font-size:13px;">
+                    {{ lead.phone_number }}
+                  </a>
+                </td>
+                <td>{{ lead.contact_name or '—' }}</td>
+                <td class="truncate" title="{{ lead.email or '' }}">{{ lead.email or '—' }}</td>
+                <td class="truncate" title="{{ lead.company or '' }}">
+                    {% if lead.company %}
+                        <span style="display:flex; align-items:center; gap:4px;">
+                            🏢 {{ lead.company }}
+                        </span>
+                    {% else %}—{% endif %}
+                </td>
+                <td class="truncate" title="{{ lead.job_title or '' }}">{{ lead.job_title or '—' }}</td>
+                <td class="truncate" title="{{ lead.training_interest or '' }}">
+                    {% if lead.training_interest %}
+                        <span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500;">
+                            {{ lead.training_interest }}
+                        </span>
+                    {% else %}—{% endif %}
+                </td>
+                <td>
+                    {% if lead.stage == 'novo' %}
+                    <span class="badge badge-blue">Novo</span>
+                    {% elif lead.stage == 'qualificado' %}
+                    <span class="badge badge-green">Qualificado</span>
+                    {% elif lead.stage == 'negociando' %}
+                    <span class="badge badge-yellow">Negociando</span>
+                    {% elif lead.stage == 'convertido' %}
+                    <span class="badge badge-green">Convertido</span>
+                    {% else %}
+                    <span class="badge">{{ lead.stage or '—' }}</span>
+                    {% endif %}
+                </td>
+                <td style="font-size:12px; color:#6b7280; white-space:nowrap;">{{ lead.created_at | brt }}</td>
+                <td style="font-size:12px; color:#6b7280; white-space:nowrap;">{{ lead.updated_at | brt }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div style="padding: 12px 16px; font-size: 13px; color: #6b7280; border-top: 1px solid #f3f4f6;">
+      Total: {{ leads|length }} lead(s) PJ
+    </div>
+    {% else %}
+    <div class="empty">
+        <p style="font-size: 32px; margin-bottom: 12px;">🏢</p>
+        <p style="font-weight: 600;">Nenhum lead PJ capturado ainda.</p>
+        <p style="margin-top: 8px; color: #9ca3af;">
+            Os leads PJ serão registrados automaticamente quando empresas interagirem com o bot
+            via <code>/webhook/tallospj</code>.
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

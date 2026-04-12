@@ -1,0 +1,23 @@
+[Unit]
+Description=Bot SDR PJ - Chatbot Treinamentos Corporativos
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=botsdrpj
+WorkingDirectory=/opt/bot-sdr-pj
+Environment="PATH=/opt/bot-sdr-pj/venv/bin"
+ExecStart=/opt/bot-sdr-pj/venv/bin/gunicorn main:app \
+    --workers 2 \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --bind 127.0.0.1:8001 \
+    --timeout 120 \
+    --access-logfile /var/log/bot-sdr-pj/access.log \
+    --error-logfile /var/log/bot-sdr-pj/error.log
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

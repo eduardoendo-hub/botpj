@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% set active_page = "webhook_logs" %}
+{% block title %}Webhook Logs — Bot SDR PJ{% endblock %}
+
+{% block content %}
+<style>
+    .filter-bar { display: flex; gap: 12px; align-items: center; margin-bottom: 24px; flex-wrap: wrap; }
+    .filter-bar input { padding: 9px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; width: 220px; }
+    .filter-bar input:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+    .filter-bar select { padding: 9px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; }
+    .log-table td { vertical-align: top; }
+    .event-badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .ev-received  { background: #d1fae5; color: #065f46; }
+    .ev-sent      { background: #dbeafe; color: #1e40af; }
+    .ev-ack       { background: #fef3c7; color: #92400e; }
+    .ev-session   { background: #ede9fe; color: #5b21b6; }
+    .ev-pj        { background: #d1fae5; color: #065f46; }
+    .ev-unknown   { background: #f3f4f6; color: #6b7280; }
+    .msg-preview  { font-size: 13px; color: #374151; max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .phone-link   { font-family: monospace; font-size: 13px; color: #4f46e5; text-decoration: none; }
+    .phone-link:hover { text-decoration: underline; }
+    .ts           { font-size: 12px; color: #9ca3af; white-space: nowrap; }
+    .btn-expand   { background: none; border: 1px solid #d1d5db; border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer; color: #6b7280; }
+    .btn-expand:hover { background: #f3f4f6; }
+    .payload-box  { display: none; background: #1e293b; color: #a5f3fc; font-family: monospace; font-size: 12px; padding: 14px; border-radius: 8px; white-space: pre-wrap; word-break: break-all; margin-top: 8px; max-height: 380px; overflow-y: auto; }
+    .payload-box.open { display: block; }
+    .info-row     { font-size: 13px; color: #6b7280; margin-bottom: 18px; }
+    .empty        { text-align: center; padding: 60px; color: #9ca3af; font-size: 15px; }
+    .direction    { font-size: 16px; }
+    .refresh-btn  { margin-left: auto; }
+</style>
+
+<div class="header">
+    <h1>📡 Webhook Logs</h1>
+    <a href="/admin/webhook-logs" class="btn btn-secondary refresh-btn">🔄 Atualizar</a>
+</div>
+
+<!-- Info sobre endpoints -->
+<div class="card" style="padding: 14px 20px; background: #f0f7ff; border: 1px solid #bfdbfe; margin-bottom: 20px;">
+    <p style="font-size: 13px; color: #1e40af;">
+        📡 <strong>Endpoints monitorados:</strong>
+        <code style="background:#dbeafe; padding:1px 6px; border-radius:4px;">/webhook/tallos</code> (monitor geral — mensagens dos leads PJ) e
+        <code style="background:#d1fae5; padding:1px 6px; border-radius:4px;">/webhook/tallospj</code> (registro de novos leads PJ)
+    </p>
+</div>
+
+<!-- Filtro -->
+<form method="get" action="/admin/webhook-logs">
+    <div class="filter-bar">
+        <input type="text" name="phone" placeholder="Filtrar por número (ex: 5511999...)"
+               value="{{ filter_phone }}" />
+        <select name="limit">
+            {% for n in [20, 50, 100, 200] %}
+            <option value="{{ n }}" {% if n == limit %}selected{% endif %}>{{ n }} registros</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+        {% if filter_phone %}
+        <a href="/admin/webhook-logs" class="btn btn-secondary">Limpar filtro</a>
+        {% endif %}
+    </div>
+</form>
+
+<div class="info-row">
+    {% if filter_phone %}
+        Mostrando <strong>{{ logs|length }}</strong> eventos para o número <code>{{ filter_phone }}</code>
+    {% else %}
+        Mostrando os últimos <strong>{{ logs|length }}</strong> eventos recebidos
+    {% endif %}
+</div>
+
+<div class="card" style="padding: 0; overflow: hidden;">
+    {% if logs %}
+    <table class="log-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Horário</th>
+                <th>Evento</th>
+                <th>Dir.</th>
+                <th>Número</th>
+                <th>Mensagem prévia</th>
+                <th>Payload</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for log in logs %}
+        {% set pobj = log.payload_obj %}
+        {% set mdata = pobj.get("message_data", pobj) %}
+        {% set from_me = mdata.get("from_me") or mdata.get("fromMe") %}
+        {% set msg = mdata.get("message") or mdata.get("body") or "" %}
+        <tr>
+            <td class="ts">{{ log.id }}</td>
+            <td class="ts">{{ log.created_at | brt }}</td>
+            <td>
+                {% if log.event_type == "received_message" %}
+                    <span class="event-badge ev-received">received</span>
+                {% elif log.event_type == "sent_message" %}
+                    <span class="event-badge ev-sent">sent</span>
+                {% elif log.event_type == "ack_update" %}
+                    <span class="event-badge ev-ack">ack</span>
+                {% elif log.event_type == "pj_lead_registered" %}
+                    <span class="event-badge ev-pj">🏢 lead PJ</span>
+                {% elif "session" in log.event_type %}
+                    <span class="event-badge ev-session">{{ log.event_type }}</span>
+                {% else %}
+                    <span class="event-badge ev-unknown">{{ log.event_type }}</span>
+                {% endif %}
+            </td>
+            <td class="direction">
+                {% if from_me %}➡️{% else %}⬅️{% endif %}
+            </td>
+            <td>
+                {% if log.phone_number %}
+                <a class="phone-link" href="/admin/webhook-logs?phone={{ log.phone_number }}">
+                    {{ log.phone_number }}
+                </a>
+                {% else %}—{% endif %}
+            </td>
+            <td>
+                <span class="msg-preview" title="{{ msg }}">
+                    {% if msg %}{{ msg[:120] }}{% else %}<em style="color:#9ca3af">sem texto</em>{% endif %}
+                </span>
+            </td>
+            <td>
+                <button class="btn-expand" onclick="togglePayload({{ log.id }})">ver JSON</button>
+            </td>
+        </tr>
+        <tr id="payload-row-{{ log.id }}" style="display:none;">
+            <td colspan="7" style="padding: 0 16px 16px;">
+                <pre id="payload-{{ log.id }}" class="payload-box open">{{ log.payload_fmt }}</pre>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty">
+        📭 Nenhum evento recebido ainda.<br>
+        <small>Configure o webhook no RD Conversas e envie uma mensagem de teste para ver os eventos aqui.</small>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Link rápido para conversas -->
+{% if filter_phone %}
+<div style="margin-top: 12px; font-size: 14px; color: #6b7280;">
+    Ver histórico de conversa deste número →
+    <a href="/admin/conversations/{{ filter_phone }}" style="color:#4f46e5;">
+        /admin/conversations/{{ filter_phone }}
+    </a>
+</div>
+{% endif %}
+
+<script>
+function togglePayload(id) {
+    const row = document.getElementById('payload-row-' + id);
+    row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+}
+</script>
+{% endblock %}

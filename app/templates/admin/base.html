@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Bot SDR PJ{% endblock %}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #1a1a2e; }
+
+        /* ── Sidebar retrátil ── */
+        .sidebar {
+            position: fixed; left: 0; top: 0; width: 240px; height: 100vh;
+            background: #1a1a2e; color: #fff; padding: 20px 0; z-index: 100;
+            transition: width 0.25s ease; overflow: hidden;
+        }
+        .sidebar.collapsed { width: 56px; }
+        .sidebar h2 { padding: 0 20px 16px; border-bottom: 1px solid #2a2a4e; font-size: 15px; white-space: nowrap; line-height: 1.4; }
+        .sidebar h2 .tag { display: inline-block; background: #4f46e5; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; letter-spacing: 0.5px; margin-left: 4px; vertical-align: middle; }
+        .sidebar.collapsed h2 .label { display: none; }
+        .sidebar nav { padding: 15px 0; }
+        .sidebar nav a {
+            display: flex; align-items: center; padding: 12px 16px;
+            color: #a0a0c0; text-decoration: none; font-size: 14px;
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .sidebar nav a:hover, .sidebar nav a.active { background: #2a2a4e; color: #fff; }
+        .sidebar nav a .icon { margin-right: 10px; font-size: 18px; flex-shrink: 0; }
+        .sidebar.collapsed nav a .label { display: none; }
+        .sidebar.collapsed nav a { padding: 12px; justify-content: center; }
+        .sidebar.collapsed nav a .icon { margin-right: 0; }
+        .sidebar .logout { position: absolute; bottom: 20px; left: 0; right: 0; padding: 0 20px; }
+        .sidebar .logout a { color: #ff6b6b; text-decoration: none; font-size: 13px; white-space: nowrap; }
+        .sidebar.collapsed .logout a .label { display: none; }
+
+        /* Botão toggle */
+        .sidebar-toggle {
+            position: fixed; left: 248px; top: 16px; z-index: 200;
+            background: #1a1a2e; color: #fff; border: none; border-radius: 0 6px 6px 0;
+            padding: 6px 8px; cursor: pointer; font-size: 14px;
+            transition: left 0.25s ease;
+        }
+        .sidebar.collapsed ~ .sidebar-toggle { left: 64px; }
+
+        .main { margin-left: 240px; padding: 30px; transition: margin-left 0.25s ease; }
+        .main.expanded { margin-left: 56px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { font-size: 24px; color: #1a1a2e; }
+        .btn { display: inline-block; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.2s; }
+        .btn-primary { background: #4f46e5; color: #fff; }
+        .btn-primary:hover { background: #4338ca; }
+        .btn-danger { background: #ef4444; color: #fff; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-secondary { background: #e5e7eb; color: #374151; }
+        .btn-secondary:hover { background: #d1d5db; }
+        .card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .stat-card .label { font-size: 13px; color: #6b7280; margin-bottom: 8px; }
+        .stat-card .value { font-size: 32px; font-weight: 700; color: #1a1a2e; }
+        .stat-card .value.green { color: #10b981; }
+        .stat-card .value.blue { color: #3b82f6; }
+        .stat-card .value.purple { color: #8b5cf6; }
+        .stat-card .value.indigo { color: #4f46e5; }
+        table { width: 100%; border-collapse: collapse; }
+        table th { text-align: left; padding: 12px 16px; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; border-bottom: 2px solid #e5e7eb; }
+        table td { padding: 12px 16px; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
+        table tr:hover { background: #f9fafb; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .badge-green { background: #d1fae5; color: #065f46; }
+        .badge-yellow { background: #fef3c7; color: #92400e; }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+        .badge-indigo { background: #e0e7ff; color: #3730a3; }
+        form .field { margin-bottom: 16px; }
+        form label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: #374151; }
+        form input[type="text"], form input[type="email"], form input[type="password"],
+        form input[type="number"], form textarea, form select {
+            width: 100%; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; font-family: inherit;
+        }
+        form textarea { min-height: 200px; resize: vertical; }
+        form input:focus, form textarea:focus, form select:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+        .actions { display: flex; gap: 10px; margin-top: 20px; }
+        .empty { text-align: center; padding: 40px; color: #9ca3af; }
+        .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
+        .alert-success { background: #d1fae5; color: #065f46; }
+        .alert-error { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <h2>
+            <span class="label">Bot SDR <span class="tag">PJ</span></span>
+            <br><span class="label" style="font-size:11px; color:#6b7280; font-weight:400;">Treinamentos Corporativos</span>
+        </h2>
+        <nav>
+            <a href="/admin" class="{% if active_page == 'dashboard' %}active{% endif %}">
+                <span class="icon">📊</span><span class="label"> Dashboard</span>
+            </a>
+            <a href="/admin/knowledge" class="{% if active_page == 'knowledge' %}active{% endif %}">
+                <span class="icon">📚</span><span class="label"> Base de Conhecimento</span>
+            </a>
+            <a href="/admin/conversations" class="{% if active_page == 'conversations' %}active{% endif %}">
+                <span class="icon">💬</span><span class="label"> Conversas</span>
+            </a>
+            <a href="/admin/leads" class="{% if active_page == 'leads' %}active{% endif %}">
+                <span class="icon">🏢</span><span class="label"> Leads PJ</span>
+            </a>
+            <a href="/admin/prompt" class="{% if active_page == 'prompt' %}active{% endif %}">
+                <span class="icon">🤖</span><span class="label"> Prompt do Sistema</span>
+            </a>
+            <a href="/admin/bot-config" class="{% if active_page == 'bot_config' %}active{% endif %}">
+                <span class="icon">⚙️</span><span class="label"> Configurações</span>
+            </a>
+            <a href="/admin/email-config" class="{% if active_page == 'email_config' %}active{% endif %}">
+                <span class="icon">📧</span><span class="label"> Notificações Email</span>
+            </a>
+            <a href="/admin/webhook-logs" class="{% if active_page == 'webhook_logs' %}active{% endif %}">
+                <span class="icon">📡</span><span class="label"> Webhook Logs</span>
+            </a>
+            <a href="/test" target="_blank">
+                <span class="icon">🧪</span><span class="label"> Testar Bot</span>
+            </a>
+        </nav>
+        <div class="logout">
+            <a href="/admin/logout"><span class="icon">🚪</span><span class="label"> Sair do painel</span></a>
+        </div>
+    </div>
+    <button class="sidebar-toggle" id="sidebarToggle" title="Recolher menu">◀</button>
+    <div class="main" id="mainContent">
+        {% block content %}{% endblock %}
+    </div>
+    <script>
+        (function() {
+            const sidebar = document.getElementById('sidebar');
+            const toggle  = document.getElementById('sidebarToggle');
+            const main    = document.getElementById('mainContent');
+            const KEY     = 'sidebar_sdrpj_collapsed';
+
+            function apply(collapsed) {
+                sidebar.classList.toggle('collapsed', collapsed);
+                main.classList.toggle('expanded', collapsed);
+                toggle.textContent = collapsed ? '▶' : '◀';
+                toggle.style.left  = collapsed ? '64px' : '248px';
+            }
+
+            apply(localStorage.getItem(KEY) === '1');
+
+            toggle.addEventListener('click', function() {
+                const next = !sidebar.classList.contains('collapsed');
+                localStorage.setItem(KEY, next ? '1' : '0');
+                apply(next);
+            });
+        })();
+    </script>
+</body>
+</html>
