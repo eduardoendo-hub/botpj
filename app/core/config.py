@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     def sdr_work_days_list(self) -> List[int]:
         return [int(d.strip()) for d in self.sdr_work_days.split(",")]
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
 settings = Settings()
