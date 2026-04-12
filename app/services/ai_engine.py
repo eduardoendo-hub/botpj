@@ -1,20 +1,27 @@
 """
-Motor de IA — Claude (Anthropic) para geração de respostas — Bot SDR PJ.
+Motor de IA — Claude (Anthropic) — Bot SDR PJ v2.
 
-Estratégia de economia de tokens (camadas):
-  L1 · Roteamento por complexidade: saudações → resposta fixa sem IA;
-       perguntas simples → Haiku; perguntas complexas → Sonnet.
-  L2 · max_tokens dinâmico: 256 / 512 / 800 conforme complexidade estimada.
+Estratégia de tokens:
+  L1 · Roteamento por complexidade: saudações → resposta fixa sem IA.
+  L2 · max_tokens dinâmico: 256 / 512 / 800 conforme complexidade.
   L3 · Compressão de histórico: últimas 5 msgs verbatim + resumo das anteriores.
-  L4 · Cache de respostas FAQ: TTL 1h, evita recalcular perguntas repetidas.
-  L5 · Knowledge relevante (7 000 chars max) — ver database.get_relevant_knowledge_text.
-  L6 · Follow-up com base reduzida (2 500 chars) e Haiku.
-  L7 · Prompt de sistema enxuto (remoção de instruções redundantes).
+  L4 · Cache de respostas FAQ: TTL 1h.
+  L5 · Knowledge relevante (7 000 chars max).
+  L6 · Follow-up com base reduzida e Haiku.
+  L7 · Prompt de sistema enxuto.
+
+Fase 2 — inteligência conversacional:
+  · Detecção de trilha (A/B/C/D/E)
+  · Score de temperatura do lead (quente/morno/frio)
+  · Extração estruturada de todos os campos de qualificação
+  · Análise assíncrona após cada resposta (não bloqueia o fluxo principal)
 """
 
 import logging
 import hashlib
 import time
+import json
+import re
 from typing import List, Dict, Tuple, Optional
 
 from anthropic import AsyncAnthropic
@@ -84,7 +91,7 @@ _GREETINGS = {
     "boa tarde", "bom dia", "boa noite",
     "tudo bem", "tudo bom", "oi tudo bem",
     "bom dia!", "boa tarde!", "boa noite!",
-    "oii", "oiii", "oi!", "olá!", "ola!", "hey!",
+    "oii", "oiii", "oi!", "olá!", "ola!",
 }
 
 _SHORT_FOLLOWUPS = {
@@ -96,17 +103,16 @@ _SHORT_FOLLOWUPS = {
     "mais", "e aí", "e ai", "próximo", "proximo",
 }
 
-# Perguntas de preço/valor → Sonnet obrigatório
 _SONNET_PATTERNS = [
     "qual o valor", "qual a mensalidade", "quanto custa", "quanto é",
     "tem desconto", "qual o preço", "qual o investimento",
     "formas de pagamento", "parcelamento", "parcelas",
     "desconto", "promoção", "campanha",
     "valor do treinamento", "valor do curso", "custa quanto",
-    "orçamento", "orcamento", "tabela de preços",
+    "orçamento", "orcamento", "tabela de preços", "proposta",
+    "quero fechar", "quero contratar", "como faço para contratar",
 ]
 
-# Perguntas simples → Haiku
 _SIMPLE_PATTERNS = [
     "qual a carga horária", "quantas horas", "qual a duração",
     "tem certificado", "como funciona", "qual o formato",
@@ -115,7 +121,7 @@ _SIMPLE_PATTERNS = [
     "tem plataforma", "qual a plataforma", "onde fica",
     "quais cursos", "que cursos", "quais treinamentos",
     "tem sala", "tem auditório", "locação", "aluguel",
-    "quais documentos", "como contratar", "como funciona",
+    "quais documentos", "como contratar",
 ]
 
 
@@ -140,7 +146,8 @@ def _classify_complexity(message: str) -> str:
 
     if len(msg) > 120 or any(w in msg for w in [
         "explique", "explica", "detalhe", "diferença", "comparar",
-        "qual melhor", "customizar", "personalizar",
+        "qual melhor", "customizar", "personalizar", "in company",
+        "turma fechada", "exclusivo", "quantas pessoas",
     ]):
         return "complex"
 
@@ -148,7 +155,7 @@ def _classify_complexity(message: str) -> str:
 
 
 def _max_tokens(complexity: str) -> int:
-    return {"greeting": 150, "simple": 300, "complex": 700}.get(complexity, 400)
+    return {"greeting": 150, "simple": 350, "complex": 750}.get(complexity, 400)
 
 
 def _model(complexity: str) -> str:
@@ -161,8 +168,8 @@ def _model(complexity: str) -> str:
 # L3 · Compressão de histórico
 # ─────────────────────────────────────────────────────────────
 
-_VERBATIM_MSGS = 5
-_MAX_SUMMARY_CHARS = 600
+_VERBATIM_MSGS = 6
+_MAX_SUMMARY_CHARS = 700
 
 
 async def _build_compressed_history(
@@ -177,13 +184,13 @@ async def _build_compressed_history(
     summary = ""
     if older:
         lines = [
-            f"{'Lead' if m['role'] == 'user' else 'Bot'}: {m['message'][:120]}"
+            f"{'Lead' if m['role'] == 'user' else 'Bot'}: {m['message'][:130]}"
             for m in older
         ]
         raw = "\n".join(lines)
         if len(raw) > _MAX_SUMMARY_CHARS:
             raw = raw[:_MAX_SUMMARY_CHARS] + "…"
-        summary = f"[Resumo de {len(older)} mensagens anteriores]\n{raw}"
+        summary = f"[Resumo de {len(older)} msgs anteriores]\n{raw}"
 
     return recent, summary
 
@@ -193,9 +200,9 @@ async def _build_compressed_history(
 # ─────────────────────────────────────────────────────────────
 
 _GREETING_RESPONSES = [
-    "Olá! 👋 Tudo bem? Sou o assistente virtual do departamento de Treinamentos Corporativos. Como posso te ajudar hoje?",
-    "Oi! 😊 Bem-vindo(a)! Posso te ajudar com informações sobre nossos treinamentos para empresas — presenciais, online ao vivo, gravados, turmas fechadas e muito mais. O que você gostaria de saber?",
-    "Olá! 🎯 Que ótimo ter você aqui! Sou o assistente de Treinamentos PJ. Quer saber mais sobre nossas soluções corporativas de treinamento? É só perguntar!",
+    "Olá! 👋 Sou o assistente de Treinamentos Corporativos. Como posso te ajudar hoje?",
+    "Oi! 😊 Bem-vindo(a)! Posso ajudar com treinamentos corporativos, turmas fechadas, online ao vivo, gravados e muito mais. O que você precisa?",
+    "Olá! 🎯 Aqui é o atendimento de Treinamentos PJ. Me conta o que você está buscando!",
 ]
 
 _greeting_idx = 0
@@ -228,11 +235,10 @@ async def generate_response(
 
         if complexity == "greeting" and not is_returning_lead:
             resp = _get_greeting(contact_name)
-            logger.info(f"[{phone_number}] Saudação detectada → resposta fixa (0 tokens)")
+            logger.info(f"[{phone_number}] Saudação → resposta fixa (0 tokens)")
             return resp, False
 
         knowledge = await get_relevant_knowledge_text(user_message, max_chars=7000)
-
         knowledge_hash = hashlib.md5(knowledge.encode()).hexdigest()[:8]
         cache_key = _cache_key(phone_number, user_message, knowledge_hash)
 
@@ -242,7 +248,7 @@ async def generate_response(
         if complexity == "simple" and not is_short_followup:
             cached = _cache_get(cache_key)
             if cached:
-                logger.info(f"[{phone_number}] Cache HIT ({complexity}) → 0 tokens")
+                logger.info(f"[{phone_number}] Cache HIT → 0 tokens")
                 return cached, False
 
         recent_history, history_summary = await _build_compressed_history(
@@ -269,12 +275,12 @@ async def generate_response(
         text = _clean_whatsapp(response.content[0].text)
         logger.info(
             f"[{phone_number}] [{complexity.upper()}] [{model_id.split('-')[1]}] "
-            f"{response.usage.input_tokens}in/{response.usage.output_tokens}out tokens"
+            f"{response.usage.input_tokens}in/{response.usage.output_tokens}out"
         )
 
         needs_escalation = _detect_escalation_needed(text)
         if needs_escalation:
-            logger.info(f"[{phone_number}] 🚨 ESCALAÇÃO DETECTADA. Trecho: {text[:120]!r}")
+            logger.info(f"[{phone_number}] 🚨 ESCALAÇÃO detectada")
 
         if complexity == "simple" and not needs_escalation:
             _cache_set(cache_key, text)
@@ -291,8 +297,6 @@ async def generate_response(
 
 
 def _clean_whatsapp(text: str) -> str:
-    """Remove/converte formatação Markdown para WhatsApp."""
-    import re
     text = re.sub(r'\*\*(.+?)\*\*', r'*\1*', text)
     text = re.sub(r'__(.+?)__', r'_\1_', text)
     text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
@@ -301,17 +305,11 @@ def _clean_whatsapp(text: str) -> str:
 
 
 def _detect_escalation_needed(text: str) -> bool:
-    """
-    Detecta se a resposta indica necessidade de escalação para consultor.
-    Dois grupos: bot não sabe (A) ou bot concluiu coleta de dados (B).
-    """
     text_lower = text.lower()
 
     signals_a = [
         "não tenho essa informação",
         "não possuo essa informação",
-        "não consigo responder",
-        "não sei informar",
         "precisaria verificar",
         "melhor falar com um consultor",
         "vou encaminhar para",
@@ -326,84 +324,186 @@ def _detect_escalation_needed(text: str) -> bool:
         "tenho todas as informações",
         "em breve um consultor entrará em contato",
         "em breve nossa equipe entrará em contato",
-        "em breve alguém da equipe entrará em contato",
         "nosso consultor entrará em contato",
     ]
 
     for signal in signals_a:
         if signal in text_lower:
-            logger.debug(f"[ESCALAÇÃO-A] sinal: {signal!r}")
             return True
 
     b_hits = sum(1 for s in signals_b if s in text_lower)
     if b_hits >= 1:
-        data_signals = [
-            "whatsapp", "e-mail", "email", "linkedin",
-            "nome completo", "empresa", "cargo",
-        ]
+        data_signals = ["whatsapp", "e-mail", "email", "empresa", "cargo", "nome"]
         if any(d in text_lower for d in data_signals) or b_hits >= 2:
-            logger.debug(f"[ESCALAÇÃO-B] {b_hits} sinal(is) + dados coletados")
             return True
 
     return False
 
 
 # ─────────────────────────────────────────────────────────────
-# Extração de dados do lead para o email de notificação
+# Análise estruturada da conversa (Fase 2 — chamada assíncrona)
 # ─────────────────────────────────────────────────────────────
 
-async def extract_lead_data(phone_number: str, history: List[Dict]) -> Dict:
+_ANALYSIS_SCHEMA = """{
+  "trail": "",
+  "lead_temperature": "",
+  "urgencia": "",
+  "tipo_interesse": "",
+  "nome": "",
+  "empresa": "",
+  "job_title": "",
+  "email": "",
+  "tema_interesse": "",
+  "training_interest": "",
+  "qtd_participantes": "",
+  "formato": "",
+  "cidade": "",
+  "prazo": "",
+  "objetivo_negocio": "",
+  "score": "",
+  "proximo_passo": "",
+  "status_conversa": "",
+  "needs_escalation": false
+}"""
+
+_ANALYSIS_INSTRUCTIONS = """Analise a conversa e extraia os dados estruturados do lead PJ.
+
+TRILHAS:
+- A = curso individual / turma aberta (poucas pessoas)
+- B = corporativo / turma fechada / in company (equipe ou empresa)
+- C = consultoria (lead não sabe o que quer)
+- D = locação de espaço / evento
+- E = transferência imediata (urgente, VIP, pediu humano)
+
+TEMPERATURA:
+- quente = quer proposta, tem prazo curto, grupo definido, forte intenção de fechar
+- morno = interesse real mas exploratório, sem urgência
+- frio = dúvida genérica, baixa intenção, sem dados claros
+
+URGÊNCIA: alta / media / baixa
+
+TIPO_INTERESSE: curso_corporativo / turma_fechada / turma_aberta / locacao / outro
+
+SCORE: número de 0 a 10 (10 = lead mais quente possível)
+
+STATUS_CONVERSA: em_atendimento / qualificado / parcialmente_qualificado /
+                 encaminhado_consultor / aguardando_lead / transferido_humano /
+                 concluido / perdido
+
+PROXIMO_PASSO: ação recomendada em uma linha curta
+
+NEEDS_ESCALATION: true se deve transferir para humano agora
+
+Retorne SOMENTE o JSON preenchido, sem explicações."""
+
+
+async def analyze_and_update_lead(
+    phone_number: str,
+    history: List[Dict],
+) -> Dict:
     """
-    Usa Claude Haiku para extrair os dados coletados na conversa.
-    Retorna dict com: nome, whatsapp, email, linkedin, empresa, cargo, treinamento.
+    Analisa a conversa completa e retorna estrutura de qualificação do lead.
+    Chamada assíncrona após cada resposta — não bloqueia o fluxo principal.
     """
-    if not history:
+    if not history or len(history) < 2:
         return {}
 
     conv_text = "\n".join(
-        f"[{'Lead' if m['role'] == 'user' else 'Bot'}]: {m['message']}"
+        f"[{'Lead' if m['role'] == 'user' else 'Bot'}]: {m['message'][:200]}"
         for m in history[-20:]
     )
 
     prompt = (
-        "Extraia os dados pessoais/profissionais do lead PJ da conversa abaixo.\n\n"
-        f"{conv_text}\n\n"
-        "Retorne SOMENTE JSON com os campos encontrados (use '' para os não encontrados):\n"
-        '{"nome": "", "whatsapp": "", "email": "", "linkedin": "", '
-        '"empresa": "", "cargo": "", "treinamento": ""}'
+        f"{_ANALYSIS_INSTRUCTIONS}\n\n"
+        f"CONVERSA:\n{conv_text}\n\n"
+        f"JSON esperado:\n{_ANALYSIS_SCHEMA}"
     )
 
+    try:
+        response = await client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=400,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = response.content[0].text.strip()
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+        if match:
+            data = json.loads(match.group())
+            logger.info(
+                f"[{phone_number}] Análise → trilha={data.get('trail')} "
+                f"temp={data.get('lead_temperature')} score={data.get('score')}"
+            )
+            return data
+    except Exception as e:
+        logger.warning(f"[{phone_number}] Análise estruturada falhou: {e}")
+
+    return {}
+
+
+async def extract_lead_data(phone_number: str, history: List[Dict]) -> Dict:
+    """
+    Extrai os dados de contato do lead da conversa.
+    Mantém compatibilidade com o fluxo de email de notificação.
+    """
+    if not history:
+        return {}
+
+    data = await analyze_and_update_lead(phone_number, history)
+    if data:
+        return {
+            "nome":         data.get("nome", ""),
+            "whatsapp":     phone_number,
+            "email":        data.get("email", ""),
+            "empresa":      data.get("empresa", ""),
+            "cargo":        data.get("job_title", ""),
+            "treinamento":  data.get("training_interest", "") or data.get("tema_interesse", ""),
+            # campos extras
+            "qtd_participantes": data.get("qtd_participantes", ""),
+            "formato":           data.get("formato", ""),
+            "trail":             data.get("trail", ""),
+            "lead_temperature":  data.get("lead_temperature", ""),
+            "urgencia":          data.get("urgencia", ""),
+            "objetivo_negocio":  data.get("objetivo_negocio", ""),
+            "proximo_passo":     data.get("proximo_passo", ""),
+        }
+
+    # Fallback: extração simples via Haiku
+    conv_text = "\n".join(
+        f"[{'Lead' if m['role'] == 'user' else 'Bot'}]: {m['message']}"
+        for m in history[-15:]
+    )
+    prompt = (
+        "Extraia os dados do lead PJ da conversa.\n\n"
+        f"{conv_text}\n\n"
+        "Retorne SOMENTE JSON:\n"
+        '{"nome":"","whatsapp":"","email":"","empresa":"","cargo":"","treinamento":""}'
+    )
     try:
         response = await client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=200,
             messages=[{"role": "user", "content": prompt}],
         )
-        import json, re
         text = response.content[0].text.strip()
         match = re.search(r"\{.*\}", text, re.DOTALL)
         if match:
             return json.loads(match.group())
     except Exception as e:
-        logger.error(f"[{phone_number}] Erro ao extrair dados do lead: {e}")
+        logger.error(f"[{phone_number}] Erro fallback extração: {e}")
 
     return {}
 
 
 async def classify_conversation_context(phone_number: str) -> bool:
-    """
-    Verifica se o lead está em modo 'vou pensar / buscar aprovação interna'.
-    Retorna True se o lead está aguardando e o bot não precisa fazer follow-up.
-    """
+    """Verifica se o lead está aguardando (vai pensar, buscar aprovação interna)."""
     try:
-        history = await get_conversation_history(phone_number, limit=10)
+        history = await get_conversation_history(phone_number, limit=8)
         if not history:
             return False
 
-        recent = history[-5:]
-        history_text = "\n".join(
+        recent_text = "\n".join(
             f"[{'LEAD' if m['role'] == 'user' else 'BOT'}]: {m['message']}"
-            for m in recent
+            for m in history[-5:]
         )
 
         response = await client.messages.create(
@@ -412,18 +512,15 @@ async def classify_conversation_context(phone_number: str) -> bool:
             messages=[{
                 "role": "user",
                 "content": (
-                    f"CONVERSA:\n{history_text}\n\n"
-                    "Responda SIM ou NAO.\n"
-                    "SIM = lead disse que vai pensar, buscar aprovação, consultar diretoria, verificar orçamento ou vai voltar.\n"
-                    "NAO = conversa parou sem essa indicação.\nResponda SOMENTE: SIM ou NAO"
+                    f"CONVERSA:\n{recent_text}\n\n"
+                    "Lead disse que vai pensar, buscar aprovação, consultar alguém ou vai voltar?\n"
+                    "Responda SOMENTE: SIM ou NAO"
                 ),
             }],
         )
-
         return response.content[0].text.strip().upper() == "SIM"
-
     except Exception as e:
-        logger.error(f"[{phone_number}] Erro ao classificar contexto: {e}")
+        logger.error(f"[{phone_number}] Erro classify_context: {e}")
         return False
 
 
@@ -438,47 +535,28 @@ def _build_system_prompt(
     is_returning_lead: bool,
     history_summary: str = "",
 ) -> str:
-    """L7 · Prompt enxuto para Bot SDR PJ."""
     parts = [base_prompt]
 
     if contact_name:
-        parts.append(f"Contato: {contact_name}. Use o nome ocasionalmente.")
+        parts.append(f"\nContato: {contact_name}. Use o nome ocasionalmente.")
 
     if is_returning_lead:
         parts.append(
-            "LEAD RECORRENTE: não trate como primeiro contato. "
-            "Retome naturalmente, sem se reapresentar."
+            "\nLEAD RECORRENTE: não trate como primeiro contato. "
+            "Retome naturalmente sem se reapresentar."
         )
 
     parts.append(
-        "\nREGRAS: português BR | cordial e profissional | máx 3 parágrafos curtos | "
-        "sem markdown/asteriscos (WhatsApp) | 1-2 emojis por msg | "
-        "SEMPRE use os valores, preços e informações da BASE DE CONHECIMENTO | "
-        "quando o lead perguntar preço/orçamento, informe os valores da base diretamente | "
-        "só diga 'não tenho essa informação' se o assunto NÃO estiver na base | "
-
-        "FOCO NO PÚBLICO PJ: trate o interlocutor como representante de empresa. "
-        "Explore o contexto: quantos colaboradores serão treinados, qual a necessidade, "
-        "se preferem turma aberta/fechada, presencial/online. "
-
-        "COLETA DE DADOS — regras críticas: "
-        "(1) NUNCA peça dados pessoais durante conversa informativa normal. "
-        "Respostas curtas como 'ok', 'entendi', 'sim' são continuação da conversa — responda naturalmente. "
-        "(2) Inicie o fluxo de coleta SOMENTE quando o lead pedir EXPLICITAMENTE para falar com consultor, "
-        "fazer orçamento ou fechar negócio. "
-        "(3) Se o lead pedir contato, colete UM DADO DE CADA VEZ nesta ordem: "
-        "Nome completo → WhatsApp → Email → Empresa → Cargo. "
-        "(4) Se o lead mudar de assunto durante a coleta, responda SOMENTE a nova pergunta. "
-        "NÃO mencione coleta de dados nessa resposta. Retome numa mensagem posterior SEPARADA. "
-        "(5) NUNCA diga 'vou acionar consultor' enquanto ainda estiver coletando dados. "
-        "Use essas frases SOMENTE após confirmar TODOS os dados. "
-        "CRÍTICO — ENCERRAMENTO: após confirmar o 5º dado (Cargo), envie UMA mensagem OBRIGATORIAMENTE "
-        "contendo 'Anotei todos os seus dados' E 'em breve um consultor entrará em contato'. "
-        "ENCERRE sem fazer mais perguntas."
+        "\nREGRAS DE FORMATO: português BR | cordial e consultivo | "
+        "máx 3 parágrafos curtos | sem markdown/asteriscos | 1-2 emojis | "
+        "NUNCA invente preços, datas ou disponibilidade — use apenas a base de conhecimento | "
+        "se o lead mencionar espaço/evento/sala → trilha de locação | "
+        "se for para equipe/empresa/turma fechada → qualificação B2B completa | "
+        "faça uma pergunta por vez | nunca termine sem indicar próximo passo."
     )
 
     if history_summary:
-        parts.append(f"\nCONTEXTO ANTERIOR (resumo):\n{history_summary}")
+        parts.append(f"\nCONTEXTO ANTERIOR:\n{history_summary}")
 
     if knowledge:
         parts.append(f"\nBASE DE CONHECIMENTO:\n{knowledge}")
@@ -487,7 +565,6 @@ def _build_system_prompt(
 
 
 def _build_messages(history: List[Dict], current_message: str) -> List[Dict]:
-    """Constrói lista de mensagens para a API do Claude."""
     messages = []
     for msg in history:
         role = "user" if msg["role"] == "user" else "assistant"

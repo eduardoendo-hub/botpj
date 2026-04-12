@@ -5,9 +5,25 @@
 
 {% block content %}
 <style>
-  td.truncate { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  td.truncate { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   th, td { vertical-align: middle; }
   .export-btn { font-size: 13px; }
+
+  /* Temperatura */
+  .temp-quente  { background:#fee2e2; color:#991b1b; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600; }
+  .temp-morno   { background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600; }
+  .temp-frio    { background:#dbeafe; color:#1e40af; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600; }
+
+  /* Trail */
+  .trail-badge  { padding:2px 7px; border-radius:10px; font-size:11px; font-weight:700; }
+  .trail-A { background:#dcfce7; color:#15803d; }
+  .trail-B { background:#f3e8ff; color:#7e22ce; }
+  .trail-C { background:#ffedd5; color:#c2410c; }
+  .trail-D { background:#fce7f3; color:#be185d; }
+  .trail-E { background:#fef9c3; color:#854d0e; }
+
+  /* Score bar */
+  .score-bar { display:inline-block; height:6px; border-radius:3px; min-width:4px; background:#4f46e5; vertical-align:middle; }
 </style>
 
 <div class="header">
@@ -17,8 +33,9 @@
 
 <div class="card" style="padding: 14px 20px; background: #f0fdf4; border: 1px solid #86efac; margin-bottom: 20px;">
     <p style="font-size: 13px; color: #166534;">
-        💼 <strong>Leads PJ</strong> são contatos corporativos registrados via webhook <code>/webhook/tallospj</code> ou formulário de interesse PJ.
+        💼 <strong>Leads PJ</strong> são contatos corporativos registrados via webhook <code>/webhook/tallospj</code>.
         Clique no telefone para ver a conversa completa.
+        Os campos de qualificação são preenchidos automaticamente pela IA após cada interação.
     </p>
 </div>
 
@@ -29,13 +46,18 @@
             <tr>
                 <th>Telefone</th>
                 <th>Nome</th>
-                <th>Email</th>
                 <th>Empresa</th>
                 <th>Cargo</th>
-                <th>Treinamento de Interesse</th>
+                <th>Tema</th>
+                <th>Trail</th>
+                <th>Temp.</th>
+                <th title="Score de qualificação 0–100">Score</th>
+                <th title="Quantidade de participantes">Qtd.</th>
+                <th>Formato</th>
+                <th>Próximo Passo</th>
                 <th>Estágio</th>
                 <th>1º Contato</th>
-                <th>Última Atualização</th>
+                <th>Atualização</th>
             </tr>
         </thead>
         <tbody>
@@ -43,26 +65,70 @@
             <tr>
                 <td>
                   <a href="/admin/conversations/{{ lead.phone_number }}"
-                     style="color:#4f46e5; text-decoration:none; font-weight:500; font-family:monospace; font-size:13px;">
+                     style="color:#4f46e5; text-decoration:none; font-weight:500; font-family:monospace; font-size:12px;">
                     {{ lead.phone_number }}
                   </a>
+                  {% if lead.contact_name %}
+                  <br><span style="font-size:11px; color:#6b7280;">{{ lead.contact_name }}</span>
+                  {% endif %}
                 </td>
-                <td>{{ lead.contact_name or '—' }}</td>
-                <td class="truncate" title="{{ lead.email or '' }}">{{ lead.email or '—' }}</td>
+                <td class="truncate" title="{{ lead.contact_name or '' }}">{{ lead.contact_name or '—' }}</td>
                 <td class="truncate" title="{{ lead.company or '' }}">
-                    {% if lead.company %}
-                        <span style="display:flex; align-items:center; gap:4px;">
-                            🏢 {{ lead.company }}
-                        </span>
-                    {% else %}—{% endif %}
+                    {% if lead.company %}🏢 {{ lead.company }}{% else %}—{% endif %}
                 </td>
                 <td class="truncate" title="{{ lead.job_title or '' }}">{{ lead.job_title or '—' }}</td>
-                <td class="truncate" title="{{ lead.training_interest or '' }}">
-                    {% if lead.training_interest %}
+                <td class="truncate" title="{{ lead.tema_interesse or lead.training_interest or '' }}">
+                    {% set tema = lead.tema_interesse or lead.training_interest %}
+                    {% if tema %}
                         <span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500;">
-                            {{ lead.training_interest }}
+                            {{ tema }}
                         </span>
                     {% else %}—{% endif %}
+                </td>
+                <td style="text-align:center;">
+                    {% if lead.trail %}
+                    <span class="trail-badge trail-{{ lead.trail }}">{{ lead.trail }}</span>
+                    <br><span style="font-size:10px; color:#9ca3af;">
+                        {% if lead.trail == 'A' %}Turma Aberta
+                        {% elif lead.trail == 'B' %}Corporativo
+                        {% elif lead.trail == 'C' %}Consultoria
+                        {% elif lead.trail == 'D' %}Locação
+                        {% elif lead.trail == 'E' %}Transfer.
+                        {% endif %}
+                    </span>
+                    {% else %}—{% endif %}
+                </td>
+                <td style="text-align:center;">
+                    {% if lead.lead_temperature == 'quente' %}
+                    <span class="temp-quente">🔥 Quente</span>
+                    {% elif lead.lead_temperature == 'morno' %}
+                    <span class="temp-morno">🌤 Morno</span>
+                    {% elif lead.lead_temperature == 'frio' %}
+                    <span class="temp-frio">❄️ Frio</span>
+                    {% else %}—{% endif %}
+                </td>
+                <td style="text-align:center; white-space:nowrap;">
+                    {% if lead.score %}
+                    {% set s = lead.score | int(0) %}
+                    <span style="font-size:12px; font-weight:600; color:{% if s >= 70 %}#15803d{% elif s >= 40 %}#b45309{% else %}#6b7280{% endif %};">
+                        {{ s }}
+                    </span>
+                    <br>
+                    <span class="score-bar" style="width:{{ s }}px; max-width:50px; background:{% if s >= 70 %}#16a34a{% elif s >= 40 %}#d97706{% else %}#9ca3af{% endif %};"></span>
+                    {% else %}—{% endif %}
+                </td>
+                <td style="text-align:center; font-size:12px;">
+                    {{ lead.qtd_participantes or '—' }}
+                </td>
+                <td style="text-align:center; font-size:12px;">
+                    {% if lead.formato %}
+                    <span style="background:#f1f5f9;color:#334155;padding:2px 7px;border-radius:8px;font-size:11px;">
+                        {{ lead.formato }}
+                    </span>
+                    {% else %}—{% endif %}
+                </td>
+                <td class="truncate" title="{{ lead.proximo_passo or '' }}" style="font-size:11px; color:#374151;">
+                    {{ lead.proximo_passo or '—' }}
                 </td>
                 <td>
                     {% if lead.stage == 'novo' %}
@@ -77,8 +143,8 @@
                     <span class="badge">{{ lead.stage or '—' }}</span>
                     {% endif %}
                 </td>
-                <td style="font-size:12px; color:#6b7280; white-space:nowrap;">{{ lead.created_at | brt }}</td>
-                <td style="font-size:12px; color:#6b7280; white-space:nowrap;">{{ lead.updated_at | brt }}</td>
+                <td style="font-size:11px; color:#6b7280; white-space:nowrap;">{{ lead.created_at | brt }}</td>
+                <td style="font-size:11px; color:#6b7280; white-space:nowrap;">{{ lead.updated_at | brt }}</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -71,6 +71,19 @@ async def init_db():
                 company TEXT DEFAULT '',
                 job_title TEXT DEFAULT '',
                 training_interest TEXT DEFAULT '',
+                tema_interesse TEXT DEFAULT '',
+                tipo_interesse TEXT DEFAULT '',
+                qtd_participantes TEXT DEFAULT '',
+                formato TEXT DEFAULT '',
+                cidade TEXT DEFAULT '',
+                prazo TEXT DEFAULT '',
+                urgencia TEXT DEFAULT '',
+                objetivo_negocio TEXT DEFAULT '',
+                lead_temperature TEXT DEFAULT '',
+                trail TEXT DEFAULT '',
+                score TEXT DEFAULT '',
+                proximo_passo TEXT DEFAULT '',
+                status_conversa TEXT DEFAULT '',
                 interest TEXT DEFAULT '',
                 stage TEXT DEFAULT 'novo',
                 notes TEXT DEFAULT '',
@@ -80,11 +93,24 @@ async def init_db():
             )
         """)
 
-        # Migração: colunas que podem não existir
+        # Migração: colunas que podem não existir (inclusive as novas)
         for _col, _type_def in [
             ("company",           "TEXT DEFAULT ''"),
             ("job_title",         "TEXT DEFAULT ''"),
             ("training_interest", "TEXT DEFAULT ''"),
+            ("tema_interesse",    "TEXT DEFAULT ''"),
+            ("tipo_interesse",    "TEXT DEFAULT ''"),
+            ("qtd_participantes", "TEXT DEFAULT ''"),
+            ("formato",           "TEXT DEFAULT ''"),
+            ("cidade",            "TEXT DEFAULT ''"),
+            ("prazo",             "TEXT DEFAULT ''"),
+            ("urgencia",          "TEXT DEFAULT ''"),
+            ("objetivo_negocio",  "TEXT DEFAULT ''"),
+            ("lead_temperature",  "TEXT DEFAULT ''"),
+            ("trail",             "TEXT DEFAULT ''"),
+            ("score",             "TEXT DEFAULT ''"),
+            ("proximo_passo",     "TEXT DEFAULT ''"),
+            ("status_conversa",   "TEXT DEFAULT ''"),
         ]:
             try:
                 await db.execute(f"ALTER TABLE leads ADD COLUMN {_col} {_type_def}")
@@ -100,13 +126,45 @@ async def init_db():
             )
         """)
 
-        # Prompt padrão para Bot SDR PJ
-        await db.execute("""
-            INSERT OR IGNORE INTO system_config (key, value) VALUES (
-                'system_prompt',
-                'Você é um assistente virtual especializado em treinamentos corporativos para empresas (PJ). Seu objetivo é atender leads de empresas interessados em treinamentos presenciais, online ao vivo, gravados, formações em plataforma, turmas fechadas e locação de espaços. Seja cordial, profissional e objetivo. Identifique a necessidade da empresa, o perfil do treinamento desejado e qualifique o lead para que um consultor dê continuidade. Nunca invente informações que não estejam na base de conhecimento. Se não souber algo, diga que vai encaminhar para um consultor especializado.'
-            )
-        """)
+        # Prompt padrão para Bot SDR PJ (v2 — completo com trilhas e qualificação)
+        _DEFAULT_PROMPT = (
+            "Você é o SDR receptivo oficial de atendimento comercial da empresa, especializado em qualificar leads "
+            "interessados em cursos, treinamentos corporativos, turmas abertas, turmas fechadas e locação de espaços.\n\n"
+            "Seu papel é:\n"
+            "1. Receber leads com cordialidade e objetividade.\n"
+            "2. Identificar rapidamente a intenção principal do contato.\n"
+            "3. Tirar dúvidas iniciais com base apenas nas informações disponíveis na base de conhecimento.\n"
+            "4. Coletar informações relevantes para qualificação comercial sem transformar a conversa em interrogatório.\n"
+            "5. Classificar o lead e definir o próximo melhor passo.\n"
+            "6. Encaminhar para atendimento humano sempre que necessário.\n\n"
+            "TRILHAS DE ATENDIMENTO:\n"
+            "- Trilha A (turma aberta/individual): poucas pessoas, quer grade existente\n"
+            "- Trilha B (corporativo/fechado): empresa, equipe, turma exclusiva ou customizada\n"
+            "- Trilha C (consultoria): lead não sabe o que quer — ajude a descobrir e transfira\n"
+            "- Trilha D (locação de espaço): evento, workshop, reunião no local\n"
+            "- Trilha E (transferência imediata): urgência, VIP, pedido explícito de humano\n\n"
+            "CAMPOS A COLETAR (conforme a trilha):\n"
+            "nome, empresa, cargo, telefone, email, curso/tema de interesse, quantidade de participantes, "
+            "formato desejado (presencial/online/gravado), tipo de turma (aberta/fechada), prazo, cidade.\n\n"
+            "TEMPERATURA DO LEAD:\n"
+            "- Quente: quer proposta, tem prazo curto, grupo definido, forte intenção\n"
+            "- Morno: interesse real mas ainda exploratório\n"
+            "- Frio: dúvida genérica, baixa intenção\n\n"
+            "REGRAS DE COMPORTAMENTO:\n"
+            "- Seja cordial, profissional, consultivo e claro. Use linguagem natural e humana.\n"
+            "- Faça uma pergunta por vez, no máximo duas quando fizer sentido.\n"
+            "- Não force a coleta de todos os campos se isso gerar atrito.\n"
+            "- Se o lead não souber o curso exato, ajude a descobrir pela necessidade.\n"
+            "- Nunca invente informações sobre preços, datas, disponibilidade ou condições.\n"
+            "- Se o lead pedir atendimento humano, priorize a transferência.\n"
+            "- Nunca termine a conversa sem indicar o próximo passo.\n\n"
+            "ENCERRAMENTO: após coletar os dados mínimos (nome + empresa + interesse + contato), "
+            "envie mensagem contendo 'Anotei todos os seus dados' e 'em breve um consultor entrará em contato'."
+        )
+        await db.execute(
+            "INSERT OR IGNORE INTO system_config (key, value) VALUES ('system_prompt', ?)",
+            (_DEFAULT_PROMPT,)
+        )
 
         # Tabela de configurações do bot
         await db.execute("""
@@ -537,7 +595,12 @@ async def upsert_lead(phone_number: str, contact_name: str = "", **kwargs):
         cursor = await db.execute("SELECT * FROM leads WHERE phone_number=?", (phone_number,))
         existing = await cursor.fetchone()
 
-        _updatable = ("email", "company", "job_title", "training_interest", "interest", "stage", "notes")
+        _updatable = (
+            "email", "company", "job_title", "training_interest", "tema_interesse",
+            "tipo_interesse", "qtd_participantes", "formato", "cidade", "prazo",
+            "urgencia", "objetivo_negocio", "lead_temperature", "trail", "score",
+            "proximo_passo", "status_conversa", "interest", "stage", "notes",
+        )
 
         # Hierarquia de source_channel — nunca regride para valor menos específico
         _channel_priority = {
@@ -554,7 +617,7 @@ async def upsert_lead(phone_number: str, contact_name: str = "", **kwargs):
                 updates.append("contact_name=?")
                 values.append(contact_name)
             for key in _updatable:
-                if key in kwargs and kwargs[key]:
+                if key in kwargs and kwargs[key] not in (None, ""):
                     updates.append(f"{key}=?")
                     values.append(kwargs[key])
             if "source_channel" in kwargs and kwargs["source_channel"]:
@@ -575,13 +638,25 @@ async def upsert_lead(phone_number: str, contact_name: str = "", **kwargs):
             await db.execute(
                 """INSERT INTO leads
                    (phone_number, contact_name, email, company, job_title,
-                    training_interest, interest, stage, notes, source_channel)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (phone_number, contact_name,
-                 kwargs.get("email", ""), kwargs.get("company", ""),
-                 kwargs.get("job_title", ""), kwargs.get("training_interest", ""),
-                 kwargs.get("interest", ""), kwargs.get("stage", "novo"),
-                 kwargs.get("notes", ""), kwargs.get("source_channel", "tallos_pj"))
+                    training_interest, tema_interesse, tipo_interesse, qtd_participantes,
+                    formato, cidade, prazo, urgencia, objetivo_negocio,
+                    lead_temperature, trail, score, proximo_passo, status_conversa,
+                    interest, stage, notes, source_channel)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    phone_number, contact_name,
+                    kwargs.get("email", ""),             kwargs.get("company", ""),
+                    kwargs.get("job_title", ""),          kwargs.get("training_interest", ""),
+                    kwargs.get("tema_interesse", ""),     kwargs.get("tipo_interesse", ""),
+                    kwargs.get("qtd_participantes", ""),  kwargs.get("formato", ""),
+                    kwargs.get("cidade", ""),             kwargs.get("prazo", ""),
+                    kwargs.get("urgencia", ""),           kwargs.get("objetivo_negocio", ""),
+                    kwargs.get("lead_temperature", ""),   kwargs.get("trail", ""),
+                    kwargs.get("score", ""),              kwargs.get("proximo_passo", ""),
+                    kwargs.get("status_conversa", ""),    kwargs.get("interest", ""),
+                    kwargs.get("stage", "novo"),          kwargs.get("notes", ""),
+                    kwargs.get("source_channel", "tallos_pj"),
+                )
             )
         await db.commit()
     finally:

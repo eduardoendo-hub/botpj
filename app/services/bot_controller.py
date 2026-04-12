@@ -6,6 +6,7 @@ Arquitetura multi-canal:
   Cada integração injeta sua própria função de envio via parâmetro `send_fn`.
 """
 
+import asyncio
 import logging
 from datetime import datetime, timezone, timedelta
 from typing import Callable, Awaitable, Optional
@@ -17,7 +18,10 @@ from app.core.database import (
     get_bot_session, upsert_bot_session,
     get_conversation_history, get_lead_by_phone,
 )
-from app.services.ai_engine import generate_response, classify_conversation_context, extract_lead_data
+from app.services.ai_engine import (
+    generate_response, classify_conversation_context,
+    extract_lead_data, analyze_and_update_lead,
+)
 from app.services.email_service import send_lead_notification
 
 logger = logging.getLogger(__name__)
@@ -195,10 +199,76 @@ async def _respond(
         context_waiting = await classify_conversation_context(phone_number)
         await upsert_bot_session(phone_number, context_is_waiting=int(context_waiting))
 
+        # Análise estruturada em background — não bloqueia a resposta ao lead
+        asyncio.create_task(_run_lead_analysis(phone_number, contact_name))
+
         logger.info(f"[{phone_number}] Resposta enviada. context_is_waiting={context_waiting}")
 
     except Exception as e:
         logger.error(f"[{phone_number}] Erro ao responder: {e}")
+
+
+async def _run_lead_analysis(phone_number: str, contact_name: str) -> None:
+    """
+    Analisa a conversa em background e persiste todos os campos estruturados do lead PJ.
+    Roda via asyncio.create_task — não bloqueia o fluxo principal.
+    """
+    try:
+        history = await get_conversation_history(phone_number, limit=30)
+        extracted = await analyze_and_update_lead(phone_number, history)
+
+        # Monta payload para upsert_lead com todos os campos extraídos
+        update_kwargs: dict = {}
+
+        # Campos de identificação
+        if extracted.get("nome"):
+            update_kwargs["contact_name"] = extracted["nome"]
+        if extracted.get("email"):
+            update_kwargs["email"] = extracted["email"]
+        if extracted.get("empresa"):
+            update_kwargs["company"] = extracted["empresa"]
+        if extracted.get("job_title"):
+            update_kwargs["job_title"] = extracted["job_title"]
+
+        # Campos PJ específicos
+        if extracted.get("training_interest") or extracted.get("tema_interesse"):
+            update_kwargs["training_interest"] = (
+                extracted.get("training_interest") or extracted.get("tema_interesse")
+            )
+
+        # Campos de qualificação estruturada
+        for field in (
+            "tema_interesse", "tipo_interesse", "qtd_participantes",
+            "formato", "cidade", "prazo", "urgencia", "objetivo_negocio",
+            "lead_temperature", "trail", "score", "proximo_passo", "status_conversa",
+        ):
+            val = extracted.get(field)
+            if val is not None and val != "" and val != "desconhecido":
+                update_kwargs[field] = val
+
+        # Estágio do funil baseado na temperatura e trail
+        trail = extracted.get("trail", "")
+        temp  = extracted.get("lead_temperature", "")
+        score = extracted.get("score")
+        try:
+            score_int = int(score) if score else 0
+        except (ValueError, TypeError):
+            score_int = 0
+
+        if trail in ("D", "E") or score_int >= 80:
+            update_kwargs["stage"] = "negociando"
+        elif temp == "quente" or score_int >= 60:
+            update_kwargs["stage"] = "qualificado"
+
+        if update_kwargs:
+            await upsert_lead(phone_number, contact_name=contact_name, **update_kwargs)
+            logger.info(
+                f"[{phone_number}] Lead atualizado — trail={extracted.get('trail')} "
+                f"temp={extracted.get('lead_temperature')} score={extracted.get('score')}"
+            )
+
+    except Exception as e:
+        logger.error(f"[{phone_number}] Erro na análise em background: {e}", exc_info=True)
 
 
 async def _send(
@@ -222,35 +292,48 @@ async def _notify_lead_escalation(
     cfg: dict,
     history: list,
 ) -> None:
-    """Extrai dados do lead PJ e envia notificação por email."""
+    """Extrai dados completos do lead PJ e envia notificação por email."""
     try:
-        logger.info(f"[{phone_number}] ── Extraindo dados do lead PJ para email ──")
+        logger.info(f"[{phone_number}] ── Extraindo dados do lead PJ para escalação ──")
 
-        extracted = await extract_lead_data(phone_number, history)
+        # Usa analyze_and_update_lead para extração rica de todos os campos
+        extracted = await analyze_and_update_lead(phone_number, history)
         logger.info(f"[{phone_number}] Dados extraídos: {extracted}")
 
         saved_lead = await get_lead_by_phone(phone_number) or {}
 
+        nome    = extracted.get("nome")    or saved_lead.get("contact_name") or contact_name or ""
+        email   = extracted.get("email")   or saved_lead.get("email")   or ""
+        empresa = extracted.get("empresa") or saved_lead.get("company") or ""
+        cargo   = extracted.get("job_title") or saved_lead.get("job_title") or ""
+        tema    = (
+            extracted.get("training_interest")
+            or extracted.get("tema_interesse")
+            or saved_lead.get("training_interest") or ""
+        )
+
         lead_payload = {
-            "contact_name":      contact_name or extracted.get("nome") or saved_lead.get("contact_name") or "",
+            "contact_name":      nome,
             "phone_number":      phone_number,
-            "email":             extracted.get("email")     or saved_lead.get("email")             or "",
-            "company":           extracted.get("empresa")   or saved_lead.get("company")           or "",
-            "job_title":         extracted.get("cargo")     or saved_lead.get("job_title")         or "",
-            "training_interest": extracted.get("treinamento") or saved_lead.get("training_interest") or "",
+            "email":             email,
+            "company":           empresa,
+            "job_title":         cargo,
+            "training_interest": tema,
+            "trail":             extracted.get("trail") or saved_lead.get("trail") or "",
+            "lead_temperature":  extracted.get("lead_temperature") or saved_lead.get("lead_temperature") or "",
+            "score":             extracted.get("score") or saved_lead.get("score") or "",
+            "proximo_passo":     extracted.get("proximo_passo") or saved_lead.get("proximo_passo") or "",
+            "qtd_participantes": extracted.get("qtd_participantes") or saved_lead.get("qtd_participantes") or "",
+            "formato":           extracted.get("formato") or saved_lead.get("formato") or "",
+            "urgencia":          extracted.get("urgencia") or saved_lead.get("urgencia") or "",
             "ocorrencia":        datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M"),
         }
 
-        if lead_payload["email"] or lead_payload["company"] or lead_payload["training_interest"]:
-            await upsert_lead(
-                phone_number,
-                contact_name=lead_payload["contact_name"],
-                email=lead_payload["email"],
-                company=lead_payload["company"],
-                job_title=lead_payload["job_title"],
-                training_interest=lead_payload["training_interest"],
-                stage="qualificado",
-            )
+        # Persiste no banco antes de enviar o email
+        upsert_kwargs = {k: v for k, v in lead_payload.items()
+                        if k not in ("ocorrencia", "phone_number") and v}
+        upsert_kwargs["stage"] = "negociando"
+        await upsert_lead(phone_number, **upsert_kwargs)
 
         email_ok = await send_lead_notification(lead_payload, cfg)
         if email_ok:
