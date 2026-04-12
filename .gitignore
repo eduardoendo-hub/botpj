@@ -1,25 +1,9 @@
-# Ambiente virtual
 venv/
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
-.Python
-
-# Banco de dados
-data/
 *.db
 *.sqlite3
-
-# Variáveis de ambiente (NUNCA commitar)
 .env
-
-# Logs
 *.log
-logs/
-
-# Sistema
+data/
 .DS_Store
-.idea/
-.vscode/
-*.swp
