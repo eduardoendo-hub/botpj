@@ -12,6 +12,7 @@ from app.core.database import init_db
 from app.api.webhook_tallos import router as webhook_tallos_router
 from app.api.admin import router as admin_router
 from app.api.test_chat import router as test_router
+from app.api.radar import router as radar_router
 
 # Configurar logging
 logging.basicConfig(
@@ -31,6 +32,7 @@ async def lifespan(app: FastAPI):
     logger.info("Bot SDR PJ pronto!")
     logger.info(f"Tela de teste: http://{settings.app_host}:{settings.app_port}/test")
     logger.info(f"Painel admin:  http://{settings.app_host}:{settings.app_port}/admin")
+    logger.info(f"Radar:         http://{settings.app_host}:{settings.app_port}/radar")
     yield
     logger.info("Encerrando Bot SDR PJ...")
 
@@ -61,6 +63,8 @@ app.include_router(webhook_tallos_router, tags=["Webhook - Tallos PJ"])
 # Admin e testes
 app.include_router(admin_router,          tags=["Admin"])
 app.include_router(test_router,           tags=["Teste"])
+# Radar — painel de monitoramento em tempo real
+app.include_router(radar_router,          tags=["Radar"])
 
 
 @app.get("/")
