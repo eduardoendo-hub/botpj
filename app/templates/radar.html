@@ -23,6 +23,7 @@
 <div id="root"></div>
 
 <script type="text/babel" data-presets="react">
+{% raw %}
 const { useState, useMemo, useEffect, useCallback } = React;
 
 // ── Lucide icons via UMD ──────────────────────────────────────────────────────
@@ -528,6 +529,7 @@ function Radar() {
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<Radar />);
+{% endraw %}
 </script>
 </body>
 </html>
