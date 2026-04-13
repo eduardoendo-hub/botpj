@@ -94,7 +94,7 @@ async def test_page(request: Request):
   <div class="actions">
     <button onclick="reloadHistory()">🔄 Recarregar</button>
     <button onclick="clearHistory()" style="background:rgba(239,68,68,0.3)">🗑 Limpar</button>
-    <a href="/admin">⚙️ Admin</a>
+    <a href="/pj/admin">⚙️ Admin</a>
   </div>
 </div>
 <div id="reactivate-bar">
@@ -148,7 +148,7 @@ async def test_page(request: Request):
     typing.style.display = 'block';
     document.getElementById('messages').scrollTop = 99999;
     try {
-      const res = await fetch('/test/send', {
+      const res = await fetch('/pj/test/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text, phone: getPhone(), name: getName() })
@@ -173,14 +173,14 @@ async def test_page(request: Request):
   }
 
   async function reactivateBot() {
-    await fetch('/test/reactivate?phone=' + getPhone(), { method: 'POST' });
+    await fetch('/pj/test/reactivate?phone=' + getPhone(), { method: 'POST' });
     botPaused = false;
     document.getElementById('reactivate-bar').style.display = 'none';
     appendMsg('bot', '✅ Bot reativado. Pode continuar testando!');
   }
 
   async function reloadHistory() {
-    const res = await fetch('/test/history?phone=' + getPhone());
+    const res = await fetch('/pj/test/history?phone=' + getPhone());
     const data = await res.json();
     const msgs = document.getElementById('messages');
     const typing = document.getElementById('typing');
@@ -191,7 +191,7 @@ async def test_page(request: Request):
 
   async function clearHistory() {
     if (!confirm('Limpar histórico desta conversa?')) return;
-    await fetch('/test/clear?phone=' + getPhone(), { method: 'POST' });
+    await fetch('/pj/test/clear?phone=' + getPhone(), { method: 'POST' });
     const msgs = document.getElementById('messages');
     const typing = document.getElementById('typing');
     Array.from(msgs.children).forEach(c => { if (c !== typing) c.remove(); });
