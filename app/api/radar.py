@@ -27,13 +27,16 @@ templates = Jinja2Templates(directory="app/templates")
 async def _session_username(session_id: str) -> str:
     if not session_id:
         return ""
-    async with get_db() as db:
+    db = await get_db()
+    try:
         cursor = await db.execute(
             "SELECT username FROM admin_sessions WHERE session_id=? AND expires_at > CURRENT_TIMESTAMP",
             (session_id,)
         )
         row = await cursor.fetchone()
         return row["username"] if row else ""
+    finally:
+        await db.close()
 
 
 async def _require_auth(request: Request):
