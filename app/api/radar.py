@@ -2,17 +2,20 @@
 Radar — painel de monitoramento em tempo real dos leads PJ.
 
 Rota separada do /admin, acessível pela diretoria em /radar.
-Autenticação reutiliza a sessão do admin (mesmo cookie session_id).
+Login próprio em /radar/login — mesmas credenciais do admin, cookie separado (radar_sid).
 """
 
 import logging
+import secrets
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any
 
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import APIRouter, Request, Form
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from starlette.status import HTTP_303_SEE_OTHER
 
+from app.core.config import settings
 from app.core.database import (
     get_all_leads, get_bot_session, get_db,
 )
@@ -22,9 +25,25 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/radar")
 templates = Jinja2Templates(directory="app/templates")
 
-# ── Helpers de autenticação (mesma lógica do admin) ──────────────────────────
+# ── Helpers de autenticação (cookie radar_sid — independente do admin) ────────
 
-async def _session_username(session_id: str) -> str:
+_COOKIE = "radar_sid"
+
+
+async def _radar_session_create(session_id: str, username: str):
+    db = await get_db()
+    try:
+        await db.execute(
+            "INSERT OR REPLACE INTO admin_sessions (session_id, username, expires_at) "
+            "VALUES (?, ?, datetime('now', '+7 days'))",
+            (session_id, f"radar:{username}")
+        )
+        await db.commit()
+    finally:
+        await db.close()
+
+
+async def _radar_session_username(session_id: str) -> str:
     if not session_id:
         return ""
     db = await get_db()
@@ -34,18 +53,31 @@ async def _session_username(session_id: str) -> str:
             (session_id,)
         )
         row = await cursor.fetchone()
-        return row["username"] if row else ""
+        val = row["username"] if row else ""
+        # aceita sessões radar:* ou sessões admin normais
+        if val.startswith("radar:"):
+            return val[6:]
+        return val if val else ""
+    finally:
+        await db.close()
+
+
+async def _radar_session_delete(session_id: str):
+    db = await get_db()
+    try:
+        await db.execute("DELETE FROM admin_sessions WHERE session_id=?", (session_id,))
+        await db.commit()
     finally:
         await db.close()
 
 
 async def _require_auth(request: Request):
-    """Redireciona para /admin/login se não autenticado."""
+    """Redireciona para /radar/login se não autenticado."""
     from fastapi import HTTPException
-    session_id = request.cookies.get("session_id", "")
-    username = await _session_username(session_id)
+    session_id = request.cookies.get(_COOKIE, "")
+    username = await _radar_session_username(session_id)
     if not username:
-        raise HTTPException(status_code=303, headers={"Location": "/admin/login"})
+        raise HTTPException(status_code=303, headers={"Location": "/radar/login"})
     return username
 
 
@@ -155,6 +187,46 @@ def _map_status(stage: str, status_conversa: str | None) -> str:
 
 
 # ── Rotas ─────────────────────────────────────────────────────────────────────
+
+@router.get("/login", response_class=HTMLResponse)
+async def radar_login_page(request: Request):
+    """Tela de login dedicada ao Radar."""
+    return templates.TemplateResponse("radar_login.html", {"request": request})
+
+
+@router.post("/login")
+async def radar_login(
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...),
+):
+    """Autentica e redireciona para /radar."""
+    valid = (
+        (username == settings.admin_username and password == settings.admin_password)
+        or (username == "consultor" and password == settings.consultant_password)
+    )
+    if valid:
+        sid = secrets.token_hex(32)
+        await _radar_session_create(sid, username)
+        response = RedirectResponse(url="/radar", status_code=HTTP_303_SEE_OTHER)
+        response.set_cookie(_COOKIE, sid, httponly=True, max_age=7 * 86400)
+        return response
+    return templates.TemplateResponse(
+        "radar_login.html",
+        {"request": request, "error": "Usuário ou senha inválidos"},
+        status_code=401,
+    )
+
+
+@router.get("/logout")
+async def radar_logout(request: Request):
+    sid = request.cookies.get(_COOKIE, "")
+    if sid:
+        await _radar_session_delete(sid)
+    resp = RedirectResponse(url="/radar/login", status_code=HTTP_303_SEE_OTHER)
+    resp.delete_cookie(_COOKIE)
+    return resp
+
 
 @router.get("", response_class=HTMLResponse)
 async def radar_page(request: Request):
