@@ -568,6 +568,24 @@ async def relatorio_diario_page(request: Request):
     })
 
 
+@router.post("/relatorio-diario/salvar")
+async def relatorio_diario_salvar(request: Request):
+    """Salva as configurações do relatório diário (ChatPro + destinatários + horário)."""
+    await _check_auth(request)
+    form = await request.form()
+    updates = {}
+    for key in (
+        "chatpro_url", "chatpro_token", "chatpro_instance_id",
+        "report_template_name", "report_language_code",
+        "report_recipients", "report_hour",
+    ):
+        if key in form:
+            updates[key] = str(form[key]).strip()
+
+    await set_bot_config_bulk(updates)
+    return JSONResponse({"ok": True, "message": "Configurações salvas com sucesso!"})
+
+
 @router.get("/relatorio-diario/templates")
 async def relatorio_listar_templates(request: Request):
     """Lista templates WABA aprovados na instância ChatPro."""

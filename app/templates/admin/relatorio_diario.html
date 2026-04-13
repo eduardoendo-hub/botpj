@@ -129,7 +129,7 @@ function saveConfig() {
     'report_recipients':        document.getElementById('cfg-recipients').value.trim(),
     'report_hour':              document.getElementById('cfg-hour').value,
   });
-  fetch(`${prefix}/admin/bot-config/save`, { method:'POST', body })
+  fetch(`${prefix}/admin/relatorio-diario/salvar`, { method:'POST', body })
     .then(r => r.json())
     .then(d => {
       const el = document.getElementById('cfg-msg');
