@@ -552,7 +552,7 @@ async def webhook_logs_page(request: Request, phone: str = "", limit: int = 50):
 
 @router.get("/relatorio-diario", response_class=HTMLResponse)
 async def relatorio_diario_page(request: Request):
-    await _require_auth(request)
+    await _check_auth(request)
     report = await build_daily_report()
     config = await get_bot_config_full()
     cfg = {c["key"]: c["value"] for c in config}
@@ -571,7 +571,7 @@ async def relatorio_diario_page(request: Request):
 @router.get("/relatorio-diario/templates")
 async def relatorio_listar_templates(request: Request):
     """Lista templates WABA aprovados na instância ChatPro."""
-    await _require_auth(request)
+    await _check_auth(request)
     config = await get_bot_config_full()
     cfg = {c["key"]: c["value"] for c in config}
     chatpro_token = cfg.get("chatpro_token", "").strip()
@@ -585,7 +585,7 @@ async def relatorio_listar_templates(request: Request):
 @router.get("/relatorio-diario/preview")
 async def relatorio_diario_preview(request: Request):
     """Retorna o texto atual do relatório (JSON) para atualização ao vivo."""
-    await _require_auth(request)
+    await _check_auth(request)
     report = await build_daily_report()
     return JSONResponse({"text": report["full"]})
 
@@ -593,7 +593,7 @@ async def relatorio_diario_preview(request: Request):
 @router.post("/relatorio-diario/enviar")
 async def relatorio_diario_enviar(request: Request):
     """Dispara o envio manual do relatório via ChatPro."""
-    await _require_auth(request)
+    await _check_auth(request)
     config = await get_bot_config_full()
     cfg = {c["key"]: c["value"] for c in config}
 
