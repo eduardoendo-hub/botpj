@@ -50,17 +50,18 @@ def _hours_since(ts_str: str) -> float:
 # ── Helpers de formatação ─────────────────────────────────────────────────────
 
 def _responsible_icon(lead: Dict) -> str:
+    """Retorna label sem emoji (Meta rejeita emoji em variáveis de template via API)."""
     stage = (lead.get("stage") or "").lower()
     status = (lead.get("status_conversa") or "").lower()
     trail  = (lead.get("trail") or "").lower()
 
     if any(k in stage for k in ["consultor", "proposta", "humano_ativo"]):
-        return "👤 Consultor"
+        return "Consultor"
     if any(k in stage  for k in ["transferido", "escalado", "fila"]) or \
        any(k in status for k in ["transferido", "escalado"]) or \
        any(k in trail  for k in ["e"]):
-        return "↗️ Transição para humano"
-    return "🤖 Bot"
+        return "Transf. humano"
+    return "Bot"
 
 
 def _next_step(lead: Dict) -> str:
