@@ -9,36 +9,23 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #080e1a;
-    color: #e2e8f0;
-  }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
   #root { min-height: 100vh; }
   @keyframes slideIn { from { transform: translateX(100%) } to { transform: translateX(0) } }
   .animate-slide-in { animation: slideIn .22s cubic-bezier(.16,1,.3,1); }
-  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(1.2)} }
-  .pulse-live { animation: pulse-dot 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .animate-pulse { animation: pulse 2s cubic-bezier(.4,0,.6,1) infinite; }
   .truncate { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: #0f172a; }
-  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #475569; }
-  .glass { background: rgba(15,23,42,.7); backdrop-filter: blur(12px); border: 1px solid rgba(148,163,184,.08); }
-  .row-hover:hover { background: rgba(99,102,241,.06) !important; }
-  .row-selected { background: rgba(99,102,241,.10) !important; }
 </style>
 </head>
-<body>
+<body class="bg-slate-50">
 <div id="root"></div>
 
 <script type="text/babel" data-presets="react">
 {% raw %}
 const { useState, useMemo, useEffect, useCallback } = React;
 
-// ── Inline SVG icons ──────────────────────────────────────────────────────────
+// ── Inline SVG icons (sem dependência externa) ────────────────────────────────
 const ICON_PATHS = {
   "activity":       `<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>`,
   "alert-circle":   `<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>`,
@@ -46,8 +33,11 @@ const ICON_PATHS = {
   "bar-chart-2":    `<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>`,
   "bot":            `<rect width="18" height="10" x="3" y="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/>`,
   "building-2":     `<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>`,
+  "calendar":       `<rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>`,
   "check-circle":   `<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>`,
   "chevron-down":   `<path d="m6 9 6 6 6-6"/>`,
+  "chevron-left":   `<path d="m15 18-6-6 6-6"/>`,
+  "chevron-right":  `<path d="m9 18 6-6-6-6"/>`,
   "chevron-up":     `<path d="m18 15-6-6-6 6"/>`,
   "clock":          `<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>`,
   "filter":         `<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>`,
@@ -55,7 +45,7 @@ const ICON_PATHS = {
   "help-circle":    `<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>`,
   "log-out":        `<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>`,
   "message-square": `<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>`,
-  "phone-call":     `<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.57 3.28 2 2 0 0 1 3.55 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>`,
+  "phone-call":     `<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.57 3.28 2 2 0 0 1 3.55 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/><path d="M14.05 2a9 9 0 0 1 8 7.94"/><path d="M14.05 6A5 5 0 0 1 18 10"/>`,
   "refresh-cw":     `<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>`,
   "search":         `<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>`,
   "settings":       `<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>`,
@@ -82,71 +72,97 @@ const Icon = ({ name, size = 16, className = "" }) => (
   />
 );
 
-// ── Color helpers (dark theme) ────────────────────────────────────────────────
+// ── Helpers de data (BRT = UTC-3) ─────────────────────────────────────────────
+const todayBRT = () => {
+  const d = new Date(Date.now() - 3 * 60 * 60 * 1000);
+  return d.toISOString().split("T")[0];
+};
+const yesterdayBRT = () => {
+  const d = new Date(Date.now() - 3 * 60 * 60 * 1000 - 86400 * 1000);
+  return d.toISOString().split("T")[0];
+};
+const formatDateLabel = (iso) => {
+  const today = todayBRT();
+  const yesterday = yesterdayBRT();
+  if (iso === today) return "Hoje";
+  if (iso === yesterday) return "Ontem";
+  const [y, m, day] = iso.split("-");
+  return `${day}/${m}/${y}`;
+};
+const stepIso = (iso, delta) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(y, m - 1, d + delta);
+  return [
+    dt.getFullYear(),
+    String(dt.getMonth() + 1).padStart(2, "0"),
+    String(dt.getDate()).padStart(2, "0"),
+  ].join("-");
+};
+
+// ── Helpers de badge ──────────────────────────────────────────────────────────
 const getTempConfig = (temp) => ({
-  quente: { label: "Quente", cls: "bg-red-500/15 text-red-400 border border-red-500/25" },
-  morno:  { label: "Morno",  cls: "bg-amber-500/15 text-amber-400 border border-amber-500/25" },
-  frio:   { label: "Frio",   cls: "bg-blue-500/15 text-blue-400 border border-blue-500/25" },
-}[temp] || { label: temp || "—", cls: "bg-slate-700/50 text-slate-400" });
+  quente: { label: "Quente", cls: "bg-red-50 text-red-600 border-red-200" },
+  morno:  { label: "Morno",  cls: "bg-amber-50 text-amber-600 border-amber-200" },
+  frio:   { label: "Frio",   cls: "bg-blue-50 text-blue-600 border-blue-200" },
+}[temp] || { label: temp || "—", cls: "bg-gray-100 text-gray-500" });
 
 const getTempIcon = (temp) => ({ quente:"flame", morno:"wind", frio:"snowflake" }[temp] || "help-circle");
 
 const getStatusCls = (s) => ({
-  "Novo":                  "bg-slate-700/60 text-slate-300",
-  "Em qualificação":       "bg-violet-500/15 text-violet-400",
-  "Aguardando lead":       "bg-yellow-500/15 text-yellow-400",
-  "Transferido":           "bg-orange-500/15 text-orange-400",
-  "Em atendimento humano": "bg-blue-500/15 text-blue-400",
-  "Qualificado":           "bg-emerald-500/15 text-emerald-400",
-  "Concluído":             "bg-green-500/15 text-green-400",
-  "Perdido":               "bg-red-500/15 text-red-400",
-}[s] || "bg-slate-700/50 text-slate-400");
+  "Novo":                  "bg-slate-100 text-slate-600",
+  "Em qualificação":       "bg-violet-50 text-violet-600",
+  "Aguardando lead":       "bg-yellow-50 text-yellow-700",
+  "Transferido":           "bg-orange-50 text-orange-600",
+  "Em atendimento humano": "bg-blue-50 text-blue-700",
+  "Qualificado":           "bg-emerald-50 text-emerald-700",
+  "Concluído":             "bg-green-50 text-green-700",
+  "Perdido":               "bg-red-50 text-red-500",
+}[s] || "bg-gray-100 text-gray-500");
 
 const getTipoCls = (t) => ({
-  "Turma Aberta": "bg-sky-500/15 text-sky-400",
-  "In Company":   "bg-purple-500/15 text-purple-400",
-  "Customizado":  "bg-pink-500/15 text-pink-400",
-  "Locação":      "bg-teal-500/15 text-teal-400",
-  "Não definido": "bg-slate-700/50 text-slate-500",
-}[t] || "bg-indigo-500/15 text-indigo-400");
+  "Turma Aberta":"bg-sky-50 text-sky-700",
+  "In Company":"bg-purple-50 text-purple-700",
+  "Customizado":"bg-pink-50 text-pink-700",
+  "Locação":"bg-teal-50 text-teal-700",
+  "Não definido":"bg-gray-100 text-gray-500",
+}[t] || "bg-indigo-50 text-indigo-700");
 
 const getFormatoCls = (f) => ({
-  "Presencial": "bg-emerald-500/15 text-emerald-400",
-  "Online":     "bg-blue-500/15 text-blue-400",
-  "Híbrido":    "bg-purple-500/15 text-purple-400",
-}[f] || "bg-slate-700/50 text-slate-500");
+  "Presencial":"bg-green-50 text-green-700",
+  "Online":"bg-blue-50 text-blue-600",
+  "Híbrido":"bg-purple-50 text-purple-700",
+}[f] || "bg-gray-100 text-gray-500");
 
-const scoreColor = (s) => s>=80?"text-emerald-400":s>=60?"text-amber-400":s>=40?"text-orange-400":"text-red-400";
-const scoreBg    = (s) => s>=80?"bg-emerald-500":s>=60?"bg-amber-500":s>=40?"bg-orange-500":"bg-red-500";
+const scoreColor = (s) => s>=80?"text-emerald-600":s>=60?"text-amber-600":s>=40?"text-orange-500":"text-red-500";
+const scoreBg    = (s) => s>=80?"bg-emerald-500":s>=60?"bg-amber-400":s>=40?"bg-orange-400":"bg-red-400";
 
 const slaConfig = (m) => {
-  if (m<=10) return { cls:"text-emerald-400", bg:"bg-emerald-500/15", label:`${m}m` };
-  if (m<=25) return { cls:"text-amber-400",   bg:"bg-amber-500/15",   label:`${m}m` };
-  return           { cls:"text-red-400",     bg:"bg-red-500/15",     label:`${m}m ⚠` };
+  if (m<=10) return { cls:"text-emerald-700", bg:"bg-emerald-50", label:`${m}m` };
+  if (m<=25) return { cls:"text-amber-700",   bg:"bg-amber-50",   label:`${m}m` };
+  return           { cls:"text-red-700",     bg:"bg-red-50",     label:`${m}m ⚠` };
 };
 
 const quemConfig = (q) => ({
-  bot:         { icon:"bot",           label:"Bot SDR",            cls:"text-violet-400 bg-violet-500/15" },
-  transferido: { icon:"arrow-up-right",label:"Aguard. Consultor",  cls:"text-orange-400 bg-orange-500/15" },
-  consultor:   { icon:"user",          label:"Consultor",          cls:"text-blue-400 bg-blue-500/15" },
-}[q] || { icon:"help-circle", label:"—", cls:"text-slate-500 bg-slate-700/50" });
+  bot:         { icon:"bot",          label:"Bot SDR",           cls:"text-violet-500 bg-violet-50" },
+  transferido: { icon:"arrow-up-right",label:"Aguard. Consultor",cls:"text-orange-500 bg-orange-50" },
+  consultor:   { icon:"user",          label:"Consultor",         cls:"text-blue-600 bg-blue-50" },
+}[q] || { icon:"help-circle", label:"—", cls:"text-gray-400 bg-gray-100" });
 
 // ── Components ────────────────────────────────────────────────────────────────
 const Badge = ({ children, className="" }) => (
-  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium ${className}`}>
+  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${className}`}>
     {children}
   </span>
 );
 
-const KpiCard = ({ iconName, label, value, color="text-indigo-400", urgent=false }) => (
-  <div style={{background: urgent ? "rgba(239,68,68,.08)" : "rgba(15,23,42,.8)", border: urgent ? "1px solid rgba(239,68,68,.2)" : "1px solid rgba(148,163,184,.08)"}}
-    className="rounded-xl px-4 py-3 flex items-center gap-3">
-    <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${urgent?"bg-red-500/15 text-red-400":"bg-slate-700/50 text-slate-400"}`}>
-      <Icon name={iconName} size={15} />
+const KpiCard = ({ iconName, label, value, color="text-slate-700", urgent=false }) => (
+  <div className={`bg-white rounded-xl px-4 py-3 flex items-center gap-3 shadow-sm border ${urgent?"border-red-200 bg-red-50/60":"border-slate-100"}`}>
+    <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${urgent?"bg-red-100 text-red-500":"bg-slate-100 text-slate-500"}`}>
+      <Icon name={iconName} size={16} />
     </div>
     <div>
-      <div className={`text-xl font-bold leading-none tabular-nums ${urgent?"text-red-400":color}`}>{value}</div>
-      <div className="text-xs text-slate-500 mt-0.5 whitespace-nowrap">{label}</div>
+      <div className={`text-xl font-bold leading-none ${urgent?"text-red-600":color}`}>{value}</div>
+      <div className="text-xs text-slate-400 mt-0.5 whitespace-nowrap">{label}</div>
     </div>
   </div>
 );
@@ -158,9 +174,69 @@ const QuemIcon = ({ quem }) => {
       <span className={`flex items-center justify-center w-7 h-7 rounded-full ${cfg.cls}`}>
         <Icon name={cfg.icon} size={13} />
       </span>
-      <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap bg-slate-800 text-slate-200 text-xs px-2.5 py-1 rounded-lg border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl">
+      <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
         {cfg.label}
       </div>
+    </div>
+  );
+};
+
+// ── DateNav ───────────────────────────────────────────────────────────────────
+const DateNav = ({ dateFilter, setDateFilter, availableDates }) => {
+  const today   = todayBRT();
+  const isToday = dateFilter === today;
+
+  const go = (delta) => {
+    const next = stepIso(dateFilter, delta);
+    if (next <= today) setDateFilter(next);
+  };
+
+  return (
+    <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-sm">
+      <button onClick={() => go(-1)}
+        className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+        title="Dia anterior">
+        <Icon name="chevron-left" size={14} />
+      </button>
+
+      <div className="flex items-center gap-1.5 min-w-[80px] justify-center px-1">
+        <Icon name="calendar" size={12} className="text-indigo-400 flex-shrink-0" />
+        <span className="text-sm font-semibold text-slate-700 whitespace-nowrap">{formatDateLabel(dateFilter)}</span>
+      </div>
+
+      <button onClick={() => go(1)} disabled={isToday}
+        className={`p-1 rounded transition-colors ${isToday?"text-slate-200 cursor-not-allowed":"text-slate-400 hover:text-slate-600 hover:bg-slate-100"}`}
+        title="Próximo dia">
+        <Icon name="chevron-right" size={14} />
+      </button>
+
+      {!isToday && (
+        <button onClick={() => setDateFilter(today)}
+          className="ml-1 text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full hover:bg-indigo-100 transition-colors whitespace-nowrap">
+          Hoje
+        </button>
+      )}
+
+      {isToday && (
+        <button onClick={() => setDateFilter(yesterdayBRT())}
+          className="ml-1 text-xs text-slate-500 border border-slate-200 px-2 py-0.5 rounded-full hover:bg-slate-50 transition-colors whitespace-nowrap">
+          Ontem
+        </button>
+      )}
+
+      {availableDates.length > 2 && (
+        <select
+          value={dateFilter}
+          onChange={e => setDateFilter(e.target.value)}
+          className="ml-1 text-xs border border-slate-200 rounded-lg py-1 px-1.5 text-slate-500 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-200 cursor-pointer max-w-[90px]">
+          {availableDates.map(d => (
+            <option key={d} value={d}>{formatDateLabel(d)}</option>
+          ))}
+          {!availableDates.includes(dateFilter) && (
+            <option value={dateFilter}>{formatDateLabel(dateFilter)}</option>
+          )}
+        </select>
+      )}
     </div>
   );
 };
@@ -173,32 +249,27 @@ const Drawer = ({ lead, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="animate-slide-in relative w-full max-w-md flex flex-col h-full overflow-y-auto shadow-2xl"
-        style={{background:"#0f172a", borderLeft:"1px solid rgba(148,163,184,.1)"}}>
-
+      <div className="absolute inset-0 bg-black/25 backdrop-blur-sm" onClick={onClose} />
+      <div className="animate-slide-in relative w-full max-w-md bg-white shadow-2xl flex flex-col h-full overflow-y-auto">
         {/* Header */}
-        <div className="flex items-start justify-between p-5 sticky top-0 z-10"
-          style={{background:"rgba(15,23,42,.95)", backdropFilter:"blur(12px)", borderBottom:"1px solid rgba(148,163,184,.08)"}}>
+        <div className="flex items-start justify-between p-5 border-b border-slate-100 sticky top-0 bg-white z-10">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="font-bold text-slate-100 text-base">{lead.nome}</h2>
+              <h2 className="font-bold text-slate-800">{lead.nome}</h2>
             </div>
-            <div className="text-sm text-slate-500 mt-0.5 flex items-center gap-1.5">
-              <Icon name="building-2" size={12} className="text-slate-600" />{lead.empresa}
+            <div className="text-sm text-slate-400 mt-0.5 flex items-center gap-1.5">
+              <Icon name="building-2" size={12} />{lead.empresa}
             </div>
           </div>
-          <button onClick={onClose}
-            className="text-slate-500 hover:text-slate-200 p-1.5 rounded-lg transition-colors"
-            style={{background:"rgba(148,163,184,.08)"}}>
-            <Icon name="x" size={16} />
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+            <Icon name="x" size={17} />
           </button>
         </div>
 
         <div className="p-5 space-y-5">
           {/* Chips */}
           <div className="flex flex-wrap gap-2">
-            <Badge className={temp.cls}>
+            <Badge className={`${temp.cls} border`}>
               <Icon name={getTempIcon(lead.temp)} size={10} />{temp.label}
             </Badge>
             <Badge className={getStatusCls(lead.status)}>{lead.status}</Badge>
@@ -206,38 +277,36 @@ const Drawer = ({ lead, onClose }) => {
               <Icon name="clock" size={10} />{sla.label}
             </Badge>
             {lead.trail && lead.trail !== "?" && (
-              <Badge className="bg-indigo-500/15 text-indigo-400">Trail {lead.trail}</Badge>
+              <Badge className="bg-indigo-50 text-indigo-700">Trail {lead.trail}</Badge>
             )}
-            <Badge className={`${scoreColor(lead.score)} bg-slate-700/50 font-bold`}>
+            <Badge className={`${scoreColor(lead.score)} bg-slate-50 font-bold`}>
               Score {lead.score}
             </Badge>
           </div>
 
           {/* Próximo passo */}
           {lead.proximo_passo && lead.proximo_passo !== "—" && (
-            <div style={{background:"rgba(245,158,11,.07)", border:"1px solid rgba(245,158,11,.2)"}}
-              className="rounded-xl p-4">
-              <div className="flex items-center gap-1.5 text-amber-400 font-semibold text-xs mb-1.5">
+            <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
+              <div className="flex items-center gap-1.5 text-amber-700 font-semibold text-xs mb-1">
                 <Icon name="check-circle" size={12} /> Próximo Passo
               </div>
-              <p className="text-sm text-amber-300 font-medium leading-relaxed">{lead.proximo_passo}</p>
+              <p className="text-sm text-amber-800 font-medium">{lead.proximo_passo}</p>
             </div>
           )}
 
           {/* Urgência */}
           {lead.urgencia && (
-            <div style={{background:"rgba(239,68,68,.07)", border:"1px solid rgba(239,68,68,.2)"}}
-              className="rounded-xl p-3">
-              <div className="flex items-center gap-1.5 text-red-400 font-semibold text-xs mb-1">
+            <div className="bg-red-50 border border-red-100 rounded-xl p-3">
+              <div className="flex items-center gap-1.5 text-red-600 font-semibold text-xs mb-1">
                 <Icon name="alert-circle" size={12} /> Urgência
               </div>
-              <p className="text-sm text-red-300">{lead.urgencia}</p>
+              <p className="text-sm text-red-700">{lead.urgencia}</p>
             </div>
           )}
 
           {/* Dados */}
           <div>
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Dados Capturados</h3>
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Dados Capturados</h3>
             <div className="grid grid-cols-2 gap-2">
               {[
                 ["Telefone", lead.telefone], ["Canal", lead.canal],
@@ -247,10 +316,9 @@ const Drawer = ({ lead, onClose }) => {
                 ["Email", lead.email],       ["Prazo", lead.prazo],
                 ["Objetivo", lead.objetivo],
               ].filter(([,v]) => v && v !== "—").map(([k,v]) => (
-                <div key={k} style={{background:"rgba(148,163,184,.05)", border:"1px solid rgba(148,163,184,.08)"}}
-                  className="rounded-lg p-2.5">
-                  <div className="text-xs text-slate-600 mb-0.5">{k}</div>
-                  <div className="font-medium text-slate-300 text-xs truncate" title={v}>{v}</div>
+                <div key={k} className="bg-slate-50 rounded-lg p-2.5">
+                  <div className="text-xs text-slate-400">{k}</div>
+                  <div className="font-medium text-slate-700 text-xs mt-0.5 truncate" title={v}>{v}</div>
                 </div>
               ))}
             </div>
@@ -263,21 +331,27 @@ const Drawer = ({ lead, onClose }) => {
 
 // ── Main Radar ────────────────────────────────────────────────────────────────
 function Radar() {
-  const [leads, setLeads]       = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [search, setSearch]     = useState("");
-  const [selected, setSelected] = useState(null);
-  const [sortCol, setSortCol]   = useState("hora");
-  const [sortDir, setSortDir]   = useState("desc");
-  const [filters, setFilters]   = useState({ temp:"", quem:"", score:"" });
-  const [lastUpd, setLastUpd]   = useState(null);
+  const [leads, setLeads]                   = useState([]);
+  const [loading, setLoading]               = useState(true);
+  const [search, setSearch]                 = useState("");
+  const [selected, setSelected]             = useState(null);
+  const [sortCol, setSortCol]               = useState("hora");
+  const [sortDir, setSortDir]               = useState("desc");
+  const [filters, setFilters]               = useState({ temp:"", quem:"", score:"" });
+  const [lastUpd, setLastUpd]               = useState(null);
+  const [dateFilter, setDateFilter]         = useState(() => todayBRT());
+  const [availableDates, setAvailableDates] = useState([]);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (date) => {
+    setLoading(true);
     try {
       const basePath = window.location.pathname.replace(/\/+$/, "");
-      const res  = await fetch(basePath + "/data");
-      const json = await res.json();
+      const res      = await fetch(`${basePath}/data?date=${date}`);
+      const json     = await res.json();
       setLeads(json.leads || []);
+      if (json.available_dates && json.available_dates.length) {
+        setAvailableDates(json.available_dates);
+      }
       setLastUpd(new Date().toLocaleTimeString("pt-BR", {hour:"2-digit",minute:"2-digit"}));
     } catch(e) {
       console.error("Radar fetch error:", e);
@@ -286,11 +360,20 @@ function Radar() {
     }
   }, []);
 
+  // Re-busca ao trocar de data; auto-refresh só quando for hoje
   useEffect(() => {
-    fetchData();
-    const id = setInterval(fetchData, 30000);
+    fetchData(dateFilter);
+    if (dateFilter !== todayBRT()) return;
+    const id = setInterval(() => fetchData(dateFilter), 30000);
     return () => clearInterval(id);
-  }, [fetchData]);
+  }, [dateFilter, fetchData]);
+
+  const changeDate = (d) => {
+    setDateFilter(d);
+    setFilters({ temp:"", quem:"", score:"" });
+    setSearch("");
+    setSelected(null);
+  };
 
   const kpis = useMemo(() => ({
     total:       leads.length,
@@ -325,6 +408,7 @@ function Radar() {
     if (filters.quem)  data = data.filter(l => l.quem === filters.quem);
     if (filters.score === "alto")  data = data.filter(l => l.score >= 70);
     if (filters.score === "baixo") data = data.filter(l => l.score < 50);
+
     return [...data].sort((a,b) => {
       let av = a[sortCol] ?? "", bv = b[sortCol] ?? "";
       if (typeof av === "string") { av = av.toLowerCase(); bv = bv.toLowerCase(); }
@@ -335,169 +419,157 @@ function Radar() {
   }, [leads, search, filters, sortCol, sortDir]);
 
   const activeFilters = Object.values(filters).filter(Boolean).length;
+  const isToday       = dateFilter === todayBRT();
 
   const Th = ({ col, children }) => (
     <th onClick={() => col && handleSort(col)}
-      className={`px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap select-none ${col?"cursor-pointer":""}` }
-      style={{color: col && sortCol===col ? "#818cf8" : "#475569"}}>
+      className={`px-3 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap select-none ${col?"cursor-pointer hover:text-slate-600":""}`}>
       <span className="flex items-center gap-0.5">
         {children}
-        {col && sortCol === col && <Icon name={sortDir==="asc"?"chevron-up":"chevron-down"} size={11} />}
-        {col && sortCol !== col && <Icon name="chevron-down" size={11} className="opacity-30" />}
+        {col && sortCol === col && (
+          <Icon name={sortDir==="asc"?"chevron-up":"chevron-down"} size={11} className="text-indigo-500" />
+        )}
+        {col && sortCol !== col && (
+          <Icon name="chevron-down" size={11} className="text-slate-300" />
+        )}
       </span>
     </th>
   );
 
-  // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div style={{minHeight:"100vh", background:"#080e1a"}} className="font-sans">
-
-      {/* ── Header ── */}
-      <header style={{background:"rgba(8,14,26,.9)", backdropFilter:"blur(16px)", borderBottom:"1px solid rgba(148,163,184,.07)"}}
-        className="px-6 py-4 sticky top-0 z-30">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+      {/* Header */}
+      <header className="bg-white border-b border-slate-100 px-6 py-4 sticky top-0 z-30 shadow-sm">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <div className="flex items-center gap-2.5">
-              <div style={{background:"linear-gradient(135deg,#6366f1,#8b5cf6)"}}
-                className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
                 <Icon name="bar-chart-2" size={14} className="text-white" />
               </div>
-              <h1 className="text-lg font-bold tracking-tight" style={{color:"#e2e8f0"}}>
-                Radar <span style={{color:"#6366f1"}}>PJ</span>
-              </h1>
-              <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
-                style={{background:"rgba(16,185,129,.12)", color:"#34d399", border:"1px solid rgba(16,185,129,.2)"}}>
-                <span className="w-1.5 h-1.5 rounded-full pulse-live inline-block" style={{background:"#10b981"}} />
-                Ao Vivo
-              </span>
+              <h1 className="text-lg font-bold text-slate-800 tracking-tight">Radar</h1>
+              {isToday ? (
+                <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-600 text-xs font-semibold px-2.5 py-1 rounded-full border border-emerald-100">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse inline-block" />
+                  Ao Vivo
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 bg-slate-100 text-slate-500 text-xs font-semibold px-2.5 py-1 rounded-full border border-slate-200">
+                  <Icon name="calendar" size={11} /> Histórico
+                </span>
+              )}
             </div>
-            <p className="text-xs mt-0.5 ml-10" style={{color:"#475569"}}>
-              Monitoramento em tempo real · Leads PJ · Treinamentos Corporativos
-            </p>
+            <p className="text-xs text-slate-400 mt-0.5 ml-9">Monitoramento em tempo real · Leads PJ · Treinamentos Corporativos</p>
           </div>
-          <div className="flex items-center gap-2">
-            {lastUpd && <span className="text-xs" style={{color:"#334155"}}>Atualizado {lastUpd}</span>}
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {lastUpd && <span className="text-xs text-slate-400">Atualizado {lastUpd}</span>}
+
+            <DateNav dateFilter={dateFilter} setDateFilter={changeDate} availableDates={availableDates} />
+
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{color:"#334155"}}>
-                <Icon name="search" size={12} />
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                <Icon name="search" size={13} />
               </span>
               <input value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Nome, empresa ou telefone…"
-                className="pl-8 pr-3 py-2 text-sm rounded-lg w-56 transition-all focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
-                style={{background:"rgba(148,163,184,.07)", border:"1px solid rgba(148,163,184,.1)", color:"#cbd5e1"}} />
+                className="pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:bg-white w-52 transition-all" />
             </div>
-            <button onClick={fetchData}
-              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all hover:opacity-80"
-              style={{background:"rgba(99,102,241,.15)", color:"#818cf8", border:"1px solid rgba(99,102,241,.25)"}}>
-              <Icon name="refresh-cw" size={12} /> Atualizar
-            </button>
+
+            {isToday && (
+              <button onClick={() => fetchData(dateFilter)}
+                className="flex items-center gap-1.5 text-xs text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-2 rounded-lg hover:bg-indigo-100 transition-colors font-semibold">
+                <Icon name="refresh-cw" size={13} /> Atualizar
+              </button>
+            )}
+
             <a href={window.location.pathname.replace(/\/radar.*$/, "/admin")}
-              className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg transition-all hover:opacity-80"
-              style={{background:"rgba(148,163,184,.07)", color:"#64748b", border:"1px solid rgba(148,163,184,.1)"}}>
-              <Icon name="settings" size={12} /> Admin
+              className="flex items-center gap-1.5 text-xs text-slate-500 bg-white border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
+              <Icon name="settings" size={13} /> Admin
             </a>
             <a href={window.location.pathname.replace(/\/radar.*$/, "/radar/logout")}
-              className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg transition-all hover:opacity-80"
-              style={{background:"rgba(148,163,184,.07)", color:"#64748b", border:"1px solid rgba(148,163,184,.1)"}}>
-              <Icon name="log-out" size={12} /> Sair
+              className="flex items-center gap-1.5 text-xs text-slate-500 bg-white border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
+              <Icon name="log-out" size={13} /> Sair
             </a>
           </div>
         </div>
       </header>
 
       <div className="px-6 py-5 space-y-4">
-
-        {/* ── KPIs ── */}
+        {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-          <KpiCard iconName="users"          label="Leads hoje"    value={kpis.total}       color="text-indigo-400" />
-          <KpiCard iconName="flame"          label="Quentes"       value={kpis.quentes}     color="text-red-400" />
-          <KpiCard iconName="bot"            label="Com o bot"     value={kpis.bot}         color="text-violet-400" />
-          <KpiCard iconName="arrow-up-right" label="Transferidos"  value={kpis.transferido} color="text-orange-400" />
-          <KpiCard iconName="phone-call"     label="Com consultor" value={kpis.humano}      color="text-blue-400" />
-          <KpiCard iconName="alert-circle"   label="SLA crítico"   value={kpis.parados}     urgent={kpis.parados > 0} />
-          <KpiCard iconName="check-circle"   label="Qualificados"  value={kpis.qualificado} color="text-emerald-400" />
-          <KpiCard iconName="building-2"     label="Locação"       value={kpis.locacao}     color="text-teal-400" />
+          <KpiCard iconName="users"          label={isToday?"Leads hoje":"Total do dia"} value={kpis.total}       color="text-indigo-600" />
+          <KpiCard iconName="flame"          label="Quentes"       value={kpis.quentes}     color="text-red-500" />
+          <KpiCard iconName="bot"            label="Com o bot"     value={kpis.bot}         color="text-violet-600" />
+          <KpiCard iconName="arrow-up-right" label="Transferidos"  value={kpis.transferido} color="text-orange-500" />
+          <KpiCard iconName="phone-call"     label="Com consultor" value={kpis.humano}      color="text-blue-600" />
+          <KpiCard iconName="alert-circle"   label="SLA crítico"   value={kpis.parados}     urgent={isToday && kpis.parados > 0} />
+          <KpiCard iconName="check-circle"   label="Qualificados"  value={kpis.qualificado} color="text-emerald-600" />
+          <KpiCard iconName="building-2"     label="Locação"       value={kpis.locacao}     color="text-teal-600" />
         </div>
 
-        {/* ── Filtros ── */}
-        <div className="rounded-xl px-4 py-3"
-          style={{background:"rgba(15,23,42,.8)", border:"1px solid rgba(148,163,184,.08)"}}>
+        {/* Filtros */}
+        <div className="bg-white rounded-xl border border-slate-100 px-4 py-3 shadow-sm">
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="flex items-center gap-1.5 text-xs font-medium" style={{color:"#475569"}}>
+            <span className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
               <Icon name="filter" size={12} /> Filtros
               {activeFilters > 0 && (
                 <span className="w-4 h-4 bg-indigo-500 text-white rounded-full text-xs font-bold flex items-center justify-center">{activeFilters}</span>
               )}
             </span>
-            <div className="w-px h-4" style={{background:"rgba(148,163,184,.1)"}} />
+            <div className="w-px h-4 bg-slate-200" />
 
             {["quente","morno","frio"].map(t => {
               const cfg = getTempConfig(t);
               const on  = filters.temp === t;
               return (
                 <button key={t} onClick={() => setFilter("temp", t)}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
-                  style={on
-                    ? {background:"rgba(99,102,241,.15)", color:"#a5b4fc", border:"1px solid rgba(99,102,241,.3)"}
-                    : {background:"rgba(148,163,184,.05)", color:"#475569", border:"1px solid rgba(148,163,184,.1)"}
-                  }>
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${on?`${cfg.cls} border-current shadow-sm`:"bg-white text-slate-500 border-slate-200 hover:border-slate-300"}`}>
                   <Icon name={getTempIcon(t)} size={11} />{cfg.label}
                 </button>
               );
             })}
 
-            <div className="w-px h-4" style={{background:"rgba(148,163,184,.1)"}} />
+            <div className="w-px h-4 bg-slate-200" />
 
             {[["bot","Bot"],["transferido","Transferido"],["consultor","Consultor"]].map(([v,l]) => (
               <button key={v} onClick={() => setFilter("quem", v)}
-                className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
-                style={filters.quem===v
-                  ? {background:"rgba(99,102,241,.15)", color:"#a5b4fc", border:"1px solid rgba(99,102,241,.3)"}
-                  : {background:"rgba(148,163,184,.05)", color:"#475569", border:"1px solid rgba(148,163,184,.1)"}
-                }>
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${filters.quem===v?"bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm":"bg-white text-slate-500 border-slate-200 hover:border-slate-300"}`}>
                 {l}
               </button>
             ))}
 
-            <div className="w-px h-4" style={{background:"rgba(148,163,184,.1)"}} />
+            <div className="w-px h-4 bg-slate-200" />
 
             {[["alto","Score 70+"],["baixo","Score <50"]].map(([v,l]) => (
               <button key={v} onClick={() => setFilter("score", v)}
-                className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
-                style={filters.score===v
-                  ? {background:"rgba(148,163,184,.15)", color:"#e2e8f0", border:"1px solid rgba(148,163,184,.25)"}
-                  : {background:"rgba(148,163,184,.05)", color:"#475569", border:"1px solid rgba(148,163,184,.1)"}
-                }>
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${filters.score===v?"bg-slate-800 text-white border-slate-800 shadow-sm":"bg-white text-slate-500 border-slate-200 hover:border-slate-300"}`}>
                 {l}
               </button>
             ))}
 
             {activeFilters > 0 && (
               <button onClick={() => setFilters({temp:"",quem:"",score:""})}
-                className="ml-auto flex items-center gap-1 text-xs transition-colors hover:opacity-80"
-                style={{color:"#475569"}}>
+                className="ml-auto flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors">
                 <Icon name="x" size={11} /> Limpar
               </button>
             )}
           </div>
         </div>
 
-        {/* ── Tabela ── */}
-        <div className="rounded-xl overflow-hidden"
-          style={{background:"rgba(15,23,42,.8)", border:"1px solid rgba(148,163,184,.08)"}}>
-          <div className="flex items-center justify-between px-4 py-3"
-            style={{borderBottom:"1px solid rgba(148,163,184,.06)"}}>
-            <span className="text-sm font-semibold" style={{color:"#64748b"}}>
+        {/* Tabela */}
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+            <span className="text-sm font-semibold text-slate-600">
               {loading ? "Carregando…" : `${filtered.length} lead${filtered.length!==1?"s":""}`}
-              {!loading && activeFilters > 0 && <span style={{color:"#334155", fontWeight:400}}> filtrados</span>}
+              {!loading && activeFilters > 0 && <span className="text-slate-400 font-normal"> filtrados</span>}
             </span>
-            <span className="text-xs" style={{color:"#334155"}}>Clique em uma linha para ver detalhes</span>
+            <span className="text-xs text-slate-400">Clique em uma linha para ver detalhes</span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead style={{borderBottom:"1px solid rgba(148,163,184,.06)"}}>
-                <tr style={{background:"rgba(8,14,26,.6)"}}>
+              <thead className="bg-slate-50/80 border-b border-slate-100">
+                <tr>
                   <Th col="hora">Hora</Th>
                   <Th>Nome / Empresa</Th>
                   <Th>Telefone</Th>
@@ -512,87 +584,67 @@ function Radar() {
                   <Th col="sla_min">SLA</Th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-50">
                 {loading ? (
-                  <tr>
-                    <td colSpan={12} className="py-14 text-center text-sm" style={{color:"#334155"}}>
-                      Carregando leads…
-                    </td>
-                  </tr>
+                  <tr><td colSpan={12} className="py-14 text-center text-slate-400 text-sm">Carregando leads…</td></tr>
                 ) : filtered.length === 0 ? (
                   <tr>
                     <td colSpan={12} className="py-14 text-center">
-                      <div className="flex justify-center mb-3">
-                        <Icon name="message-square" size={28} className="opacity-20" style={{color:"#64748b"}} />
-                      </div>
-                      <p className="text-sm" style={{color:"#334155"}}>Nenhum lead encontrado.</p>
+                      <div className="flex justify-center mb-2"><Icon name="message-square" size={28} className="text-slate-300" /></div>
+                      <p className="text-sm text-slate-400">Nenhum lead em {formatDateLabel(dateFilter).toLowerCase()}.</p>
                     </td>
                   </tr>
-                ) : filtered.map((lead, idx) => {
+                ) : filtered.map(lead => {
                   const temp = getTempConfig(lead.temp);
                   const sla  = slaConfig(lead.sla_min);
-                  const isSelected = selected?.id === lead.id;
-                  const isCritical = lead.sla_min > 25;
                   return (
                     <tr key={lead.id} onClick={() => setSelected(lead)}
-                      className="cursor-pointer transition-colors"
-                      style={{
-                        borderBottom: "1px solid rgba(148,163,184,.04)",
-                        background: isSelected
-                          ? "rgba(99,102,241,.08)"
-                          : isCritical
-                          ? "rgba(239,68,68,.03)"
-                          : idx%2===0 ? "transparent" : "rgba(148,163,184,.02)"
-                      }}
-                      onMouseEnter={e => { if(!isSelected) e.currentTarget.style.background="rgba(99,102,241,.05)" }}
-                      onMouseLeave={e => { e.currentTarget.style.background = isSelected ? "rgba(99,102,241,.08)" : isCritical ? "rgba(239,68,68,.03)" : idx%2===0 ? "transparent" : "rgba(148,163,184,.02)" }}
-                    >
-                      <td className="px-3 py-3">
-                        <span className="font-mono text-xs px-1.5 py-0.5 rounded"
-                          style={{background:"rgba(148,163,184,.08)", color:"#64748b"}}>{lead.hora}</span>
+                      className={`cursor-pointer transition-colors hover:bg-indigo-50/40 ${isToday && lead.sla_min>25?"bg-red-50/20":""} ${selected?.id===lead.id?"bg-indigo-50/60":""}`}>
+                      <td className="px-3 py-3.5">
+                        <span className="font-mono text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{lead.hora}</span>
                       </td>
-                      <td className="px-3 py-3" style={{minWidth:160}}>
-                        <div className="font-semibold text-sm truncate" style={{maxWidth:150, color:"#e2e8f0"}} title={lead.nome}>{lead.nome}</div>
-                        <div className="text-xs mt-0.5 flex items-center gap-1 truncate" style={{maxWidth:150, color:"#475569"}}>
+                      <td className="px-3 py-3.5 min-w-[160px]">
+                        <div className="font-semibold text-slate-800 text-sm truncate max-w-[150px]" title={lead.nome}>{lead.nome}</div>
+                        <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-1 truncate max-w-[150px]">
                           <Icon name="building-2" size={10} />{lead.empresa}
                         </div>
                       </td>
-                      <td className="px-3 py-3">
-                        <span className="font-mono text-xs" style={{color:"#475569"}}>{lead.telefone}</span>
+                      <td className="px-3 py-3.5">
+                        <span className="font-mono text-xs text-slate-500">{lead.telefone}</span>
                       </td>
-                      <td className="px-3 py-3" style={{maxWidth:130}}>
-                        <span className="text-xs font-medium truncate block" style={{color:"#94a3b8"}} title={lead.tema}>{lead.tema}</span>
+                      <td className="px-3 py-3.5 max-w-[130px]">
+                        <span className="text-xs text-slate-700 font-medium truncate block" title={lead.tema}>{lead.tema}</span>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-3.5">
                         <Badge className={getTipoCls(lead.tipo)}>{lead.tipo}</Badge>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-3.5">
                         <Badge className={getFormatoCls(lead.formato)}>{lead.formato}</Badge>
                       </td>
-                      <td className="px-3 py-3">
-                        <Badge className={temp.cls}>
+                      <td className="px-3 py-3.5">
+                        <Badge className={`${temp.cls} border`}>
                           <Icon name={getTempIcon(lead.temp)} size={10} />{temp.label}
                         </Badge>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-3.5">
                         <div className="flex items-center gap-1.5">
                           <span className={`text-sm font-bold tabular-nums ${scoreColor(lead.score)}`}>{lead.score}</span>
-                          <div className="w-8 h-1.5 rounded-full overflow-hidden" style={{background:"rgba(148,163,184,.1)"}}>
+                          <div className="w-8 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                             <div className={`h-full rounded-full ${scoreBg(lead.score)}`} style={{width:`${lead.score}%`}} />
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap">
+                      <td className="px-3 py-3.5 whitespace-nowrap">
                         <Badge className={getStatusCls(lead.status)}>{lead.status}</Badge>
                       </td>
-                      <td className="px-3 py-3" style={{maxWidth:160}}>
-                        <span className="text-xs truncate block" style={{color:"#64748b"}} title={lead.proximo_passo}>{lead.proximo_passo}</span>
+                      <td className="px-3 py-3.5 max-w-[160px]">
+                        <span className="text-xs text-slate-600 truncate block" title={lead.proximo_passo}>{lead.proximo_passo}</span>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-3.5">
                         <QuemIcon quem={lead.quem} />
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold ${sla.bg} ${sla.cls}`}>
+                      <td className="px-3 py-3.5 whitespace-nowrap">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${sla.bg} ${sla.cls}`}>
                           <Icon name="clock" size={10} />{sla.label}
                         </span>
                       </td>
@@ -604,17 +656,17 @@ function Radar() {
           </div>
 
           {!loading && filtered.length > 0 && (
-            <div className="px-4 py-2.5 flex items-center justify-between"
-              style={{borderTop:"1px solid rgba(148,163,184,.06)"}}>
-              <span className="text-xs" style={{color:"#334155"}}>Auto-atualiza a cada 30s</span>
-              <span className="text-xs" style={{color:"#334155"}}>
+            <div className="px-4 py-2.5 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-xs text-slate-400">
+                {isToday ? "Auto-atualiza a cada 30s" : `Dados de ${formatDateLabel(dateFilter)}`}
+              </span>
+              <span className="text-xs text-slate-400">
                 {filtered.filter(l=>l.temp==="quente").length} quentes ·{" "}
-                {filtered.filter(l=>l.sla_min>25).length} SLA crítico
+                {isToday ? `${filtered.filter(l=>l.sla_min>25).length} SLA crítico` : `${filtered.filter(l=>l.status==="Qualificado").length} qualificados`}
               </span>
             </div>
           )}
         </div>
-
       </div>
 
       {selected && <Drawer lead={selected} onClose={() => setSelected(null)} />}

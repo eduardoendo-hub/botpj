@@ -10,7 +10,7 @@ import secrets
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any
 
-from fastapi import APIRouter, Request, Form
+from fastapi import APIRouter, Request, Form, Query
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.status import HTTP_303_SEE_OTHER
@@ -235,20 +235,64 @@ async def radar_page(request: Request):
     return templates.TemplateResponse("radar.html", {"request": request})
 
 
+def _lead_date_brt(lead: dict) -> str:
+    """Retorna a data do lead em BRT (YYYY-MM-DD), ou string vazia."""
+    created_at = lead.get("created_at")
+    if not created_at:
+        return ""
+    try:
+        dt = datetime.fromisoformat(str(created_at).replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(_BRT).date().isoformat()
+    except Exception:
+        return ""
+
+
 @router.get("/data")
-async def radar_data(request: Request):
+async def radar_data(
+    request: Request,
+    date: str = Query(default=None, description="Data no formato YYYY-MM-DD (BRT). Padrão: hoje."),
+):
     """API JSON que alimenta o Radar com dados reais do banco."""
     await _require_auth(request)
 
-    leads_raw = await get_all_leads()
-    result: List[Dict[str, Any]] = []
+    # Data-alvo (BRT)
+    today_brt = datetime.now(_BRT).date()
+    if date:
+        try:
+            target_date = datetime.strptime(date, "%Y-%m-%d").date()
+        except ValueError:
+            target_date = today_brt
+    else:
+        target_date = today_brt
 
+    leads_raw = await get_all_leads()
+
+    # Datas disponíveis (últimos 30 dias com dados)
+    available_dates: set = set()
     for lead in leads_raw:
+        d = _lead_date_brt(dict(lead))
+        if d:
+            available_dates.add(d)
+
+    result: List[Dict[str, Any]] = []
+    for lead in leads_raw:
+        # Filtrar pelo dia solicitado
+        if _lead_date_brt(dict(lead)) != target_date.isoformat():
+            continue
         phone   = lead.get("phone_number", "")
         session = await get_bot_session(phone)
         result.append(_normalize_lead(dict(lead), dict(session) if session else None))
 
-    # Ordenar por created_at desc (mais recentes primeiro)
+    # Ordenar por hora desc (mais recentes primeiro)
     result.sort(key=lambda x: x.get("hora", ""), reverse=True)
 
-    return JSONResponse({"leads": result, "total": len(result)})
+    sorted_dates = sorted(available_dates, reverse=True)[:30]
+
+    return JSONResponse({
+        "leads":           result,
+        "total":           len(result),
+        "date":            target_date.isoformat(),
+        "available_dates": sorted_dates,
+    })
