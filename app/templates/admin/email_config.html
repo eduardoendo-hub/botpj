@@ -78,7 +78,7 @@
   </ol>
 </div>
 
-<form method="POST" action="/admin/email-config/save">
+<form method="POST" action="{{ prefix }}/admin/email-config/save">
   <div class="card">
 
     <!-- ── LIGA/DESLIGA ── -->
@@ -150,7 +150,7 @@
   <div class="save-bar">
     <button type="submit" class="btn btn-primary">💾 Salvar configurações</button>
     <button type="button" class="btn btn-secondary" onclick="testEmail()">🧪 Enviar email de teste</button>
-    <a href="/admin" class="btn btn-secondary">Cancelar</a>
+    <a href="{{ prefix }}/admin" class="btn btn-secondary">Cancelar</a>
   </div>
 
   <div id="testResult" class="test-result"></div>
@@ -166,7 +166,7 @@ async function testEmail() {
   result.style.display = 'none';
 
   try {
-    const resp = await fetch('/admin/email-config/test', { method: 'POST' });
+    const resp = await fetch(`${prefix}/admin/email-config/test`, { method: 'POST' });
     const data = await resp.json();
     if (data.ok) {
       result.className = 'test-result ok';

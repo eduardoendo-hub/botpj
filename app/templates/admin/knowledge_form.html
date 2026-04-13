@@ -83,7 +83,7 @@
     </div>
 
     <!-- ABA: Formulário Manual -->
-    <form method="post" action="/admin/knowledge/save" id="main-form">
+    <form method="post" action="{{ prefix }}/admin/knowledge/save" id="main-form">
         {% if item %}
         <input type="hidden" name="item_id" value="{{ item.id }}">
         {% endif %}
@@ -132,7 +132,7 @@
 
         <div class="actions">
             <button type="submit" class="btn btn-primary">Salvar</button>
-            <a href="/admin/knowledge" class="btn btn-secondary">Cancelar</a>
+            <a href="{{ prefix }}/admin/knowledge" class="btn btn-secondary">Cancelar</a>
         </div>
     </form>
 </div>
@@ -169,7 +169,7 @@
         document.getElementById('url-preview').style.display = 'none';
 
         try {
-            const res = await fetch('/admin/knowledge/fetch-url', {
+            const res = await fetch(`${prefix}/admin/knowledge/fetch-url`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url })

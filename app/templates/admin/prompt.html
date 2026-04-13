@@ -18,7 +18,7 @@
         Ele é enviado junto com cada conversa para guiar as respostas da IA.
     </p>
 
-    <form method="post" action="/admin/prompt/save">
+    <form method="post" action="{{ prefix }}/admin/prompt/save">
         <div class="field">
             <label>System Prompt</label>
             <textarea name="prompt" style="min-height: 400px; font-family: monospace; font-size: 13px; line-height: 1.6;">{{ prompt }}</textarea>
@@ -26,7 +26,7 @@
 
         <div class="actions">
             <button type="submit" class="btn btn-primary">💾 Salvar Alterações</button>
-            <a href="/admin" class="btn btn-secondary">Cancelar</a>
+            <a href="{{ prefix }}/admin" class="btn btn-secondary">Cancelar</a>
         </div>
     </form>
 </div>

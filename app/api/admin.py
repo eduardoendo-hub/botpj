@@ -61,6 +61,7 @@ _jinja_env = Environment(
     auto_reload=True,
 )
 _jinja_env.filters["brt"] = _to_brt
+_jinja_env.globals["prefix"] = "/pj"   # prefixo nginx — garante links corretos em todos os templates
 templates = Jinja2Templates(env=_jinja_env)
 
 

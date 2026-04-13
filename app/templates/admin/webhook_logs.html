@@ -32,7 +32,7 @@
 
 <div class="header">
     <h1>📡 Webhook Logs</h1>
-    <a href="/admin/webhook-logs" class="btn btn-secondary refresh-btn">🔄 Atualizar</a>
+    <a href="{{ prefix }}/admin/webhook-logs" class="btn btn-secondary refresh-btn">🔄 Atualizar</a>
 </div>
 
 <!-- Info sobre endpoints -->
@@ -45,7 +45,7 @@
 </div>
 
 <!-- Filtro -->
-<form method="get" action="/admin/webhook-logs">
+<form method="get" action="{{ prefix }}/admin/webhook-logs">
     <div class="filter-bar">
         <input type="text" name="phone" placeholder="Filtrar por número (ex: 5511999...)"
                value="{{ filter_phone }}" />
@@ -56,7 +56,7 @@
         </select>
         <button type="submit" class="btn btn-primary">Filtrar</button>
         {% if filter_phone %}
-        <a href="/admin/webhook-logs" class="btn btn-secondary">Limpar filtro</a>
+        <a href="{{ prefix }}/admin/webhook-logs" class="btn btn-secondary">Limpar filtro</a>
         {% endif %}
     </div>
 </form>
@@ -112,7 +112,7 @@
             </td>
             <td>
                 {% if log.phone_number %}
-                <a class="phone-link" href="/admin/webhook-logs?phone={{ log.phone_number }}">
+                <a class="phone-link" href="{{ prefix }}/admin/webhook-logs?phone={{ log.phone_number }}">
                     {{ log.phone_number }}
                 </a>
                 {% else %}—{% endif %}
@@ -146,7 +146,7 @@
 {% if filter_phone %}
 <div style="margin-top: 12px; font-size: 14px; color: #6b7280;">
     Ver histórico de conversa deste número →
-    <a href="/admin/conversations/{{ filter_phone }}" style="color:#4f46e5;">
+    <a href="{{ prefix }}/admin/conversations/{{ filter_phone }}" style="color:#4f46e5;">
         /admin/conversations/{{ filter_phone }}
     </a>
 </div>

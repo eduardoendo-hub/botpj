@@ -65,7 +65,7 @@
 <div class="alert alert-success">✅ Configurações salvas com sucesso!</div>
 {% endif %}
 
-<form method="POST" action="/admin/bot-config/save">
+<form method="POST" action="{{ prefix }}/admin/bot-config/save">
 
   <!-- ── LIGA/DESLIGA GERAL ── -->
   <div class="big-toggle-card">
@@ -211,7 +211,7 @@
 
   <div class="save-bar">
     <button type="submit" class="btn btn-primary">💾 Salvar configurações</button>
-    <a href="/admin" class="btn btn-secondary">Cancelar</a>
+    <a href="{{ prefix }}/admin" class="btn btn-secondary">Cancelar</a>
   </div>
 
 </form>

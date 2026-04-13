@@ -28,7 +28,7 @@
 
 <div class="header">
     <h1>🏢 Leads PJ Capturados</h1>
-    <a href="/admin/leads/export" class="btn btn-secondary export-btn">⬇️ Exportar CSV</a>
+    <a href="{{ prefix }}/admin/leads/export" class="btn btn-secondary export-btn">⬇️ Exportar CSV</a>
 </div>
 
 <div class="card" style="padding: 14px 20px; background: #f0fdf4; border: 1px solid #86efac; margin-bottom: 20px;">
@@ -64,7 +64,7 @@
             {% for lead in leads %}
             <tr>
                 <td>
-                  <a href="/admin/conversations/{{ lead.phone_number }}"
+                  <a href="{{ prefix }}/admin/conversations/{{ lead.phone_number }}"
                      style="color:#4f46e5; text-decoration:none; font-weight:500; font-family:monospace; font-size:12px;">
                     {{ lead.phone_number }}
                   </a>

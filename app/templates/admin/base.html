@@ -86,6 +86,7 @@
         .alert-success { background: #d1fae5; color: #065f46; }
         .alert-error { background: #fee2e2; color: #991b1b; }
     </style>
+<script>const prefix = "{{ prefix }}";</script>
 </head>
 <body>
     <div class="sidebar" id="sidebar">
@@ -94,28 +95,28 @@
             <br><span class="label" style="font-size:11px; color:#6b7280; font-weight:400;">Treinamentos Corporativos</span>
         </h2>
         <nav>
-            <a href="/admin" class="{% if active_page == 'dashboard' %}active{% endif %}">
+            <a href="{{ prefix }}/admin" class="{% if active_page == 'dashboard' %}active{% endif %}">
                 <span class="icon">📊</span><span class="label"> Dashboard</span>
             </a>
-            <a href="/admin/knowledge" class="{% if active_page == 'knowledge' %}active{% endif %}">
+            <a href="{{ prefix }}/admin/knowledge" class="{% if active_page == 'knowledge' %}active{% endif %}">
                 <span class="icon">📚</span><span class="label"> Base de Conhecimento</span>
             </a>
-            <a href="/admin/conversations" class="{% if active_page == 'conversations' %}active{% endif %}">
+            <a href="{{ prefix }}/admin/conversations" class="{% if active_page == 'conversations' %}active{% endif %}">
                 <span class="icon">💬</span><span class="label"> Conversas</span>
             </a>
-            <a href="/admin/leads" class="{% if active_page == 'leads' %}active{% endif %}">
+            <a href="{{ prefix }}/admin/leads" class="{% if active_page == 'leads' %}active{% endif %}">
                 <span class="icon">🏢</span><span class="label"> Leads PJ</span>
             </a>
-            <a href="/admin/prompt" class="{% if active_page == 'prompt' %}active{% endif %}">
+            <a href="{{ prefix }}/admin/prompt" class="{% if active_page == 'prompt' %}active{% endif %}">
                 <span class="icon">🤖</span><span class="label"> Prompt do Sistema</span>
             </a>
-            <a href="/admin/bot-config" class="{% if active_page == 'bot_config' %}active{% endif %}">
+            <a href="{{ prefix }}/admin/bot-config" class="{% if active_page == 'bot_config' %}active{% endif %}">
                 <span class="icon">⚙️</span><span class="label"> Configurações</span>
             </a>
-            <a href="/admin/email-config" class="{% if active_page == 'email_config' %}active{% endif %}">
+            <a href="{{ prefix }}/admin/email-config" class="{% if active_page == 'email_config' %}active{% endif %}">
                 <span class="icon">📧</span><span class="label"> Notificações Email</span>
             </a>
-            <a href="/admin/webhook-logs" class="{% if active_page == 'webhook_logs' %}active{% endif %}">
+            <a href="{{ prefix }}/admin/webhook-logs" class="{% if active_page == 'webhook_logs' %}active{% endif %}">
                 <span class="icon">📡</span><span class="label"> Webhook Logs</span>
             </a>
             <a href="/test" target="_blank">
@@ -123,7 +124,7 @@
             </a>
         </nav>
         <div class="logout">
-            <a href="/admin/logout"><span class="icon">🚪</span><span class="label"> Sair do painel</span></a>
+            <a href="{{ prefix }}/admin/logout"><span class="icon">🚪</span><span class="label"> Sair do painel</span></a>
         </div>
     </div>
     <button class="sidebar-toggle" id="sidebarToggle" title="Recolher menu">◀</button>
