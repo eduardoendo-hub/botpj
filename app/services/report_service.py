@@ -397,7 +397,12 @@ async def send_report_whatsapp(
                     "name":              template_name,
                     "languageCode":      language_code,
                     "schedulingMessage": True,
-                    "components":        components,
+                    # Variáveis do corpo do template ({{1}}, {{2}}, {{3}})
+                    "variables": [
+                        report.get("sec1", ""),
+                        report.get("sec2", ""),
+                        report.get("sec3", ""),
+                    ],
                 }
                 resp = await client.post(
                     f"{_SPARKS_BASE}/waba/sendTemplate",
