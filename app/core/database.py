@@ -191,6 +191,14 @@ async def init_db():
             ("test_phone_numbers",            "",      "Números de teste",                   "Números separados por vírgula que SEMPRE recebem resposta do bot (ignora horário)"),
             # ── Encaminhamento para fila ────────────────────────────────
             ("escalation_flow_id",            "",      "ID do fluxo de escalonamento",       "ID do fluxo RD Conversas para onde o lead é encaminhado após qualificação (POST /v2/forward-to-customer)"),
+            # ── Relatório diário WhatsApp ────────────────────────────────
+            ("chatpro_token",      "f2da0b5d-2650-456f-b77f-49f8d8406be6", "ChatPro token",            "instance-token da instância sparks.chatpro.com.br"),
+            ("chatpro_instance_id","chatpro-71f6d6f880",                   "ChatPro instance ID",       "ID da instância ChatPro"),
+            ("chatpro_url",        "",                                      "ChatPro URL (legado)",      "Não utilizado — envio usa Sparks diretamente"),
+            ("report_recipients",     "",     "Destinatários do relatório",  "Números WhatsApp da diretoria, um por linha (ex: 5511999998888)"),
+            ("report_hour",          "18",   "Horário do relatório",         "Hora (BRT) em que o relatório diário é enviado automaticamente"),
+            ("report_template_name", "",     "Nome do template WABA",        "Nome exato do template aprovado no Meta Business Manager para o relatório diário"),
+            ("report_language_code", "pt_BR","Idioma do template",           "Código de idioma do template (ex: pt_BR, en_US)"),
         ]
         for key, val, label, desc in defaults:
             await db.execute(

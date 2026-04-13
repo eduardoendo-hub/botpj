@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Relatório Diário · Bot SDR PJ{% endblock %}
+{% block content %}
+<div class="header">
+  <h1>📨 Relatório Diário</h1>
+  <div style="display:flex;gap:10px;align-items:center">
+    <button class="btn btn-secondary" onclick="refreshPreview()" id="btn-refresh">↻ Atualizar prévia</button>
+    <button class="btn btn-primary" onclick="sendReport()" id="btn-send">Enviar agora</button>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start">
+
+  <!-- Prévia da mensagem -->
+  <div class="card">
+    <h3 style="margin-bottom:14px;font-size:15px;color:#374151">Prévia da mensagem WhatsApp</h3>
+    <div id="preview-box" style="
+      background:#e5ddd5;border-radius:10px;padding:20px;
+      font-family:'Segoe UI',sans-serif;font-size:13.5px;line-height:1.65;
+      white-space:pre-wrap;word-break:break-word;min-height:300px;
+      color:#111;position:relative;
+    ">{{ report_text }}</div>
+    <p id="preview-ts" style="font-size:11px;color:#9ca3af;margin-top:8px">
+      Gerado em: <span id="ts-val">agora</span>
+    </p>
+  </div>
+
+  <!-- Configurações -->
+  <div>
+    <div class="card">
+      <h3 style="margin-bottom:16px;font-size:15px;color:#374151">⚙️ Configuração ChatPro</h3>
+
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;font-weight:600;color:#6b7280;display:block;margin-bottom:4px">URL de envio</label>
+        <input id="cfg-url" type="text" value="{{ chatpro_url }}"
+          placeholder="https://api.chatpro.com.br/instance/XXXX/sendText"
+          style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px">
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;font-weight:600;color:#6b7280;display:block;margin-bottom:4px">Token de autenticação</label>
+        <input id="cfg-token" type="password" value="{{ chatpro_token }}"
+          placeholder="f2da0b5d-2650-456f-b77f-49f8d8406be6"
+          style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px">
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;font-weight:600;color:#6b7280;display:block;margin-bottom:4px">
+          Nome do template WABA
+          <button type="button" onclick="listTemplates()" style="margin-left:8px;font-size:11px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:4px;padding:2px 8px;cursor:pointer;color:#374151">
+            📋 Listar templates
+          </button>
+        </label>
+        <input id="cfg-template" type="text" value="{{ chatpro_template_name|default('') }}"
+          placeholder="ex: radar_pj_diretoria"
+          style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px">
+        <div id="template-list" style="display:none;margin-top:6px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px;font-size:12px;max-height:160px;overflow-y:auto"></div>
+        <span style="font-size:11px;color:#9ca3af">Nome exato do template aprovado no Meta Business Manager</span>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;font-weight:600;color:#6b7280;display:block;margin-bottom:4px">Idioma do template</label>
+        <input id="cfg-lang" type="text" value="{{ chatpro_language_code|default('pt_BR') }}"
+          placeholder="pt_BR"
+          style="width:140px;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px">
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;font-weight:600;color:#6b7280;display:block;margin-bottom:4px">Destinatários (um por linha)</label>
+        <textarea id="cfg-recipients" rows="4"
+          placeholder="5511999998888&#10;5511988887777"
+          style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;resize:vertical">{{ report_recipients }}</textarea>
+        <span style="font-size:11px;color:#9ca3af">Formato: 55 + DDD + número (sem espaços)</span>
+      </div>
+
+      <div style="margin-bottom:18px">
+        <label style="font-size:12px;font-weight:600;color:#6b7280;display:block;margin-bottom:4px">Horário de envio automático</label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input id="cfg-hour" type="number" min="0" max="23" value="{{ report_hour }}"
+            style="width:70px;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px">
+          <span style="font-size:13px;color:#6b7280">h (horário de Brasília)</span>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%" onclick="saveConfig()">Salvar configurações</button>
+      <div id="cfg-msg" style="margin-top:10px;font-size:12px;text-align:center;min-height:18px"></div>
+    </div>
+
+    <div class="card" style="margin-top:0">
+      <h3 style="margin-bottom:10px;font-size:14px;color:#374151">ℹ️ Lógica dos pontos de atenção</h3>
+      <ul style="font-size:12px;color:#6b7280;line-height:1.8;padding-left:16px">
+        <li>Lead <strong>quente</strong> parado há +4h sem resposta</li>
+        <li>Lead <strong>transferido</strong> há +6h sem consultor</li>
+        <li>Lead <strong>morno</strong> sem contato há +24h (risco de esfriar)</li>
+        <li>Leads com <strong>+10 participantes</strong> em qualificação</li>
+        <li>Máximo de 3 alertas por dia</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div id="send-result" style="display:none" class="card">
+  <div id="send-result-text" style="font-size:14px"></div>
+</div>
+
+<script>
+const prefix = "{{ prefix }}";
+
+function refreshPreview() {
+  const btn = document.getElementById('btn-refresh');
+  btn.disabled = true; btn.textContent = '⏳ Atualizando...';
+  fetch(`${prefix}/admin/relatorio-diario/preview`)
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('preview-box').textContent = d.text;
+      const now = new Date().toLocaleTimeString('pt-BR');
+      document.getElementById('ts-val').textContent = now;
+    })
+    .catch(() => alert('Erro ao atualizar prévia.'))
+    .finally(() => { btn.disabled = false; btn.textContent = '↻ Atualizar prévia'; });
+}
+
+function saveConfig() {
+  const body = new URLSearchParams({
+    'chatpro_url':              document.getElementById('cfg-url').value.trim(),
+    'chatpro_token':            document.getElementById('cfg-token').value.trim(),
+    'report_template_name':     document.getElementById('cfg-template').value.trim(),
+    'report_language_code':     document.getElementById('cfg-lang').value.trim() || 'pt_BR',
+    'report_recipients':        document.getElementById('cfg-recipients').value.trim(),
+    'report_hour':              document.getElementById('cfg-hour').value,
+  });
+  fetch(`${prefix}/admin/bot-config/save`, { method:'POST', body })
+    .then(r => r.json())
+    .then(d => {
+      const el = document.getElementById('cfg-msg');
+      el.style.color = d.ok ? '#16a34a' : '#dc2626';
+      el.textContent = d.ok ? '✓ Configurações salvas!' : '✗ Erro ao salvar.';
+      setTimeout(() => el.textContent = '', 3000);
+    });
+}
+
+function listTemplates() {
+  const tl = document.getElementById('template-list');
+  tl.style.display = 'block';
+  tl.innerHTML = '⏳ Buscando templates...';
+  fetch(`${prefix}/admin/relatorio-diario/templates`)
+    .then(r => r.json())
+    .then(d => {
+      if (!d.ok || !d.templates.length) {
+        tl.innerHTML = '<span style="color:#dc2626">Nenhum template encontrado. Verifique o token e se há templates aprovados na instância.</span>';
+        return;
+      }
+      tl.innerHTML = d.templates.map(t => {
+        const name   = t.name || t.id || JSON.stringify(t);
+        const status = t.status ? ` <span style="color:${t.status==='APPROVED'?'#16a34a':'#d97706'}">(${t.status})</span>` : '';
+        const lang   = t.language || (t.components && t.components[0]?.example) || '';
+        return `<div style="padding:4px 0;border-bottom:1px solid #e5e7eb;cursor:pointer" onclick="document.getElementById('cfg-template').value='${name}';document.getElementById('template-list').style.display='none'">
+          <strong>${name}</strong>${status} ${lang ? '· '+lang : ''}
+        </div>`;
+      }).join('');
+    })
+    .catch(() => { tl.innerHTML = '<span style="color:#dc2626">Erro ao buscar templates.</span>'; });
+}
+
+function sendReport() {
+  const btn = document.getElementById('btn-send');
+  btn.disabled = true; btn.textContent = '⏳ Enviando...';
+  fetch(`${prefix}/admin/relatorio-diario/enviar`, { method:'POST' })
+    .then(r => r.json())
+    .then(d => {
+      const el = document.getElementById('send-result');
+      const txt = document.getElementById('send-result-text');
+      el.style.display = 'block';
+      txt.style.color = d.ok ? '#16a34a' : '#dc2626';
+      txt.textContent = (d.ok ? '✓ ' : '✗ ') + d.message;
+    })
+    .catch(() => alert('Erro ao enviar.'))
+    .finally(() => { btn.disabled = false; btn.textContent = 'Enviar agora'; });
+}
+</script>
+{% endblock %}

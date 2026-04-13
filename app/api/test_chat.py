@@ -82,13 +82,24 @@ async def test_page(request: Request):
                      font-size: 12px; font-family: monospace; width: 160px; }
   .badge-pj { background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 12px;
               font-size: 11px; font-weight: 600; margin-left: 4px; }
+  .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+                background: #6b7280; margin-left: 6px; vertical-align: middle;
+                flex-shrink: 0; transition: background 0.3s; }
+  .status-dot.online { background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.6);
+                       animation: pulse-green 2s infinite; }
+  .status-dot.offline { background: #ef4444; }
+  @keyframes pulse-green {
+    0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
+    70%  { box-shadow: 0 0 0 7px rgba(34,197,94,0); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  }
 </style>
 </head>
 <body>
 <div class="top-bar">
   <div class="avatar">🏢</div>
   <div class="info">
-    <h3>Bot SDR PJ <span class="badge-pj">Teste</span></h3>
+    <h3>Bot SDR PJ <span class="badge-pj">Teste</span><span id="status-dot" class="status-dot" title="Verificando..."></span></h3>
     <p>Departamento de Treinamentos Corporativos</p>
   </div>
   <div class="actions">
@@ -203,6 +214,27 @@ async def test_page(request: Request):
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   });
 
+  async function checkStatus() {
+    const dot = document.getElementById('status-dot');
+    try {
+      const res = await fetch('/pj/test/status');
+      const data = await res.json();
+      if (data.ok) {
+        dot.className = 'status-dot online';
+        dot.title = 'Bot online ✅';
+      } else {
+        dot.className = 'status-dot offline';
+        dot.title = 'Bot com problemas ⚠️';
+      }
+    } catch(e) {
+      dot.className = 'status-dot offline';
+      dot.title = 'Bot offline ❌';
+    }
+  }
+
+  checkStatus();
+  setInterval(checkStatus, 30000);
+
   reloadHistory();
 </script>
 </body>
@@ -291,3 +323,18 @@ async def test_clear(phone: str = TEST_PHONE):
     finally:
         await db.close()
     return {"status": "ok", "message": "Histórico limpo."}
+
+
+@router.get("/status")
+async def test_status():
+    """Retorna se o bot está operacional (usado pelo farol na interface de teste)."""
+    try:
+        db = await get_db()
+        try:
+            await db.execute("SELECT 1 FROM bot_config LIMIT 1")
+        finally:
+            await db.close()
+        return {"ok": True, "db": True}
+    except Exception as e:
+        logger.warning(f"[TEST][status] {e}")
+        return {"ok": False, "db": False, "error": str(e)}

@@ -21,6 +21,8 @@ from app.core.database import (
 )
 from app.services.tallos import tallos_service
 from app.services.url_fetcher import fetch_url_content
+from app.services.report_service import build_daily_report, send_report_whatsapp, list_waba_templates
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/admin")
@@ -543,4 +545,82 @@ async def webhook_logs_page(request: Request, phone: str = "", limit: int = 50):
         "logs": logs,
         "filter_phone": phone,
         "limit": limit,
+    })
+
+
+# ==================== Relatório Diário ====================
+
+@router.get("/relatorio-diario", response_class=HTMLResponse)
+async def relatorio_diario_page(request: Request):
+    await _require_auth(request)
+    report = await build_daily_report()
+    config = await get_bot_config_full()
+    cfg = {c["key"]: c["value"] for c in config}
+    return _r(request, "relatorio_diario.html", {
+        "active_page":           "relatorio_diario",
+        "report_text":           report["full"],
+        "chatpro_url":           cfg.get("chatpro_url", ""),
+        "chatpro_token":         cfg.get("chatpro_token", ""),
+        "report_recipients":     cfg.get("report_recipients", ""),
+        "report_hour":           cfg.get("report_hour", "18"),
+        "chatpro_template_name": cfg.get("report_template_name", "radarpj"),
+        "chatpro_language_code": cfg.get("report_language_code", "pt_BR"),
+    })
+
+
+@router.get("/relatorio-diario/templates")
+async def relatorio_listar_templates(request: Request):
+    """Lista templates WABA aprovados na instância ChatPro."""
+    await _require_auth(request)
+    config = await get_bot_config_full()
+    cfg = {c["key"]: c["value"] for c in config}
+    chatpro_token = cfg.get("chatpro_token", "").strip()
+    instance_id   = cfg.get("chatpro_instance_id", "chatpro-71f6d6f880").strip()
+    if not chatpro_token:
+        return JSONResponse({"ok": False, "templates": [], "message": "Token não configurado."})
+    templates = await list_waba_templates(chatpro_token, instance_id)
+    return JSONResponse({"ok": True, "templates": templates, "total": len(templates)})
+
+
+@router.get("/relatorio-diario/preview")
+async def relatorio_diario_preview(request: Request):
+    """Retorna o texto atual do relatório (JSON) para atualização ao vivo."""
+    await _require_auth(request)
+    report = await build_daily_report()
+    return JSONResponse({"text": report["full"]})
+
+
+@router.post("/relatorio-diario/enviar")
+async def relatorio_diario_enviar(request: Request):
+    """Dispara o envio manual do relatório via ChatPro."""
+    await _require_auth(request)
+    config = await get_bot_config_full()
+    cfg = {c["key"]: c["value"] for c in config}
+
+    chatpro_token   = cfg.get("chatpro_token", "").strip()
+    chatpro_url     = cfg.get("chatpro_url", "").strip()
+    instance_id     = cfg.get("chatpro_instance_id", "chatpro-71f6d6f880").strip()
+    template_name   = cfg.get("report_template_name", "").strip()
+    language_code   = cfg.get("report_language_code", "pt_BR").strip()
+    recipients_raw  = cfg.get("report_recipients", "")
+    recipients = [n.strip() for n in recipients_raw.replace("\n", ",").split(",") if n.strip()]
+
+    if not chatpro_token:
+        return JSONResponse({"ok": False, "message": "Configure o token do ChatPro primeiro."})
+    if not recipients:
+        return JSONResponse({"ok": False, "message": "Nenhum número destinatário configurado."})
+    if not template_name:
+        return JSONResponse({"ok": False, "message": "Informe o nome do template WABA nas configurações."})
+
+    report = await build_daily_report()
+    results = await send_report_whatsapp(
+        report, recipients, chatpro_url, chatpro_token, instance_id, template_name, language_code
+    )
+
+    total   = len(results)
+    success = sum(1 for r in results.values() if r.get("ok"))
+    return JSONResponse({
+        "ok": success > 0,
+        "message": f"Enviado para {success}/{total} número(s).",
+        "details": results,
     })
