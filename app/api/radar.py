@@ -17,7 +17,7 @@ from starlette.status import HTTP_303_SEE_OTHER
 
 from app.core.config import settings
 from app.core.database import (
-    get_all_leads, get_bot_session, get_db,
+    get_all_leads, get_bot_session, get_db, get_full_conversation,
 )
 
 logger = logging.getLogger(__name__)
@@ -296,3 +296,19 @@ async def radar_data(
         "date":            target_date.isoformat(),
         "available_dates": sorted_dates,
     })
+
+
+@router.get("/conversation/{phone}")
+async def radar_conversation(request: Request, phone: str):
+    """Retorna o histórico completo de mensagens de um lead."""
+    await _require_auth(request)
+    messages_raw = await get_full_conversation(phone)
+    messages = [
+        {
+            "role":    m.get("role", ""),
+            "message": m.get("message", ""),
+            "hora":    _hora_brt(m.get("created_at", "")),
+        }
+        for m in messages_raw
+    ]
+    return JSONResponse({"messages": messages, "total": len(messages)})

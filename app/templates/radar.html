@@ -9,23 +9,59 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #080e1a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #e2e8f0; }
   #root { min-height: 100vh; }
+
   @keyframes slideIn { from { transform: translateX(100%) } to { transform: translateX(0) } }
-  .animate-slide-in { animation: slideIn .22s cubic-bezier(.16,1,.3,1); }
+  .slide-in { animation: slideIn .22s cubic-bezier(.16,1,.3,1); }
+
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-  .animate-pulse { animation: pulse 2s cubic-bezier(.4,0,.6,1) infinite; }
+  .pulse { animation: pulse 2s cubic-bezier(.4,0,.6,1) infinite; }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: rgba(15,23,42,.4); }
+  ::-webkit-scrollbar-thumb { background: rgba(148,163,184,.2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,.35); }
+
   .truncate { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* chat bubbles */
+  .bubble-bot   { background: rgba(30,41,59,.9);   border: 1px solid rgba(148,163,184,.1); color: #cbd5e1; border-radius: 4px 14px 14px 14px; }
+  .bubble-user  { background: rgba(99,102,241,.22); border: 1px solid rgba(99,102,241,.3);  color: #c7d2fe; border-radius: 14px 4px 14px 14px; }
+  .bubble-agent { background: rgba(14,165,233,.14); border: 1px solid rgba(14,165,233,.25); color: #7dd3fc; border-radius: 4px 14px 14px 14px; }
+
+  /* tabela linhas */
+  .tr-hover:hover { background: rgba(99,102,241,.07) !important; }
+  .tr-sel         { background: rgba(99,102,241,.14) !important; }
+  .tr-sla         { background: rgba(239,68,68,.06); }
 </style>
 </head>
-<body class="bg-slate-50">
+<body>
 <div id="root"></div>
 
 <script type="text/babel" data-presets="react">
 {% raw %}
-const { useState, useMemo, useEffect, useCallback } = React;
+const { useState, useMemo, useEffect, useCallback, useRef } = React;
 
-// ── Inline SVG icons (sem dependência externa) ────────────────────────────────
+// ── Paleta dark ────────────────────────────────────────────────────────────────
+const C = {
+  pageBg:   "#080e1a",
+  cardBg:   "rgba(15,23,42,.85)",
+  headerBg: "rgba(10,18,35,.94)",
+  border:   "rgba(148,163,184,.1)",
+  borderSm: "rgba(148,163,184,.06)",
+  txt1:     "#e2e8f0",
+  txt2:     "#94a3b8",
+  txt3:     "#475569",
+  inputBg:  "rgba(30,41,59,.7)",
+  rowHover: "rgba(99,102,241,.07)",
+  rowSel:   "rgba(99,102,241,.14)",
+  indigo:   "#6366f1",
+  indigoDim:"rgba(99,102,241,.15)",
+};
+
+// ── Inline SVG icons ───────────────────────────────────────────────────────────
 const ICON_PATHS = {
   "activity":       `<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>`,
   "alert-circle":   `<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>`,
@@ -45,7 +81,8 @@ const ICON_PATHS = {
   "help-circle":    `<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>`,
   "log-out":        `<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>`,
   "message-square": `<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>`,
-  "phone-call":     `<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.57 3.28 2 2 0 0 1 3.55 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/><path d="M14.05 2a9 9 0 0 1 8 7.94"/><path d="M14.05 6A5 5 0 0 1 18 10"/>`,
+  "messages":       `<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>`,
+  "phone-call":     `<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.57 3.28 2 2 0 0 1 3.55 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>`,
   "refresh-cw":     `<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>`,
   "search":         `<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>`,
   "settings":       `<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>`,
@@ -58,21 +95,15 @@ const ICON_PATHS = {
   "zap":            `<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>`,
 };
 
-const Icon = ({ name, size = 16, className = "" }) => (
-  <svg
-    width={size} height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
+const Icon = ({ name, size = 16, style = {} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    style={{display:"inline-block", verticalAlign:"middle", flexShrink:0, ...style}}
     dangerouslySetInnerHTML={{ __html: ICON_PATHS[name] || ICON_PATHS["help-circle"] }}
   />
 );
 
-// ── Helpers de data (BRT = UTC-3) ─────────────────────────────────────────────
+// ── Date helpers (BRT = UTC-3) ─────────────────────────────────────────────────
 const todayBRT = () => {
   const d = new Date(Date.now() - 3 * 60 * 60 * 1000);
   return d.toISOString().split("T")[0];
@@ -82,156 +113,170 @@ const yesterdayBRT = () => {
   return d.toISOString().split("T")[0];
 };
 const formatDateLabel = (iso) => {
-  const today = todayBRT();
-  const yesterday = yesterdayBRT();
-  if (iso === today) return "Hoje";
-  if (iso === yesterday) return "Ontem";
-  const [y, m, day] = iso.split("-");
-  return `${day}/${m}/${y}`;
+  const t = todayBRT(), y = yesterdayBRT();
+  if (iso === t) return "Hoje";
+  if (iso === y) return "Ontem";
+  const [yr, m, d] = iso.split("-");
+  return `${d}/${m}/${yr}`;
 };
 const stepIso = (iso, delta) => {
   const [y, m, d] = iso.split("-").map(Number);
   const dt = new Date(y, m - 1, d + delta);
-  return [
-    dt.getFullYear(),
-    String(dt.getMonth() + 1).padStart(2, "0"),
-    String(dt.getDate()).padStart(2, "0"),
-  ].join("-");
+  return [dt.getFullYear(), String(dt.getMonth()+1).padStart(2,"0"), String(dt.getDate()).padStart(2,"0")].join("-");
 };
 
-// ── Helpers de badge ──────────────────────────────────────────────────────────
-const getTempConfig = (temp) => ({
-  quente: { label: "Quente", cls: "bg-red-50 text-red-600 border-red-200" },
-  morno:  { label: "Morno",  cls: "bg-amber-50 text-amber-600 border-amber-200" },
-  frio:   { label: "Frio",   cls: "bg-blue-50 text-blue-600 border-blue-200" },
-}[temp] || { label: temp || "—", cls: "bg-gray-100 text-gray-500" });
+// ── Badge config helpers ───────────────────────────────────────────────────────
+const getTempConfig = (t) => ({
+  quente: { label:"Quente", bg:"rgba(239,68,68,.13)",   color:"#f87171", border:"rgba(239,68,68,.3)",   icon:"flame"     },
+  morno:  { label:"Morno",  bg:"rgba(245,158,11,.13)",  color:"#fbbf24", border:"rgba(245,158,11,.3)",  icon:"wind"      },
+  frio:   { label:"Frio",   bg:"rgba(59,130,246,.13)",  color:"#60a5fa", border:"rgba(59,130,246,.3)",  icon:"snowflake" },
+}[t] || { label: t||"—", bg:"rgba(100,116,139,.15)", color:"#94a3b8", border:"rgba(100,116,139,.2)", icon:"help-circle" });
 
-const getTempIcon = (temp) => ({ quente:"flame", morno:"wind", frio:"snowflake" }[temp] || "help-circle");
+const getStatusStyle = (s) => ({
+  "Novo":                  { bg:"rgba(100,116,139,.18)", color:"#94a3b8" },
+  "Em qualificação":       { bg:"rgba(139,92,246,.18)",  color:"#a78bfa" },
+  "Aguardando lead":       { bg:"rgba(234,179,8,.15)",   color:"#fbbf24" },
+  "Transferido":           { bg:"rgba(249,115,22,.15)",  color:"#fb923c" },
+  "Em atendimento humano": { bg:"rgba(59,130,246,.15)",  color:"#60a5fa" },
+  "Qualificado":           { bg:"rgba(16,185,129,.15)",  color:"#34d399" },
+  "Concluído":             { bg:"rgba(34,197,94,.15)",   color:"#4ade80" },
+  "Perdido":               { bg:"rgba(239,68,68,.15)",   color:"#f87171" },
+}[s] || { bg:"rgba(100,116,139,.15)", color:"#94a3b8" });
 
-const getStatusCls = (s) => ({
-  "Novo":                  "bg-slate-100 text-slate-600",
-  "Em qualificação":       "bg-violet-50 text-violet-600",
-  "Aguardando lead":       "bg-yellow-50 text-yellow-700",
-  "Transferido":           "bg-orange-50 text-orange-600",
-  "Em atendimento humano": "bg-blue-50 text-blue-700",
-  "Qualificado":           "bg-emerald-50 text-emerald-700",
-  "Concluído":             "bg-green-50 text-green-700",
-  "Perdido":               "bg-red-50 text-red-500",
-}[s] || "bg-gray-100 text-gray-500");
+const getTipoStyle = (t) => ({
+  "Turma Aberta": { bg:"rgba(14,165,233,.13)",  color:"#38bdf8" },
+  "In Company":   { bg:"rgba(139,92,246,.15)",  color:"#a78bfa" },
+  "Customizado":  { bg:"rgba(236,72,153,.13)",  color:"#f472b6" },
+  "Locação":      { bg:"rgba(20,184,166,.13)",  color:"#2dd4bf" },
+  "Não definido": { bg:"rgba(100,116,139,.15)", color:"#94a3b8" },
+}[t] || { bg:"rgba(99,102,241,.13)", color:"#818cf8" });
 
-const getTipoCls = (t) => ({
-  "Turma Aberta":"bg-sky-50 text-sky-700",
-  "In Company":"bg-purple-50 text-purple-700",
-  "Customizado":"bg-pink-50 text-pink-700",
-  "Locação":"bg-teal-50 text-teal-700",
-  "Não definido":"bg-gray-100 text-gray-500",
-}[t] || "bg-indigo-50 text-indigo-700");
+const getFormatoStyle = (f) => ({
+  "Presencial": { bg:"rgba(34,197,94,.12)",   color:"#4ade80" },
+  "Online":     { bg:"rgba(59,130,246,.12)",  color:"#60a5fa" },
+  "Híbrido":    { bg:"rgba(139,92,246,.12)",  color:"#a78bfa" },
+}[f] || { bg:"rgba(100,116,139,.12)", color:"#94a3b8" });
 
-const getFormatoCls = (f) => ({
-  "Presencial":"bg-green-50 text-green-700",
-  "Online":"bg-blue-50 text-blue-600",
-  "Híbrido":"bg-purple-50 text-purple-700",
-}[f] || "bg-gray-100 text-gray-500");
+const scoreColor = (s) => s>=80?"#34d399":s>=60?"#fbbf24":s>=40?"#fb923c":"#f87171";
+const scoreBgColor = (s) => s>=80?"#34d399":s>=60?"#fbbf24":s>=40?"#fb923c":"#f87171";
 
-const scoreColor = (s) => s>=80?"text-emerald-600":s>=60?"text-amber-600":s>=40?"text-orange-500":"text-red-500";
-const scoreBg    = (s) => s>=80?"bg-emerald-500":s>=60?"bg-amber-400":s>=40?"bg-orange-400":"bg-red-400";
-
-const slaConfig = (m) => {
-  if (m<=10) return { cls:"text-emerald-700", bg:"bg-emerald-50", label:`${m}m` };
-  if (m<=25) return { cls:"text-amber-700",   bg:"bg-amber-50",   label:`${m}m` };
-  return           { cls:"text-red-700",     bg:"bg-red-50",     label:`${m}m ⚠` };
+const slaStyle = (m) => {
+  if (m<=10) return { bg:"rgba(16,185,129,.13)",  color:"#34d399", label:`${m}m` };
+  if (m<=25) return { bg:"rgba(245,158,11,.13)",  color:"#fbbf24", label:`${m}m` };
+  return            { bg:"rgba(239,68,68,.15)",   color:"#f87171", label:`${m}m ⚠` };
 };
 
 const quemConfig = (q) => ({
-  bot:         { icon:"bot",          label:"Bot SDR",           cls:"text-violet-500 bg-violet-50" },
-  transferido: { icon:"arrow-up-right",label:"Aguard. Consultor",cls:"text-orange-500 bg-orange-50" },
-  consultor:   { icon:"user",          label:"Consultor",         cls:"text-blue-600 bg-blue-50" },
-}[q] || { icon:"help-circle", label:"—", cls:"text-gray-400 bg-gray-100" });
+  bot:         { icon:"bot",          label:"Bot SDR",            bg:"rgba(139,92,246,.2)",  color:"#a78bfa" },
+  transferido: { icon:"arrow-up-right",label:"Aguard. Consultor", bg:"rgba(249,115,22,.18)", color:"#fb923c" },
+  consultor:   { icon:"user",          label:"Consultor",          bg:"rgba(59,130,246,.18)", color:"#60a5fa" },
+}[q] || { icon:"help-circle", label:"—", bg:"rgba(100,116,139,.15)", color:"#94a3b8" });
 
-// ── Components ────────────────────────────────────────────────────────────────
-const Badge = ({ children, className="" }) => (
-  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${className}`}>
+// ── Micro-components ───────────────────────────────────────────────────────────
+const Pill = ({ bg, color, border, children, style={} }) => (
+  <span style={{
+    display:"inline-flex", alignItems:"center", gap:4,
+    padding:"2px 8px", borderRadius:999,
+    fontSize:11, fontWeight:600, lineHeight:"18px",
+    background: bg, color, border: border ? `1px solid ${border}` : undefined,
+    ...style,
+  }}>
     {children}
   </span>
 );
 
-const KpiCard = ({ iconName, label, value, color="text-slate-700", urgent=false }) => (
-  <div className={`bg-white rounded-xl px-4 py-3 flex items-center gap-3 shadow-sm border ${urgent?"border-red-200 bg-red-50/60":"border-slate-100"}`}>
-    <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${urgent?"bg-red-100 text-red-500":"bg-slate-100 text-slate-500"}`}>
+const KpiCard = ({ iconName, label, value, color="#e2e8f0", urgent=false }) => (
+  <div style={{
+    background: urgent ? "rgba(239,68,68,.12)" : C.cardBg,
+    border: `1px solid ${urgent ? "rgba(239,68,68,.28)" : C.border}`,
+    borderRadius: 12, padding:"12px 16px",
+    display:"flex", alignItems:"center", gap:12,
+  }}>
+    <div style={{
+      flexShrink:0, width:36, height:36, borderRadius:8,
+      display:"flex", alignItems:"center", justifyContent:"center",
+      background: urgent ? "rgba(239,68,68,.22)" : "rgba(30,41,59,.8)",
+      color: urgent ? "#f87171" : "#64748b",
+    }}>
       <Icon name={iconName} size={16} />
     </div>
     <div>
-      <div className={`text-xl font-bold leading-none ${urgent?"text-red-600":color}`}>{value}</div>
-      <div className="text-xs text-slate-400 mt-0.5 whitespace-nowrap">{label}</div>
+      <div style={{fontSize:20, fontWeight:700, lineHeight:1, color: urgent?"#f87171":color}}>{value}</div>
+      <div style={{fontSize:11, color:C.txt3, marginTop:2, whiteSpace:"nowrap"}}>{label}</div>
     </div>
   </div>
 );
 
 const QuemIcon = ({ quem }) => {
   const cfg = quemConfig(quem);
+  const [tip, setTip] = useState(false);
   return (
-    <div className="relative group flex items-center justify-center">
-      <span className={`flex items-center justify-center w-7 h-7 rounded-full ${cfg.cls}`}>
+    <div style={{position:"relative", display:"inline-flex"}}
+      onMouseEnter={()=>setTip(true)} onMouseLeave={()=>setTip(false)}>
+      <span style={{display:"flex",alignItems:"center",justifyContent:"center",
+        width:28,height:28,borderRadius:"50%",background:cfg.bg,color:cfg.color}}>
         <Icon name={cfg.icon} size={13} />
       </span>
-      <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-        {cfg.label}
-      </div>
+      {tip && (
+        <div style={{position:"absolute",bottom:"calc(100% + 4px)",left:"50%",transform:"translateX(-50%)",
+          background:"#1e293b",color:"#e2e8f0",fontSize:11,padding:"3px 8px",borderRadius:6,
+          whiteSpace:"nowrap",pointerEvents:"none",border:`1px solid ${C.border}`,zIndex:99}}>
+          {cfg.label}
+        </div>
+      )}
     </div>
   );
 };
 
-// ── DateNav ───────────────────────────────────────────────────────────────────
+// ── DateNav ────────────────────────────────────────────────────────────────────
 const DateNav = ({ dateFilter, setDateFilter, availableDates }) => {
-  const today   = todayBRT();
-  const isToday = dateFilter === today;
-
-  const go = (delta) => {
-    const next = stepIso(dateFilter, delta);
-    if (next <= today) setDateFilter(next);
-  };
-
+  const today = todayBRT(), isToday = dateFilter === today;
+  const go = (d) => { const n = stepIso(dateFilter, d); if (n <= today) setDateFilter(n); };
+  const btn = (onClick, disabled, children, title) => (
+    <button onClick={onClick} disabled={disabled} title={title} style={{
+      padding:"4px 6px", borderRadius:6, background:"transparent", border:"none",
+      color: disabled ? C.txt3 : C.txt2, cursor: disabled ? "not-allowed" : "pointer",
+      display:"flex",alignItems:"center",
+    }}
+    onMouseEnter={e=>{ if(!disabled) e.currentTarget.style.background="rgba(148,163,184,.1)"; }}
+    onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
+      {children}
+    </button>
+  );
   return (
-    <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-sm">
-      <button onClick={() => go(-1)}
-        className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-        title="Dia anterior">
-        <Icon name="chevron-left" size={14} />
-      </button>
-
-      <div className="flex items-center gap-1.5 min-w-[80px] justify-center px-1">
-        <Icon name="calendar" size={12} className="text-indigo-400 flex-shrink-0" />
-        <span className="text-sm font-semibold text-slate-700 whitespace-nowrap">{formatDateLabel(dateFilter)}</span>
+    <div style={{
+      display:"flex", alignItems:"center", gap:2,
+      background:C.cardBg, border:`1px solid ${C.border}`,
+      borderRadius:10, padding:"4px 8px",
+    }}>
+      {btn(() => go(-1), false, <Icon name="chevron-left" size={14} />, "Dia anterior")}
+      <div style={{display:"flex",alignItems:"center",gap:6,minWidth:80,justifyContent:"center",padding:"0 4px"}}>
+        <Icon name="calendar" size={12} style={{color:"#6366f1"}} />
+        <span style={{fontSize:13,fontWeight:600,color:C.txt1,whiteSpace:"nowrap"}}>{formatDateLabel(dateFilter)}</span>
       </div>
-
-      <button onClick={() => go(1)} disabled={isToday}
-        className={`p-1 rounded transition-colors ${isToday?"text-slate-200 cursor-not-allowed":"text-slate-400 hover:text-slate-600 hover:bg-slate-100"}`}
-        title="Próximo dia">
-        <Icon name="chevron-right" size={14} />
-      </button>
+      {btn(() => go(1), isToday, <Icon name="chevron-right" size={14} />, "Próximo dia")}
 
       {!isToday && (
-        <button onClick={() => setDateFilter(today)}
-          className="ml-1 text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full hover:bg-indigo-100 transition-colors whitespace-nowrap">
-          Hoje
-        </button>
+        <button onClick={() => setDateFilter(today)} style={{
+          marginLeft:4, fontSize:11, fontWeight:600, color:"#818cf8",
+          background:"rgba(99,102,241,.15)", border:"1px solid rgba(99,102,241,.25)",
+          borderRadius:999, padding:"2px 8px", cursor:"pointer",
+        }}>Hoje</button>
       )}
-
       {isToday && (
-        <button onClick={() => setDateFilter(yesterdayBRT())}
-          className="ml-1 text-xs text-slate-500 border border-slate-200 px-2 py-0.5 rounded-full hover:bg-slate-50 transition-colors whitespace-nowrap">
-          Ontem
-        </button>
+        <button onClick={() => setDateFilter(yesterdayBRT())} style={{
+          marginLeft:4, fontSize:11, color:C.txt2,
+          background:"rgba(148,163,184,.08)", border:`1px solid ${C.border}`,
+          borderRadius:999, padding:"2px 8px", cursor:"pointer",
+        }}>Ontem</button>
       )}
-
       {availableDates.length > 2 && (
-        <select
-          value={dateFilter}
-          onChange={e => setDateFilter(e.target.value)}
-          className="ml-1 text-xs border border-slate-200 rounded-lg py-1 px-1.5 text-slate-500 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-200 cursor-pointer max-w-[90px]">
-          {availableDates.map(d => (
-            <option key={d} value={d}>{formatDateLabel(d)}</option>
-          ))}
+        <select value={dateFilter} onChange={e => setDateFilter(e.target.value)} style={{
+          marginLeft:4, fontSize:11, border:`1px solid ${C.border}`,
+          borderRadius:6, padding:"3px 4px", color:C.txt2,
+          background:"rgba(30,41,59,.8)", cursor:"pointer", maxWidth:80,
+        }}>
+          {availableDates.map(d => <option key={d} value={d}>{formatDateLabel(d)}</option>)}
           {!availableDates.includes(dateFilter) && (
             <option value={dateFilter}>{formatDateLabel(dateFilter)}</option>
           )}
@@ -241,95 +286,205 @@ const DateNav = ({ dateFilter, setDateFilter, availableDates }) => {
   );
 };
 
-// ── Drawer ────────────────────────────────────────────────────────────────────
-const Drawer = ({ lead, onClose }) => {
+// ── Drawer com abas (Detalhes / Conversa) ──────────────────────────────────────
+const Drawer = ({ lead, onClose, basePath }) => {
+  const [tab, setTab]         = useState("info");
+  const [msgs, setMsgs]       = useState(null);   // null = não carregado
+  const [loadingMsgs, setLM]  = useState(false);
+  const chatEndRef             = useRef(null);
+
+  // Fecha ao trocar de lead
+  useEffect(() => { setTab("info"); setMsgs(null); }, [lead?.id]);
+
+  const loadChat = useCallback(async () => {
+    if (msgs !== null || loadingMsgs) return;
+    setLM(true);
+    try {
+      const res  = await fetch(`${basePath}/conversation/${encodeURIComponent(lead.telefone)}`);
+      const json = await res.json();
+      setMsgs(json.messages || []);
+    } catch(e) { setMsgs([]); }
+    finally    { setLM(false); }
+  }, [msgs, loadingMsgs, lead, basePath]);
+
+  useEffect(() => {
+    if (tab === "chat") { loadChat(); }
+  }, [tab]);
+
+  useEffect(() => {
+    if (tab === "chat" && msgs && chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior:"smooth" });
+    }
+  }, [msgs, tab]);
+
   if (!lead) return null;
   const temp = getTempConfig(lead.temp);
-  const sla  = slaConfig(lead.sla_min);
+  const sla  = slaStyle(lead.sla_min);
+
+  const roleLabel = (r) => r === "assistant" ? "Bot" : r === "user" ? "Lead" : "Consultor";
+  const bubbleCls = (r) => r === "user" ? "bubble-user" : r === "agent" ? "bubble-agent" : "bubble-bot";
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/25 backdrop-blur-sm" onClick={onClose} />
-      <div className="animate-slide-in relative w-full max-w-md bg-white shadow-2xl flex flex-col h-full overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-start justify-between p-5 border-b border-slate-100 sticky top-0 bg-white z-10">
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="font-bold text-slate-800">{lead.nome}</h2>
+    <div style={{position:"fixed",inset:0,zIndex:50,display:"flex",justifyContent:"flex-end"}}>
+      {/* Overlay */}
+      <div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.55)",backdropFilter:"blur(4px)"}} />
+
+      {/* Painel */}
+      <div className="slide-in" style={{
+        position:"relative", width:"100%", maxWidth:440,
+        background:"#0d1526", borderLeft:`1px solid ${C.border}`,
+        display:"flex", flexDirection:"column", height:"100%", overflow:"hidden",
+      }}>
+        {/* Header do drawer */}
+        <div style={{
+          padding:"16px 20px", borderBottom:`1px solid ${C.border}`,
+          background:"rgba(15,23,42,.95)",
+          position:"sticky", top:0, zIndex:10,
+        }}>
+          <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between"}}>
+            <div>
+              <div style={{fontWeight:700, color:C.txt1, fontSize:15}}>{lead.nome}</div>
+              <div style={{fontSize:12,color:C.txt2,marginTop:2,display:"flex",alignItems:"center",gap:4}}>
+                <Icon name="building-2" size={11} />{lead.empresa}
+              </div>
             </div>
-            <div className="text-sm text-slate-400 mt-0.5 flex items-center gap-1.5">
-              <Icon name="building-2" size={12} />{lead.empresa}
-            </div>
+            <button onClick={onClose} style={{
+              color:C.txt3, border:"none", background:"transparent",
+              cursor:"pointer", padding:"4px 6px", borderRadius:6,
+            }}
+            onMouseEnter={e=>e.currentTarget.style.background="rgba(148,163,184,.1)"}
+            onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+              <Icon name="x" size={17} />
+            </button>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
-            <Icon name="x" size={17} />
-          </button>
+
+          {/* Abas */}
+          <div style={{display:"flex",gap:4,marginTop:12}}>
+            {[["info","Detalhes"],["chat",`Conversa${msgs?` (${msgs.length})`:""}`]].map(([t,l]) => (
+              <button key={t} onClick={()=>setTab(t)} style={{
+                padding:"5px 14px", borderRadius:8, fontSize:12, fontWeight:600,
+                cursor:"pointer", border:"none", transition:"all .15s",
+                background: tab===t ? "rgba(99,102,241,.22)" : "transparent",
+                color:      tab===t ? "#818cf8" : C.txt2,
+                borderBottom: tab===t ? "2px solid #6366f1" : "2px solid transparent",
+              }}>{l}</button>
+            ))}
+          </div>
         </div>
 
-        <div className="p-5 space-y-5">
-          {/* Chips */}
-          <div className="flex flex-wrap gap-2">
-            <Badge className={`${temp.cls} border`}>
-              <Icon name={getTempIcon(lead.temp)} size={10} />{temp.label}
-            </Badge>
-            <Badge className={getStatusCls(lead.status)}>{lead.status}</Badge>
-            <Badge className={`${sla.bg} ${sla.cls}`}>
-              <Icon name="clock" size={10} />{sla.label}
-            </Badge>
-            {lead.trail && lead.trail !== "?" && (
-              <Badge className="bg-indigo-50 text-indigo-700">Trail {lead.trail}</Badge>
-            )}
-            <Badge className={`${scoreColor(lead.score)} bg-slate-50 font-bold`}>
-              Score {lead.score}
-            </Badge>
-          </div>
+        {/* Conteúdo */}
+        <div style={{overflowY:"auto", flex:1, padding: tab==="chat" ? 0 : "20px"}}>
 
-          {/* Próximo passo */}
-          {lead.proximo_passo && lead.proximo_passo !== "—" && (
-            <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
-              <div className="flex items-center gap-1.5 text-amber-700 font-semibold text-xs mb-1">
-                <Icon name="check-circle" size={12} /> Próximo Passo
+          {/* ─── Aba Detalhes ─── */}
+          {tab === "info" && (
+            <div style={{display:"flex",flexDirection:"column",gap:16}}>
+              {/* Chips */}
+              <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                <Pill bg={temp.bg} color={temp.color} border={temp.border}>
+                  <Icon name={temp.icon} size={10} />{temp.label}
+                </Pill>
+                {(() => { const s = getStatusStyle(lead.status); return <Pill bg={s.bg} color={s.color}>{lead.status}</Pill>; })()}
+                <Pill bg={sla.bg} color={sla.color}>
+                  <Icon name="clock" size={10} />{sla.label}
+                </Pill>
+                {lead.trail && lead.trail !== "?" && (
+                  <Pill bg="rgba(99,102,241,.15)" color="#818cf8">Trail {lead.trail}</Pill>
+                )}
+                <Pill bg="rgba(100,116,139,.12)" color={scoreColor(lead.score)} style={{fontWeight:700}}>
+                  Score {lead.score}
+                </Pill>
               </div>
-              <p className="text-sm text-amber-800 font-medium">{lead.proximo_passo}</p>
-            </div>
-          )}
 
-          {/* Urgência */}
-          {lead.urgencia && (
-            <div className="bg-red-50 border border-red-100 rounded-xl p-3">
-              <div className="flex items-center gap-1.5 text-red-600 font-semibold text-xs mb-1">
-                <Icon name="alert-circle" size={12} /> Urgência
-              </div>
-              <p className="text-sm text-red-700">{lead.urgencia}</p>
-            </div>
-          )}
-
-          {/* Dados */}
-          <div>
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Dados Capturados</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                ["Telefone", lead.telefone], ["Canal", lead.canal],
-                ["Tema", lead.tema],         ["Tipo", lead.tipo],
-                ["Formato", lead.formato],   ["Qtd.", lead.qtd || "—"],
-                ["Cidade", lead.cidade],     ["Cargo", lead.cargo],
-                ["Email", lead.email],       ["Prazo", lead.prazo],
-                ["Objetivo", lead.objetivo],
-              ].filter(([,v]) => v && v !== "—").map(([k,v]) => (
-                <div key={k} className="bg-slate-50 rounded-lg p-2.5">
-                  <div className="text-xs text-slate-400">{k}</div>
-                  <div className="font-medium text-slate-700 text-xs mt-0.5 truncate" title={v}>{v}</div>
+              {/* Próximo passo */}
+              {lead.proximo_passo && lead.proximo_passo !== "—" && (
+                <div style={{background:"rgba(245,158,11,.08)",border:"1px solid rgba(245,158,11,.2)",borderRadius:12,padding:"12px 14px"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,color:"#fbbf24",fontSize:11,fontWeight:700,marginBottom:4}}>
+                    <Icon name="check-circle" size={12} /> Próximo Passo
+                  </div>
+                  <p style={{margin:0,fontSize:13,color:"#fde68a",fontWeight:500}}>{lead.proximo_passo}</p>
                 </div>
-              ))}
+              )}
+
+              {/* Urgência */}
+              {lead.urgencia && (
+                <div style={{background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.2)",borderRadius:12,padding:"12px 14px"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,color:"#f87171",fontSize:11,fontWeight:700,marginBottom:4}}>
+                    <Icon name="alert-circle" size={12} /> Urgência
+                  </div>
+                  <p style={{margin:0,fontSize:13,color:"#fca5a5"}}>{lead.urgencia}</p>
+                </div>
+              )}
+
+              {/* Grid de dados */}
+              <div>
+                <div style={{fontSize:10,fontWeight:700,color:C.txt3,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>
+                  Dados Capturados
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                  {[
+                    ["Telefone",lead.telefone],["Canal",lead.canal],
+                    ["Tema",lead.tema],        ["Tipo",lead.tipo],
+                    ["Formato",lead.formato],  ["Qtd.",lead.qtd||"—"],
+                    ["Cidade",lead.cidade],    ["Cargo",lead.cargo],
+                    ["Email",lead.email],      ["Prazo",lead.prazo],
+                    ["Objetivo",lead.objetivo],
+                  ].filter(([,v]) => v && v !== "—").map(([k,v]) => (
+                    <div key={k} style={{background:"rgba(30,41,59,.6)",borderRadius:8,padding:"8px 10px",overflow:"hidden"}}>
+                      <div style={{fontSize:10,color:C.txt3,marginBottom:2}}>{k}</div>
+                      <div className="truncate" title={v} style={{fontSize:12,fontWeight:600,color:C.txt1}}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* ─── Aba Conversa ─── */}
+          {tab === "chat" && (
+            <div style={{display:"flex",flexDirection:"column",minHeight:"100%"}}>
+              {loadingMsgs && (
+                <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:40,color:C.txt3,fontSize:13}}>
+                  Carregando conversa…
+                </div>
+              )}
+              {!loadingMsgs && msgs && msgs.length === 0 && (
+                <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:40}}>
+                  <Icon name="message-square" size={32} style={{color:C.txt3,marginBottom:8}} />
+                  <p style={{color:C.txt3,fontSize:13,margin:0}}>Nenhuma mensagem registrada.</p>
+                </div>
+              )}
+              {!loadingMsgs && msgs && msgs.length > 0 && (
+                <div style={{padding:"16px 12px",display:"flex",flexDirection:"column",gap:8}}>
+                  {msgs.map((m, i) => {
+                    const isUser = m.role === "user";
+                    const isAgent = m.role === "agent";
+                    return (
+                      <div key={i} style={{display:"flex",flexDirection:"column",alignItems: isUser?"flex-end":"flex-start"}}>
+                        <div style={{fontSize:10,color:C.txt3,marginBottom:3,paddingLeft:isUser?0:4,paddingRight:isUser?4:0}}>
+                          {isAgent ? "👤 " : ""}{roleLabel(m.role)} · {m.hora}
+                        </div>
+                        <div className={bubbleCls(m.role)} style={{
+                          maxWidth:"88%", padding:"8px 12px",
+                          fontSize:13, lineHeight:1.5,
+                          whiteSpace:"pre-wrap", wordBreak:"break-word",
+                        }}>
+                          {m.message}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div ref={chatEndRef} />
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-// ── Main Radar ────────────────────────────────────────────────────────────────
+// ── Radar principal ────────────────────────────────────────────────────────────
 function Radar() {
   const [leads, setLeads]                   = useState([]);
   const [loading, setLoading]               = useState(true);
@@ -342,25 +497,20 @@ function Radar() {
   const [dateFilter, setDateFilter]         = useState(() => todayBRT());
   const [availableDates, setAvailableDates] = useState([]);
 
+  const basePath = window.location.pathname.replace(/\/+$/, "");
+
   const fetchData = useCallback(async (date) => {
     setLoading(true);
     try {
-      const basePath = window.location.pathname.replace(/\/+$/, "");
-      const res      = await fetch(`${basePath}/data?date=${date}`);
-      const json     = await res.json();
+      const res  = await fetch(`${basePath}/data?date=${date}`);
+      const json = await res.json();
       setLeads(json.leads || []);
-      if (json.available_dates && json.available_dates.length) {
-        setAvailableDates(json.available_dates);
-      }
+      if (json.available_dates?.length) setAvailableDates(json.available_dates);
       setLastUpd(new Date().toLocaleTimeString("pt-BR", {hour:"2-digit",minute:"2-digit"}));
-    } catch(e) {
-      console.error("Radar fetch error:", e);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    } catch(e) { console.error(e); }
+    finally    { setLoading(false); }
+  }, [basePath]);
 
-  // Re-busca ao trocar de data; auto-refresh só quando for hoje
   useEffect(() => {
     fetchData(dateFilter);
     if (dateFilter !== todayBRT()) return;
@@ -371,28 +521,26 @@ function Radar() {
   const changeDate = (d) => {
     setDateFilter(d);
     setFilters({ temp:"", quem:"", score:"" });
-    setSearch("");
-    setSelected(null);
+    setSearch(""); setSelected(null);
   };
 
   const kpis = useMemo(() => ({
     total:       leads.length,
-    quentes:     leads.filter(l => l.temp === "quente").length,
-    bot:         leads.filter(l => l.quem === "bot").length,
-    transferido: leads.filter(l => l.quem === "transferido").length,
-    humano:      leads.filter(l => l.quem === "consultor").length,
-    parados:     leads.filter(l => l.sla_min > 25).length,
-    qualificado: leads.filter(l => l.status === "Qualificado").length,
-    locacao:     leads.filter(l => l.tipo === "Locação").length,
+    quentes:     leads.filter(l => l.temp==="quente").length,
+    bot:         leads.filter(l => l.quem==="bot").length,
+    transferido: leads.filter(l => l.quem==="transferido").length,
+    humano:      leads.filter(l => l.quem==="consultor").length,
+    parados:     leads.filter(l => l.sla_min>25).length,
+    qualificado: leads.filter(l => l.status==="Qualificado").length,
+    locacao:     leads.filter(l => l.tipo==="Locação").length,
   }), [leads]);
 
   const handleSort = (col) => {
-    if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
+    if (sortCol === col) setSortDir(d => d==="asc"?"desc":"asc");
     else { setSortCol(col); setSortDir("desc"); }
   };
 
-  const setFilter = (key, val) =>
-    setFilters(f => ({ ...f, [key]: f[key] === val ? "" : val }));
+  const setFilter = (key, val) => setFilters(f => ({ ...f, [key]: f[key]===val?"":val }));
 
   const filtered = useMemo(() => {
     let data = [...leads];
@@ -404,16 +552,15 @@ function Radar() {
         (l.telefone||"").includes(q)
       );
     }
-    if (filters.temp)  data = data.filter(l => l.temp === filters.temp);
-    if (filters.quem)  data = data.filter(l => l.quem === filters.quem);
-    if (filters.score === "alto")  data = data.filter(l => l.score >= 70);
-    if (filters.score === "baixo") data = data.filter(l => l.score < 50);
-
+    if (filters.temp)               data = data.filter(l => l.temp===filters.temp);
+    if (filters.quem)               data = data.filter(l => l.quem===filters.quem);
+    if (filters.score==="alto")     data = data.filter(l => l.score>=70);
+    if (filters.score==="baixo")    data = data.filter(l => l.score<50);
     return [...data].sort((a,b) => {
-      let av = a[sortCol] ?? "", bv = b[sortCol] ?? "";
-      if (typeof av === "string") { av = av.toLowerCase(); bv = bv.toLowerCase(); }
-      if (av < bv) return sortDir==="asc"?-1:1;
-      if (av > bv) return sortDir==="asc"?1:-1;
+      let av = a[sortCol]??"", bv = b[sortCol]??"";
+      if (typeof av==="string") { av=av.toLowerCase(); bv=bv.toLowerCase(); }
+      if (av<bv) return sortDir==="asc"?-1:1;
+      if (av>bv) return sortDir==="asc"?1:-1;
       return 0;
     });
   }, [leads, search, filters, sortCol, sortDir]);
@@ -421,155 +568,204 @@ function Radar() {
   const activeFilters = Object.values(filters).filter(Boolean).length;
   const isToday       = dateFilter === todayBRT();
 
+  // ── Estilos reutilizáveis ──
+  const card = { background:C.cardBg, border:`1px solid ${C.border}`, borderRadius:12 };
+  const thStyle = { padding:"10px 12px", fontSize:11, fontWeight:700, color:C.txt3,
+    textTransform:"uppercase", letterSpacing:".5px", whiteSpace:"nowrap",
+    userSelect:"none", textAlign:"left", cursor:"pointer" };
+  const tdStyle = { padding:"10px 12px", fontSize:12 };
+
+  const SortIcon = ({ col }) => {
+    if (sortCol !== col) return <Icon name="chevron-down" size={10} style={{color:C.txt3,marginLeft:2}} />;
+    return <Icon name={sortDir==="asc"?"chevron-up":"chevron-down"} size={10} style={{color:"#6366f1",marginLeft:2}} />;
+  };
+
   const Th = ({ col, children }) => (
-    <th onClick={() => col && handleSort(col)}
-      className={`px-3 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap select-none ${col?"cursor-pointer hover:text-slate-600":""}`}>
-      <span className="flex items-center gap-0.5">
+    <th style={thStyle} onClick={() => col && handleSort(col)}>
+      <span style={{display:"flex",alignItems:"center"}}>
         {children}
-        {col && sortCol === col && (
-          <Icon name={sortDir==="asc"?"chevron-up":"chevron-down"} size={11} className="text-indigo-500" />
-        )}
-        {col && sortCol !== col && (
-          <Icon name="chevron-down" size={11} className="text-slate-300" />
-        )}
+        {col && <SortIcon col={col} />}
       </span>
     </th>
   );
 
+  // ── Botão de filtro ──
+  const FilterBtn = ({ active, onClick, children }) => (
+    <button onClick={onClick} style={{
+      display:"flex", alignItems:"center", gap:4,
+      padding:"4px 10px", borderRadius:8,
+      fontSize:11, fontWeight:600, cursor:"pointer",
+      border: active ? "1px solid rgba(99,102,241,.4)" : `1px solid ${C.border}`,
+      background: active ? "rgba(99,102,241,.18)" : "transparent",
+      color: active ? "#818cf8" : C.txt2,
+      transition:"all .15s",
+    }}>
+      {children}
+    </button>
+  );
+
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-100 px-6 py-4 sticky top-0 z-30 shadow-sm">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
+    <div style={{minHeight:"100vh", background:C.pageBg}}>
+
+      {/* ── Header ── */}
+      <header style={{
+        background: C.headerBg, borderBottom:`1px solid ${C.border}`,
+        padding:"14px 24px", position:"sticky", top:0, zIndex:30,
+        backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)",
+      }}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
           <div>
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
-                <Icon name="bar-chart-2" size={14} className="text-white" />
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{width:28,height:28,background:"#6366f1",borderRadius:8,
+                display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 12px rgba(99,102,241,.4)"}}>
+                <Icon name="bar-chart-2" size={14} style={{color:"#fff"}} />
               </div>
-              <h1 className="text-lg font-bold text-slate-800 tracking-tight">Radar</h1>
+              <span style={{fontSize:17,fontWeight:800,color:C.txt1,letterSpacing:"-.3px"}}>Radar</span>
               {isToday ? (
-                <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-600 text-xs font-semibold px-2.5 py-1 rounded-full border border-emerald-100">
-                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse inline-block" />
+                <span style={{display:"flex",alignItems:"center",gap:5,
+                  background:"rgba(16,185,129,.12)",color:"#34d399",
+                  fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:999,
+                  border:"1px solid rgba(16,185,129,.25)"}}>
+                  <span className="pulse" style={{width:6,height:6,borderRadius:"50%",background:"#34d399",display:"inline-block"}} />
                   Ao Vivo
                 </span>
               ) : (
-                <span className="flex items-center gap-1.5 bg-slate-100 text-slate-500 text-xs font-semibold px-2.5 py-1 rounded-full border border-slate-200">
-                  <Icon name="calendar" size={11} /> Histórico
+                <span style={{display:"flex",alignItems:"center",gap:5,
+                  background:"rgba(100,116,139,.12)",color:C.txt2,
+                  fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:999,
+                  border:`1px solid ${C.border}`}}>
+                  <Icon name="calendar" size={10} /> Histórico
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-400 mt-0.5 ml-9">Monitoramento em tempo real · Leads PJ · Treinamentos Corporativos</p>
+            <p style={{fontSize:11,color:C.txt3,marginTop:3,marginLeft:36}}>
+              Monitoramento em tempo real · Leads PJ · Treinamentos Corporativos
+            </p>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            {lastUpd && <span className="text-xs text-slate-400">Atualizado {lastUpd}</span>}
+          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+            {lastUpd && <span style={{fontSize:11,color:C.txt3}}>Atualizado {lastUpd}</span>}
 
             <DateNav dateFilter={dateFilter} setDateFilter={changeDate} availableDates={availableDates} />
 
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+            {/* Busca */}
+            <div style={{position:"relative"}}>
+              <span style={{position:"absolute",left:9,top:"50%",transform:"translateY(-50%)",color:C.txt3,pointerEvents:"none"}}>
                 <Icon name="search" size={13} />
               </span>
-              <input value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Nome, empresa ou telefone…"
-                className="pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:bg-white w-52 transition-all" />
+              <input value={search} onChange={e=>setSearch(e.target.value)}
+                placeholder="Nome, empresa, telefone…"
+                style={{
+                  paddingLeft:28, paddingRight:10, paddingTop:7, paddingBottom:7,
+                  fontSize:12, border:`1px solid ${C.border}`, borderRadius:8,
+                  background:C.inputBg, color:C.txt1, outline:"none", width:190,
+                }}
+                onFocus={e=>e.target.style.borderColor="#6366f1"}
+                onBlur={e=>e.target.style.borderColor=C.border}
+              />
             </div>
 
             {isToday && (
-              <button onClick={() => fetchData(dateFilter)}
-                className="flex items-center gap-1.5 text-xs text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-2 rounded-lg hover:bg-indigo-100 transition-colors font-semibold">
-                <Icon name="refresh-cw" size={13} /> Atualizar
+              <button onClick={() => fetchData(dateFilter)} style={{
+                display:"flex", alignItems:"center", gap:5,
+                fontSize:11, fontWeight:700, color:"#818cf8",
+                background:"rgba(99,102,241,.15)", border:"1px solid rgba(99,102,241,.3)",
+                padding:"6px 12px", borderRadius:8, cursor:"pointer",
+              }}>
+                <Icon name="refresh-cw" size={12} /> Atualizar
               </button>
             )}
 
-            <a href={window.location.pathname.replace(/\/radar.*$/, "/admin")}
-              className="flex items-center gap-1.5 text-xs text-slate-500 bg-white border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
-              <Icon name="settings" size={13} /> Admin
+            <a href={basePath.replace(/\/radar.*$/, "/admin")} style={{
+              display:"flex",alignItems:"center",gap:5,fontSize:11,color:C.txt2,
+              background:"rgba(148,163,184,.07)",border:`1px solid ${C.border}`,
+              padding:"6px 12px",borderRadius:8,textDecoration:"none",
+            }}>
+              <Icon name="settings" size={12} /> Admin
             </a>
-            <a href={window.location.pathname.replace(/\/radar.*$/, "/radar/logout")}
-              className="flex items-center gap-1.5 text-xs text-slate-500 bg-white border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
-              <Icon name="log-out" size={13} /> Sair
+            <a href={basePath.replace(/\/radar.*$/, "/radar/logout")} style={{
+              display:"flex",alignItems:"center",gap:5,fontSize:11,color:C.txt2,
+              background:"rgba(148,163,184,.07)",border:`1px solid ${C.border}`,
+              padding:"6px 12px",borderRadius:8,textDecoration:"none",
+            }}>
+              <Icon name="log-out" size={12} /> Sair
             </a>
           </div>
         </div>
       </header>
 
-      <div className="px-6 py-5 space-y-4">
-        {/* KPIs */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-          <KpiCard iconName="users"          label={isToday?"Leads hoje":"Total do dia"} value={kpis.total}       color="text-indigo-600" />
-          <KpiCard iconName="flame"          label="Quentes"       value={kpis.quentes}     color="text-red-500" />
-          <KpiCard iconName="bot"            label="Com o bot"     value={kpis.bot}         color="text-violet-600" />
-          <KpiCard iconName="arrow-up-right" label="Transferidos"  value={kpis.transferido} color="text-orange-500" />
-          <KpiCard iconName="phone-call"     label="Com consultor" value={kpis.humano}      color="text-blue-600" />
-          <KpiCard iconName="alert-circle"   label="SLA crítico"   value={kpis.parados}     urgent={isToday && kpis.parados > 0} />
-          <KpiCard iconName="check-circle"   label="Qualificados"  value={kpis.qualificado} color="text-emerald-600" />
-          <KpiCard iconName="building-2"     label="Locação"       value={kpis.locacao}     color="text-teal-600" />
+      <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:14}}>
+
+        {/* ── KPIs ── */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:10}}>
+          <KpiCard iconName="users"          label={isToday?"Leads hoje":"Total do dia"} value={kpis.total}       color="#818cf8" />
+          <KpiCard iconName="flame"          label="Quentes"       value={kpis.quentes}     color="#f87171" />
+          <KpiCard iconName="bot"            label="Com o bot"     value={kpis.bot}         color="#a78bfa" />
+          <KpiCard iconName="arrow-up-right" label="Transferidos"  value={kpis.transferido} color="#fb923c" />
+          <KpiCard iconName="phone-call"     label="Com consultor" value={kpis.humano}      color="#60a5fa" />
+          <KpiCard iconName="alert-circle"   label="SLA crítico"   value={kpis.parados}     urgent={isToday && kpis.parados>0} />
+          <KpiCard iconName="check-circle"   label="Qualificados"  value={kpis.qualificado} color="#34d399" />
+          <KpiCard iconName="building-2"     label="Locação"       value={kpis.locacao}     color="#2dd4bf" />
         </div>
 
-        {/* Filtros */}
-        <div className="bg-white rounded-xl border border-slate-100 px-4 py-3 shadow-sm">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+        {/* ── Filtros ── */}
+        <div style={{...card, padding:"10px 16px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+            <span style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:C.txt3,fontWeight:600}}>
               <Icon name="filter" size={12} /> Filtros
               {activeFilters > 0 && (
-                <span className="w-4 h-4 bg-indigo-500 text-white rounded-full text-xs font-bold flex items-center justify-center">{activeFilters}</span>
+                <span style={{background:"#6366f1",color:"#fff",borderRadius:"50%",
+                  width:16,height:16,display:"inline-flex",alignItems:"center",
+                  justifyContent:"center",fontSize:10,fontWeight:700}}>{activeFilters}</span>
               )}
             </span>
-            <div className="w-px h-4 bg-slate-200" />
+            <div style={{width:1,height:16,background:C.border}} />
 
             {["quente","morno","frio"].map(t => {
               const cfg = getTempConfig(t);
-              const on  = filters.temp === t;
               return (
-                <button key={t} onClick={() => setFilter("temp", t)}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${on?`${cfg.cls} border-current shadow-sm`:"bg-white text-slate-500 border-slate-200 hover:border-slate-300"}`}>
-                  <Icon name={getTempIcon(t)} size={11} />{cfg.label}
-                </button>
+                <FilterBtn key={t} active={filters.temp===t} onClick={()=>setFilter("temp",t)}>
+                  <Icon name={cfg.icon} size={10} style={{color:filters.temp===t?cfg.color:"inherit"}} />
+                  {cfg.label}
+                </FilterBtn>
               );
             })}
 
-            <div className="w-px h-4 bg-slate-200" />
-
+            <div style={{width:1,height:16,background:C.border}} />
             {[["bot","Bot"],["transferido","Transferido"],["consultor","Consultor"]].map(([v,l]) => (
-              <button key={v} onClick={() => setFilter("quem", v)}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${filters.quem===v?"bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm":"bg-white text-slate-500 border-slate-200 hover:border-slate-300"}`}>
-                {l}
-              </button>
+              <FilterBtn key={v} active={filters.quem===v} onClick={()=>setFilter("quem",v)}>{l}</FilterBtn>
             ))}
 
-            <div className="w-px h-4 bg-slate-200" />
-
+            <div style={{width:1,height:16,background:C.border}} />
             {[["alto","Score 70+"],["baixo","Score <50"]].map(([v,l]) => (
-              <button key={v} onClick={() => setFilter("score", v)}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${filters.score===v?"bg-slate-800 text-white border-slate-800 shadow-sm":"bg-white text-slate-500 border-slate-200 hover:border-slate-300"}`}>
-                {l}
-              </button>
+              <FilterBtn key={v} active={filters.score===v} onClick={()=>setFilter("score",v)}>{l}</FilterBtn>
             ))}
 
             {activeFilters > 0 && (
-              <button onClick={() => setFilters({temp:"",quem:"",score:""})}
-                className="ml-auto flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors">
+              <button onClick={()=>setFilters({temp:"",quem:"",score:""})} style={{
+                marginLeft:"auto", display:"flex", alignItems:"center", gap:4,
+                fontSize:11, color:C.txt3, background:"transparent", border:"none", cursor:"pointer",
+              }}>
                 <Icon name="x" size={11} /> Limpar
               </button>
             )}
           </div>
         </div>
 
-        {/* Tabela */}
-        <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-            <span className="text-sm font-semibold text-slate-600">
+        {/* ── Tabela ── */}
+        <div style={{...card, overflow:"hidden"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 16px",borderBottom:`1px solid ${C.borderSm}`}}>
+            <span style={{fontSize:13,fontWeight:600,color:C.txt1}}>
               {loading ? "Carregando…" : `${filtered.length} lead${filtered.length!==1?"s":""}`}
-              {!loading && activeFilters > 0 && <span className="text-slate-400 font-normal"> filtrados</span>}
+              {!loading && activeFilters>0 && <span style={{color:C.txt3,fontWeight:400}}> filtrados</span>}
             </span>
-            <span className="text-xs text-slate-400">Clique em uma linha para ver detalhes</span>
+            <span style={{fontSize:11,color:C.txt3}}>Clique para ver detalhes e conversa</span>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50/80 border-b border-slate-100">
-                <tr>
+          <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse"}}>
+              <thead>
+                <tr style={{borderBottom:`1px solid ${C.borderSm}`}}>
                   <Th col="hora">Hora</Th>
                   <Th>Nome / Empresa</Th>
                   <Th>Telefone</Th>
@@ -584,69 +780,82 @@ function Radar() {
                   <Th col="sla_min">SLA</Th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody>
                 {loading ? (
-                  <tr><td colSpan={12} className="py-14 text-center text-slate-400 text-sm">Carregando leads…</td></tr>
+                  <tr><td colSpan={12} style={{...tdStyle,textAlign:"center",padding:"56px 0",color:C.txt3}}>Carregando leads…</td></tr>
                 ) : filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={12} className="py-14 text-center">
-                      <div className="flex justify-center mb-2"><Icon name="message-square" size={28} className="text-slate-300" /></div>
-                      <p className="text-sm text-slate-400">Nenhum lead em {formatDateLabel(dateFilter).toLowerCase()}.</p>
-                    </td>
-                  </tr>
-                ) : filtered.map(lead => {
-                  const temp = getTempConfig(lead.temp);
-                  const sla  = slaConfig(lead.sla_min);
+                  <tr><td colSpan={12} style={{...tdStyle,textAlign:"center",padding:"56px 0"}}>
+                    <div style={{display:"flex",justifyContent:"center",marginBottom:8}}>
+                      <Icon name="message-square" size={28} style={{color:C.txt3}} />
+                    </div>
+                    <p style={{color:C.txt3,margin:0,fontSize:13}}>Nenhum lead em {formatDateLabel(dateFilter).toLowerCase()}.</p>
+                  </td></tr>
+                ) : filtered.map((lead, idx) => {
+                  const temp  = getTempConfig(lead.temp);
+                  const sla   = slaStyle(lead.sla_min);
+                  const sSt   = getStatusStyle(lead.status);
+                  const tSt   = getTipoStyle(lead.tipo);
+                  const fSt   = getFormatoStyle(lead.formato);
+                  const isSel = selected?.id === lead.id;
                   return (
-                    <tr key={lead.id} onClick={() => setSelected(lead)}
-                      className={`cursor-pointer transition-colors hover:bg-indigo-50/40 ${isToday && lead.sla_min>25?"bg-red-50/20":""} ${selected?.id===lead.id?"bg-indigo-50/60":""}`}>
-                      <td className="px-3 py-3.5">
-                        <span className="font-mono text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{lead.hora}</span>
+                    <tr key={lead.id}
+                      className={`tr-hover ${isSel?"tr-sel":""} ${isToday&&lead.sla_min>25?"tr-sla":""}`}
+                      onClick={() => setSelected(isSel ? null : lead)}
+                      style={{cursor:"pointer",borderBottom:`1px solid ${C.borderSm}`,transition:"background .12s"}}>
+                      <td style={tdStyle}>
+                        <span style={{fontFamily:"monospace",fontSize:11,color:C.txt2,
+                          background:"rgba(30,41,59,.7)",padding:"2px 6px",borderRadius:4}}>
+                          {lead.hora}
+                        </span>
                       </td>
-                      <td className="px-3 py-3.5 min-w-[160px]">
-                        <div className="font-semibold text-slate-800 text-sm truncate max-w-[150px]" title={lead.nome}>{lead.nome}</div>
-                        <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-1 truncate max-w-[150px]">
+                      <td style={{...tdStyle, minWidth:160}}>
+                        <div className="truncate" title={lead.nome}
+                          style={{fontWeight:600,color:C.txt1,fontSize:13,maxWidth:150}}>{lead.nome}</div>
+                        <div className="truncate" title={lead.empresa}
+                          style={{fontSize:11,color:C.txt3,marginTop:1,display:"flex",alignItems:"center",gap:3,maxWidth:150}}>
                           <Icon name="building-2" size={10} />{lead.empresa}
                         </div>
                       </td>
-                      <td className="px-3 py-3.5">
-                        <span className="font-mono text-xs text-slate-500">{lead.telefone}</span>
+                      <td style={tdStyle}>
+                        <span style={{fontFamily:"monospace",fontSize:11,color:C.txt3}}>{lead.telefone}</span>
                       </td>
-                      <td className="px-3 py-3.5 max-w-[130px]">
-                        <span className="text-xs text-slate-700 font-medium truncate block" title={lead.tema}>{lead.tema}</span>
+                      <td style={{...tdStyle, maxWidth:130}}>
+                        <span className="truncate" title={lead.tema}
+                          style={{fontSize:12,color:C.txt2,fontWeight:500,display:"block"}}>{lead.tema}</span>
                       </td>
-                      <td className="px-3 py-3.5">
-                        <Badge className={getTipoCls(lead.tipo)}>{lead.tipo}</Badge>
+                      <td style={tdStyle}>
+                        <Pill bg={tSt.bg} color={tSt.color}>{lead.tipo}</Pill>
                       </td>
-                      <td className="px-3 py-3.5">
-                        <Badge className={getFormatoCls(lead.formato)}>{lead.formato}</Badge>
+                      <td style={tdStyle}>
+                        <Pill bg={fSt.bg} color={fSt.color}>{lead.formato}</Pill>
                       </td>
-                      <td className="px-3 py-3.5">
-                        <Badge className={`${temp.cls} border`}>
-                          <Icon name={getTempIcon(lead.temp)} size={10} />{temp.label}
-                        </Badge>
+                      <td style={tdStyle}>
+                        <Pill bg={temp.bg} color={temp.color} border={temp.border}>
+                          <Icon name={temp.icon} size={9} />{temp.label}
+                        </Pill>
                       </td>
-                      <td className="px-3 py-3.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className={`text-sm font-bold tabular-nums ${scoreColor(lead.score)}`}>{lead.score}</span>
-                          <div className="w-8 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div className={`h-full rounded-full ${scoreBg(lead.score)}`} style={{width:`${lead.score}%`}} />
+                      <td style={tdStyle}>
+                        <div style={{display:"flex",alignItems:"center",gap:6}}>
+                          <span style={{fontSize:13,fontWeight:700,color:scoreColor(lead.score),fontVariantNumeric:"tabular-nums"}}>
+                            {lead.score}
+                          </span>
+                          <div style={{width:28,height:4,background:"rgba(148,163,184,.12)",borderRadius:2,overflow:"hidden"}}>
+                            <div style={{height:"100%",borderRadius:2,background:scoreBgColor(lead.score),width:`${lead.score}%`}} />
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 py-3.5 whitespace-nowrap">
-                        <Badge className={getStatusCls(lead.status)}>{lead.status}</Badge>
+                      <td style={{...tdStyle, whiteSpace:"nowrap"}}>
+                        <Pill bg={sSt.bg} color={sSt.color}>{lead.status}</Pill>
                       </td>
-                      <td className="px-3 py-3.5 max-w-[160px]">
-                        <span className="text-xs text-slate-600 truncate block" title={lead.proximo_passo}>{lead.proximo_passo}</span>
+                      <td style={{...tdStyle, maxWidth:160}}>
+                        <span className="truncate" title={lead.proximo_passo}
+                          style={{fontSize:11,color:C.txt3,display:"block"}}>{lead.proximo_passo}</span>
                       </td>
-                      <td className="px-3 py-3.5">
-                        <QuemIcon quem={lead.quem} />
-                      </td>
-                      <td className="px-3 py-3.5 whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${sla.bg} ${sla.cls}`}>
-                          <Icon name="clock" size={10} />{sla.label}
-                        </span>
+                      <td style={tdStyle}><QuemIcon quem={lead.quem} /></td>
+                      <td style={{...tdStyle, whiteSpace:"nowrap"}}>
+                        <Pill bg={sla.bg} color={sla.color}>
+                          <Icon name="clock" size={9} />{sla.label}
+                        </Pill>
                       </td>
                     </tr>
                   );
@@ -656,20 +865,23 @@ function Radar() {
           </div>
 
           {!loading && filtered.length > 0 && (
-            <div className="px-4 py-2.5 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs text-slate-400">
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+              padding:"8px 16px",borderTop:`1px solid ${C.borderSm}`}}>
+              <span style={{fontSize:11,color:C.txt3}}>
                 {isToday ? "Auto-atualiza a cada 30s" : `Dados de ${formatDateLabel(dateFilter)}`}
               </span>
-              <span className="text-xs text-slate-400">
+              <span style={{fontSize:11,color:C.txt3}}>
                 {filtered.filter(l=>l.temp==="quente").length} quentes ·{" "}
-                {isToday ? `${filtered.filter(l=>l.sla_min>25).length} SLA crítico` : `${filtered.filter(l=>l.status==="Qualificado").length} qualificados`}
+                {isToday
+                  ? `${filtered.filter(l=>l.sla_min>25).length} SLA crítico`
+                  : `${filtered.filter(l=>l.status==="Qualificado").length} qualificados`}
               </span>
             </div>
           )}
         </div>
       </div>
 
-      {selected && <Drawer lead={selected} onClose={() => setSelected(null)} />}
+      {selected && <Drawer lead={selected} onClose={()=>setSelected(null)} basePath={basePath} />}
     </div>
   );
 }
