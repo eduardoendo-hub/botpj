@@ -627,8 +627,6 @@ async def relatorio_diario_enviar(request: Request):
         return JSONResponse({"ok": False, "message": "Configure o token do ChatPro primeiro."})
     if not recipients:
         return JSONResponse({"ok": False, "message": "Nenhum número destinatário configurado."})
-    if not template_name:
-        return JSONResponse({"ok": False, "message": "Informe o nome do template WABA nas configurações."})
 
     report = await build_daily_report()
     results = await send_report_whatsapp(

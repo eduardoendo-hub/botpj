@@ -282,50 +282,57 @@ def _truncate_var(text: str, max_len: int = _MAX_VAR_LEN) -> str:
     return truncated + "\n_(lista truncada — veja o Radar completo no admin)_"
 
 
-async def build_daily_report() -> Dict[str, str]:
+async def build_daily_report() -> Dict[str, Any]:
     """
-    Monta as 3 seções do relatório diário separadamente.
+    Monta o relatório diário como listas de linhas por seção.
 
-    Retorna dict com:
-      sec1  — leads de hoje       → variável {{1}} do template
-      sec2  — leads da semana     → variável {{2}} do template
-      sec3  — pontos de atenção   → variável {{3}} do template
-      full  — texto completo (preview no admin)
+    Retorna:
+      hoje    — lista com até 5 linhas (leads de hoje)
+      semana  — lista com até 10 linhas (leads da semana)
+      atencao — lista com até 3 linhas (pontos de atenção)
+      full    — texto completo para preview no admin
     """
     today_leads = await _fetch_leads_today()
     week_leads  = await _fetch_leads_week_active()
     now_brt     = _now_brt()
 
-    # ── {{1}}: Leads hoje  (sem \n — Meta rejeita newlines em parâmetros de template)
-    if today_leads:
-        sec1 = _truncate_var(" | ".join(_fmt_lead_today(l) for l in today_leads))
-    else:
-        sec1 = "Nenhum lead registrado hoje ainda."
+    # ── Leads hoje (máx 5)
+    hoje_lines = [_fmt_lead_today(l) for l in today_leads[:5]]
 
-    # ── {{2}}: Leads da semana
-    if week_leads:
-        sec2 = _truncate_var(" | ".join(_fmt_lead_week(l) for l in week_leads))
-    else:
-        sec2 = "Nenhum lead ativo da semana."
+    # ── Leads semana (máx 10)
+    semana_lines = [_fmt_lead_week(l) for l in week_leads[:10]]
 
-    # ── {{3}}: Pontos de atenção (seção curta, não precisa truncar)
-    sec3 = _build_attention_section(today_leads, week_leads)
+    # ── Atenção (máx 3)
+    all_leads = today_leads + week_leads
+    scored    = sorted(all_leads, key=_urgency_score, reverse=True)
+    top       = [l for l in scored if _urgency_score(l) > 10][:3]
+    atencao_lines = [
+        f"{_company_label(l)} / {_name_label(l)} - {_attention_label(l)}"
+        for l in top
+    ]
 
-    # Preview completo para o admin (simula como aparecerá no WhatsApp)
+    # ── Preview completo para o admin
+    def _preview_sec(lines: List[str], empty_msg: str) -> str:
+        return "\n".join(lines) if lines else empty_msg
+
     full = (
-        f"📡 *Radar PJ | Diretoria*\n"
-        f"_{now_brt.strftime('%d/%m/%Y às %H:%M')}_\n"
-        f"\n"
-        f"*Leads que entraram hoje*\n{sec1}\n"
-        f"\n"
-        f"*Leads da semana em andamento*\n{sec2}\n"
-        f"\n"
-        f"⚠️ *Pontos de atenção:*\n{sec3}\n"
-        f"\n"
+        f"📡 *Radar PJ | Diretoria* — {now_brt.strftime('%d/%m %H:%M')}\n\n"
+        f"*Leads que entraram hoje*\n{_preview_sec(hoje_lines, 'Nenhum lead hoje.')}\n\n"
+        f"*Leads da semana em andamento*\n{_preview_sec(semana_lines, 'Nenhum lead ativo.')}\n\n"
+        f"⚠️ *Pontos de atenção:*\n{_preview_sec(atencao_lines, 'Nenhum ponto de atenção.')}\n\n"
         f"_🤖 Bot | ↗️ Transferido para humano | 👤 Consultor_"
     )
 
-    return {"sec1": sec1, "sec2": sec2, "sec3": sec3, "full": full}
+    return {
+        "hoje":    hoje_lines,
+        "semana":  semana_lines,
+        "atencao": atencao_lines,
+        "full":    full,
+        # mantidos para compatibilidade com preview JSON
+        "sec1": _preview_sec(hoje_lines, "Nenhum lead hoje."),
+        "sec2": _preview_sec(semana_lines, "Nenhum lead ativo."),
+        "sec3": _preview_sec(atencao_lines, "Nenhum ponto de atenção."),
+    }
 
 
 # ── Envio via ChatPro WABA (número oficial) ───────────────────────────────────
@@ -362,81 +369,112 @@ async def list_waba_templates(
 
 
 async def send_report_whatsapp(
-    report: Dict[str, str],
+    report: Dict[str, Any],
     recipients: List[str],
     chatpro_url: str,        # não utilizado (mantido para compatibilidade)
     chatpro_token: str,
     instance_id: str = "chatpro-71f6d6f880",
-    template_name: str = "radarpj",
+    template_name: str = "",   # ignorado — templates hardcoded por bloco
     language_code: str = "pt_BR",
 ) -> Dict[str, Any]:
     """
-    Envia o relatório via template WABA (número oficial WhatsApp Business).
+    Envia o relatório diário via templates WABA (número oficial WhatsApp Business).
+
+    Envia até 4 mensagens por destinatário, usando templates hardcoded:
+
+      1. radarpj       — 5 variáveis com os leads de hoje ({{1}}–{{5}})
+      2. radarpjsemana — 5 variáveis por mensagem (até 2 msgs) com leads da semana
+      3. radarpjatencao — 1 variável por mensagem (até 3 msgs) com pontos de atenção
+      4. radarpjlead   — reservado para uso futuro (não enviado ainda)
 
     Usa POST /waba/sendTemplate com schedulingMessage=true — funciona
     fora da janela de 24h sem precisar de sessão ativa.
-
-    Template 'radarpj' com 3 variáveis no corpo:
-      {{1}} → leads de hoje
-      {{2}} → leads da semana
-      {{3}} → pontos de atenção
+    Meta rejeita \\n dentro de variáveis — cada variável deve ser uma linha só.
     """
     import httpx
-
-    if not template_name:
-        return {"__error": {"ok": False, "body": "Nome do template não configurado."}}
 
     results: Dict[str, Any] = {}
     headers = {"instance-token": chatpro_token, "Content-Type": "application/json"}
 
-    # Monta os 3 parâmetros do body do template
-    components = [
-        {
-            "type": "body",
-            "parameters": [
-                {"type": "text", "text": report.get("sec1", "")},
-                {"type": "text", "text": report.get("sec2", "")},
-                {"type": "text", "text": report.get("sec3", "")},
-            ],
+    # ── helpers ──────────────────────────────────────────────────────────────
+    def _pad(lst: List[str], size: int) -> List[str]:
+        """Garante exatamente `size` elementos, preenchendo com '-'."""
+        lst = list(lst)
+        if len(lst) >= size:
+            return lst[:size]
+        return lst + ["-"] * (size - len(lst))
+
+    def _vars(items: List[str]) -> List[Dict]:
+        """Converte lista de strings no formato esperado pela Meta API."""
+        return [{"type": "text", "text": t} for t in items]
+
+    async def _send_one(
+        client: httpx.AsyncClient,
+        number: str,
+        name: str,
+        variables: List[Dict],
+    ) -> Dict:
+        payload: Dict[str, Any] = {
+            "instanceId":        instance_id,
+            "number":            number,
+            "name":              name,
+            "languageCode":      language_code,
+            "schedulingMessage": True,
+            "variables":         variables,
         }
+        try:
+            resp = await client.post(
+                f"{_SPARKS_BASE}/waba/sendTemplate",
+                json=payload,
+                headers=headers,
+                timeout=15,
+            )
+            ok = resp.status_code < 300
+            logger.info(f"[REPORT] Template '{name}' → {number}: HTTP {resp.status_code}")
+            return {"status": resp.status_code, "ok": ok, "body": resp.text[:300]}
+        except Exception as e:
+            logger.error(f"[REPORT] Erro ao enviar '{name}' para {number}: {e}")
+            return {"status": 0, "ok": False, "body": str(e)}
+
+    # ── monta as mensagens a enviar ──────────────────────────────────────────
+    hoje_lines    = report.get("hoje", [])
+    semana_lines  = report.get("semana", [])
+    atencao_lines = report.get("atencao", [])
+
+    # radarpj: 1 msg com 5 vars (leads de hoje)
+    msgs_hoje = [
+        ("radarpj", _vars(_pad(hoje_lines, 5))),
     ]
 
+    # radarpjsemana: chunks de 5 vars (até 2 msgs = até 10 leads)
+    msgs_semana = []
+    for i in range(0, min(len(semana_lines), 10), 5):
+        chunk = semana_lines[i:i + 5]
+        msgs_semana.append(("radarpjsemana", _vars(_pad(chunk, 5))))
+    if not msgs_semana:
+        # Se não há leads na semana, envia uma mensagem com traços
+        msgs_semana.append(("radarpjsemana", _vars(["-"] * 5)))
+
+    # radarpjatencao: 1 var por msg, até 3 msgs
+    msgs_atencao = []
+    for item in (atencao_lines or ["-"])[:3]:
+        msgs_atencao.append(("radarpjatencao", _vars([item])))
+
+    all_messages = msgs_hoje + msgs_semana + msgs_atencao
+
+    # ── envia para cada destinatário ─────────────────────────────────────────
     async with httpx.AsyncClient(timeout=20) as client:
         for number in recipients:
             number = number.strip()
             if not number:
                 continue
-            try:
-                payload: Dict[str, Any] = {
-                    "instanceId":        instance_id,
-                    "number":            number,
-                    "name":              template_name,
-                    "languageCode":      language_code,
-                    "schedulingMessage": True,
-                    # Variáveis do corpo do template ({{1}}, {{2}}, {{3}})
-                    # Meta exige objetos {"type": "text", "text": "..."}
-                    "variables": [
-                        {"type": "text", "text": report.get("sec1", "")},
-                        {"type": "text", "text": report.get("sec2", "")},
-                        {"type": "text", "text": report.get("sec3", "")},
-                    ],
-                }
-                resp = await client.post(
-                    f"{_SPARKS_BASE}/waba/sendTemplate",
-                    json=payload,
-                    headers=headers,
-                    timeout=15,
-                )
-                results[number] = {
-                    "status": resp.status_code,
-                    "ok":     resp.status_code < 300,
-                    "body":   resp.text[:300],
-                }
-                logger.info(
-                    f"[REPORT] Template '{template_name}' enviado para {number}: HTTP {resp.status_code}"
-                )
-            except Exception as e:
-                results[number] = {"status": 0, "ok": False, "body": str(e)}
-                logger.error(f"[REPORT] Erro ao enviar para {number}: {e}")
+            msg_results = []
+            any_ok = False
+            for tmpl_name, variables in all_messages:
+                res = await _send_one(client, number, tmpl_name, variables)
+                msg_results.append({"template": tmpl_name, **res})
+                if res["ok"]:
+                    any_ok = True
+            results[number] = {"ok": any_ok, "messages": msg_results}
 
     return results
