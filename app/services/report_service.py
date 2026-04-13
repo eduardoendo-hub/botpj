@@ -404,9 +404,18 @@ async def send_report_whatsapp(
             return lst[:size]
         return lst + ["-"] * (size - len(lst))
 
+    def _clean(t: str) -> str:
+        """Remove quebras de linha e espaços extras — Meta rejeita \\n em variáveis."""
+        if not t:
+            return t
+        # Substitui qualquer sequência de whitespace (incluindo \n, \r, \t) por espaço
+        return " ".join(t.split())
+
     def _vars(items: List[str]) -> List[Dict]:
         """Converte lista de strings no formato esperado pela Meta API."""
-        return [{"type": "text", "text": t} for t in items]
+        cleaned = [_clean(t) for t in items]
+        logger.debug(f"[REPORT] vars: {cleaned}")
+        return [{"type": "text", "text": t} for t in cleaned]
 
     async def _send_one(
         client: httpx.AsyncClient,
@@ -423,6 +432,7 @@ async def send_report_whatsapp(
             "variables":         variables,
         }
         try:
+            logger.info(f"[REPORT] Enviando '{name}' → {number} | vars: {[v['text'] for v in variables]}")
             resp = await client.post(
                 f"{_SPARKS_BASE}/waba/sendTemplate",
                 json=payload,
@@ -430,7 +440,7 @@ async def send_report_whatsapp(
                 timeout=15,
             )
             ok = resp.status_code < 300
-            logger.info(f"[REPORT] Template '{name}' → {number}: HTTP {resp.status_code}")
+            logger.info(f"[REPORT] Template '{name}' → {number}: HTTP {resp.status_code} | {resp.text[:200]}")
             return {"status": resp.status_code, "ok": ok, "body": resp.text[:300]}
         except Exception as e:
             logger.error(f"[REPORT] Erro ao enviar '{name}' para {number}: {e}")
