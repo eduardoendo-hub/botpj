@@ -230,8 +230,8 @@ def _fmt_lead_today(lead: Dict) -> str:
     resp   = _responsible_icon(lead)
     pp     = _next_step(lead)
     return (
-        f"{hora} {_company_label(lead)} - {_name_label(lead)} - "
-        f"{_interest_label(lead)} - {status} - {resp} - {pp}"
+        f">> {hora} {_company_label(lead)} | {_name_label(lead)} | "
+        f"{_interest_label(lead)} | {status} | {resp} | {pp}"
     )
 
 
@@ -243,8 +243,8 @@ def _fmt_lead_week(lead: Dict) -> str:
     resp   = _responsible_icon(lead)
     pp     = _next_step(lead)
     return (
-        f"{data} {_company_label(lead)} - {_name_label(lead)} - "
-        f"{_interest_label(lead)} - {temp.capitalize()} - {status} - {resp} - {pp}"
+        f">> {data} {_company_label(lead)} | {_name_label(lead)} | "
+        f"{_interest_label(lead)} | {temp.capitalize()} | {status} | {resp} | {pp}"
     )
 
 
@@ -399,11 +399,11 @@ async def send_report_whatsapp(
 
     # ── helpers ──────────────────────────────────────────────────────────────
     def _pad(lst: List[str], size: int) -> List[str]:
-        """Garante exatamente `size` elementos, preenchendo com '-'."""
+        """Garante exatamente `size` elementos, preenchendo com string vazia."""
         lst = list(lst)
         if len(lst) >= size:
             return lst[:size]
-        return lst + ["-"] * (size - len(lst))
+        return lst + [""] * (size - len(lst))
 
     def _clean(t: str) -> str:
         """Remove quebras de linha e espaços extras — Meta rejeita \\n em variáveis."""
@@ -463,12 +463,12 @@ async def send_report_whatsapp(
         chunk = semana_lines[i:i + 5]
         msgs_semana.append(("radarpjsemana", _vars(_pad(chunk, 5))))
     if not msgs_semana:
-        # Se não há leads na semana, envia uma mensagem com traços
-        msgs_semana.append(("radarpjsemana", _vars(["-"] * 5)))
+        # Se não há leads na semana, envia uma mensagem com campos vazios
+        msgs_semana.append(("radarpjsemana", _vars([""] * 5)))
 
     # radarpjatencao: 1 var por msg, até 3 msgs
     msgs_atencao = []
-    for item in (atencao_lines or ["-"])[:3]:
+    for item in (atencao_lines or [""])[:3]:
         msgs_atencao.append(("radarpjatencao", _vars([item])))
 
     all_messages = msgs_hoje + msgs_semana + msgs_atencao
