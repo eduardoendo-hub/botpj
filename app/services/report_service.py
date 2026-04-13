@@ -398,10 +398,11 @@ async def send_report_whatsapp(
                     "languageCode":      language_code,
                     "schedulingMessage": True,
                     # Variáveis do corpo do template ({{1}}, {{2}}, {{3}})
+                    # Meta exige objetos {"type": "text", "text": "..."}
                     "variables": [
-                        report.get("sec1", ""),
-                        report.get("sec2", ""),
-                        report.get("sec3", ""),
+                        {"type": "text", "text": report.get("sec1", "")},
+                        {"type": "text", "text": report.get("sec2", "")},
+                        {"type": "text", "text": report.get("sec3", "")},
                     ],
                 }
                 resp = await client.post(
