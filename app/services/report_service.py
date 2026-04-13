@@ -223,26 +223,27 @@ async def _fetch_leads_week_active() -> List[Dict]:
 # ── Montagem da mensagem ──────────────────────────────────────────────────────
 
 def _fmt_lead_today(lead: Dict) -> str:
-    dt   = _to_brt(lead.get("created_at") or "")
-    hora = dt.strftime("%H:%M") if dt else "--:--"
+    dt     = _to_brt(lead.get("created_at") or "")
+    hora   = dt.strftime("%H:%M") if dt else "--:--"
+    status = lead.get("status_conversa") or lead.get("stage") or "Novo"
+    resp   = _responsible_icon(lead)
+    pp     = _next_step(lead)
     return (
-        f"• {hora} | {_company_label(lead)} | {_name_label(lead)} | "
-        f"{_interest_label(lead)} | {lead.get('status_conversa') or lead.get('stage') or 'Novo'} | "
-        f"Responsável: {_responsible_icon(lead)} | "
-        f"Próximo passo: {_next_step(lead)}"
+        f"{hora} {_company_label(lead)} - {_name_label(lead)} - "
+        f"{_interest_label(lead)} - {status} - {resp} - {pp}"
     )
 
 
 def _fmt_lead_week(lead: Dict) -> str:
     dt   = _to_brt(lead.get("created_at") or "")
     data = dt.strftime("%d/%m") if dt else "--/--"
-    temp = lead.get("lead_temperature") or ""
+    temp = lead.get("lead_temperature") or "N/i"
+    status = lead.get("status_conversa") or lead.get("stage") or "Em andamento"
+    resp   = _responsible_icon(lead)
+    pp     = _next_step(lead)
     return (
-        f"• {data} | {_company_label(lead)} | {_name_label(lead)} | "
-        f"{_interest_label(lead)} | {temp.capitalize() if temp else 'N/i'} | "
-        f"{lead.get('status_conversa') or lead.get('stage') or 'Em andamento'} | "
-        f"Responsável: {_responsible_icon(lead)} | "
-        f"Próximo passo: {_next_step(lead)}"
+        f"{data} {_company_label(lead)} - {_name_label(lead)} - "
+        f"{_interest_label(lead)} - {temp.capitalize()} - {status} - {resp} - {pp}"
     )
 
 
@@ -295,15 +296,15 @@ async def build_daily_report() -> Dict[str, str]:
     week_leads  = await _fetch_leads_week_active()
     now_brt     = _now_brt()
 
-    # ── {{1}}: Leads hoje
+    # ── {{1}}: Leads hoje  (sem \n — Meta rejeita newlines em parâmetros de template)
     if today_leads:
-        sec1 = _truncate_var("\n".join(_fmt_lead_today(l) for l in today_leads))
+        sec1 = _truncate_var(" | ".join(_fmt_lead_today(l) for l in today_leads))
     else:
         sec1 = "Nenhum lead registrado hoje ainda."
 
     # ── {{2}}: Leads da semana
     if week_leads:
-        sec2 = _truncate_var("\n".join(_fmt_lead_week(l) for l in week_leads))
+        sec2 = _truncate_var(" | ".join(_fmt_lead_week(l) for l in week_leads))
     else:
         sec2 = "Nenhum lead ativo da semana."
 
