@@ -266,6 +266,21 @@ def _build_attention_section(today: List[Dict], week: List[Dict]) -> str:
     return "\n".join(lines)
 
 
+_MAX_VAR_LEN = 900  # Meta limita parâmetros de template a ~1024 chars; usamos 900 com margem
+
+
+def _truncate_var(text: str, max_len: int = _MAX_VAR_LEN) -> str:
+    """Trunca o texto para caber no limite de parâmetros da Meta API."""
+    if len(text) <= max_len:
+        return text
+    # Corta na última linha completa que cabe
+    truncated = text[:max_len]
+    last_nl = truncated.rfind("\n")
+    if last_nl > max_len // 2:
+        truncated = truncated[:last_nl]
+    return truncated + "\n_(lista truncada — veja o Radar completo no admin)_"
+
+
 async def build_daily_report() -> Dict[str, str]:
     """
     Monta as 3 seções do relatório diário separadamente.
@@ -282,17 +297,17 @@ async def build_daily_report() -> Dict[str, str]:
 
     # ── {{1}}: Leads hoje
     if today_leads:
-        sec1 = "\n".join(_fmt_lead_today(l) for l in today_leads)
+        sec1 = _truncate_var("\n".join(_fmt_lead_today(l) for l in today_leads))
     else:
         sec1 = "Nenhum lead registrado hoje ainda."
 
     # ── {{2}}: Leads da semana
     if week_leads:
-        sec2 = "\n".join(_fmt_lead_week(l) for l in week_leads)
+        sec2 = _truncate_var("\n".join(_fmt_lead_week(l) for l in week_leads))
     else:
         sec2 = "Nenhum lead ativo da semana."
 
-    # ── {{3}}: Pontos de atenção
+    # ── {{3}}: Pontos de atenção (seção curta, não precisa truncar)
     sec3 = _build_attention_section(today_leads, week_leads)
 
     # Preview completo para o admin (simula como aparecerá no WhatsApp)
