@@ -112,9 +112,12 @@ async def _session_delete(session_id: str):
         await db.close()
 
 
+_ADMIN_COOKIE = "pj_admin_sid"
+
+
 async def _check_auth(request: Request):
     """Verifica autenticação — apenas admin tem acesso ao painel completo."""
-    session_id = request.cookies.get("session_id")
+    session_id = request.cookies.get(_ADMIN_COOKIE)
     username = await _session_username(session_id) if session_id else ""
     if username == settings.admin_username:
         return
@@ -125,7 +128,7 @@ async def _check_auth(request: Request):
 
 async def _check_auth_shared(request: Request):
     """Auth compartilhado — aceita admin e consultor."""
-    session_id = request.cookies.get("session_id")
+    session_id = request.cookies.get(_ADMIN_COOKIE)
     username = await _session_username(session_id) if session_id else ""
     if username in (settings.admin_username, "consultor"):
         return
@@ -149,24 +152,24 @@ async def login(request: Request, username: str = Form(...), password: str = For
         session_id = secrets.token_hex(32)
         await _session_create(session_id, settings.admin_username)
         response = RedirectResponse(url="/admin", status_code=HTTP_303_SEE_OTHER)
-        response.set_cookie("session_id", session_id, httponly=True, max_age=86400)
+        response.set_cookie(_ADMIN_COOKIE, session_id, httponly=True, max_age=86400, path="/pj")
         return response
     if username == "consultor" and password == settings.consultant_password:
         session_id = secrets.token_hex(32)
         await _session_create(session_id, "consultor")
         response = RedirectResponse(url="/admin/conversations", status_code=HTTP_303_SEE_OTHER)
-        response.set_cookie("session_id", session_id, httponly=True, max_age=86400)
+        response.set_cookie(_ADMIN_COOKIE, session_id, httponly=True, max_age=86400, path="/pj")
         return response
     return _r(request, "login.html", {"error": "Credenciais inválidas"})
 
 
 @router.get("/logout")
 async def logout(request: Request):
-    session_id = request.cookies.get("session_id")
+    session_id = request.cookies.get(_ADMIN_COOKIE)
     if session_id:
         await _session_delete(session_id)
     response = RedirectResponse(url="/admin/login", status_code=HTTP_303_SEE_OTHER)
-    response.delete_cookie("session_id")
+    response.delete_cookie(_ADMIN_COOKIE, path="/pj")
     return response
 
 
