@@ -142,14 +142,20 @@
     let _htmlContent = { title: '', content: '' };
 
     function switchTab(tab) {
+        // Painéis das abas URL e HTML
+        ['url', 'html'].forEach(t => {
+            const panel = document.getElementById('panel-' + t);
+            if (panel) panel.style.display = (t === tab) ? 'block' : 'none';
+        });
+        // Estilo de todas as abas (incluindo manual)
         ['manual', 'url', 'html'].forEach(t => {
-            const isActive = t === tab;
-            document.getElementById('panel-' + t).style.display = (isActive && t !== 'manual') ? 'block' : 'none';
             const btn = document.getElementById('tab-' + t);
+            if (!btn) return;
+            const isActive = t === tab;
             btn.style.color = isActive ? '#4f46e5' : '#6b7280';
             btn.style.borderBottomColor = isActive ? '#4f46e5' : 'transparent';
         });
-        // O formulário manual fica sempre visível
+        // Formulário manual sempre visível
         document.getElementById('main-form').style.display = 'block';
     }
 
