@@ -268,7 +268,7 @@ def _extract_impacta_cursos_content(html: str, url: str) -> dict | None:
         for i in range(from_line, len(lines)):
             for stop in _IMPACTA_CURSOS_STOP:
                 if stop.lower() in lines[i].lower():
-                    logger.debug(
+                    logger.info(
                         "Parser Impacta Cursos: stop '%s' na linha %d: %r",
                         stop, i, lines[i][:80],
                     )
@@ -311,8 +311,8 @@ def _extract_impacta_cursos_content(html: str, url: str) -> dict | None:
         "Parser Impacta Cursos: %d seções encontradas, stop_pos=%d, total_lines=%d | %s",
         len(sec_positions), stop_pos, len(lines), url,
     )
-    logger.debug("Parser Impacta Cursos: primeiras 30 linhas: %s", lines[:30])
-    logger.debug("Parser Impacta Cursos: seções: %s", [(p, m) for p, m in sec_positions])
+    logger.info("Parser Impacta Cursos: primeiras 30 linhas: %s", lines[:30])
+    logger.info("Parser Impacta Cursos: seções pos: %s", [(p, m) for p, m in sec_positions])
 
     # ── Extrai conteúdo de cada seção ─────────────────────────────────────
     section_texts = []
