@@ -178,6 +178,162 @@ def _is_impacta_course_url(url: str) -> bool:
     return bool(re.search(r"mba\.impacta\.edu\.br/(mbas|pos|cursos)/", url))
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Parser especializado — Cursos Impacta (impacta.com.br/cursos/)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _is_impacta_cursos_url(url: str) -> bool:
+    """Retorna True para páginas de cursos da Impacta (impacta.com.br/cursos/)."""
+    return bool(re.search(r"impacta\.com\.br/cursos/", url))
+
+
+# Seções que queremos extrair, em ordem de aparição na página
+_IMPACTA_CURSOS_SECTIONS = [
+    "Sobre o Curso",
+    "Suas habilidades ao final do curso",
+    "Este curso é para você que:",
+    "Conteúdo programático",
+    "Pré-requisitos",
+]
+
+# Marcadores que indicam fim do conteúdo útil
+_IMPACTA_CURSOS_STOP = [
+    "PRÓXIMAS TURMAS PRESENCIAIS",
+    "PRÓXIMAS TURMAS ONLINE",
+    "SOLICITE UMA COTAÇÃO",
+    "O que os alunos dizem sobre",
+    "nossos parceiros",
+    "VOCÊ PRECISA DE MAIS INFORMAÇÕES",
+    "novas features",
+    "Maior escola de tecnologia",
+    "CURSOS RELACIONADOS",
+    "Conhecer todas as formações",
+    "Download do conteúdo do curso",
+    "Avise-me quando tiver novas datas",
+    "ver mais datas",
+]
+
+# Linhas de ruído no cabeçalho (antes de "Sobre o Curso")
+_HEADER_SKIP_RE = re.compile(
+    r"^(Voltar|matricule-se|inscritos|Online ao Vivo|Presencial|Online e Presencial"
+    r"|Teoria \+ [Pp]rática|ICS\s.*|Certificado\s.*"
+    r"|CADASTRE-SE.*|Preencha seus dados.*|O curso é para.*"
+    r"|Este curso (também )?está disponível.*|Este curso faz parte da"
+    r"|Escola\s.*)$",
+    re.IGNORECASE,
+)
+_HEADER_ALUNOS_RE = re.compile(r"^\+?\d[\d\.,]*\s*(alunos|mil\s*alunos)", re.IGNORECASE)
+
+# Linhas curtas úteis no cabeçalho (carga horária, módulos)
+_HEADER_KEEP_RE = re.compile(r"^\d+h de carga horária|^Módulo único$|^\d+ módulos?$", re.IGNORECASE)
+
+# Noise dentro da seção "Sobre o Curso" (logo após a descrição)
+_SOBRE_STOP_LINES = {"Projetos", "Reais", "Turbine seu portfólio", "Metodologia Hands-on", "Metodologia Hands-On"}
+_SOBRE_RATING_RE  = re.compile(r"^\d+[\.,]\d+\s+Avalia")
+
+# Noise dentro de "Pré-requisitos" (após o texto principal)
+_PREREQ_STOP_RE = re.compile(r"^(Certificação Impacta|Download do conteúdo)", re.IGNORECASE)
+
+
+def _extract_impacta_cursos_content(html: str, url: str) -> dict | None:
+    """
+    Parser especializado para páginas impacta.com.br/cursos/.
+    Extrai: cabeçalho resumido, Sobre o Curso, Habilidades, Para quem,
+    Conteúdo programático e Pré-requisitos. Remove todo o ruído da página.
+    """
+    title   = _extract_title_from_html(html)
+    raw     = _extract_text_from_html(html)
+    if not raw:
+        return None
+
+    lines = [l.strip() for l in raw.split("\n")]
+
+    def find_exact(marker: str) -> int:
+        for i, l in enumerate(lines):
+            if l == marker:
+                return i
+        return -1
+
+    def find_stop() -> int:
+        for i, l in enumerate(lines):
+            for stop in _IMPACTA_CURSOS_STOP:
+                if stop in l:
+                    return i
+        return len(lines)
+
+    # A página precisa ter "Sobre o Curso" para usar este parser
+    sobre_pos = find_exact("Sobre o Curso")
+    if sobre_pos == -1:
+        return None
+
+    # ── Cabeçalho: extrai tagline e info básica antes de "Sobre o Curso" ──
+    header_parts = []
+    for line in lines[:sobre_pos]:
+        if not line:
+            continue
+        if _HEADER_SKIP_RE.match(line) or _HEADER_ALUNOS_RE.match(line):
+            continue
+        if _HEADER_KEEP_RE.match(line):        # carga horária, módulos
+            header_parts.append(line)
+        elif len(line) > 45:                   # tagline longa
+            header_parts.append(line)
+        # linhas curtas sem padrão reconhecido → descarta (ruído)
+
+    # ── Localiza todas as seções e o ponto de parada ──────────────────────
+    sec_positions = []
+    for marker in _IMPACTA_CURSOS_SECTIONS:
+        pos = find_exact(marker)
+        if pos != -1:
+            sec_positions.append((pos, marker))
+    sec_positions.sort(key=lambda x: x[0])
+
+    stop_pos = find_stop()
+
+    # ── Extrai conteúdo de cada seção ─────────────────────────────────────
+    section_texts = []
+    for idx, (pos, marker) in enumerate(sec_positions):
+        end = sec_positions[idx + 1][0] if idx + 1 < len(sec_positions) else stop_pos
+
+        sec_lines = lines[pos:end]
+
+        if marker == "Sobre o Curso":
+            clean = []
+            for l in sec_lines:
+                if _SOBRE_RATING_RE.match(l) or l in _SOBRE_STOP_LINES:
+                    break
+                clean.append(l)
+            sec_lines = clean
+
+        if marker == "Pré-requisitos":
+            clean = []
+            for l in sec_lines:
+                if _PREREQ_STOP_RE.match(l):
+                    break
+                clean.append(l)
+            sec_lines = clean
+
+        text = "\n".join(l for l in sec_lines if l)
+        if text:
+            section_texts.append(text)
+
+    if not section_texts:
+        return None
+
+    parts = []
+    if header_parts:
+        parts.append("\n".join(header_parts))
+    parts.extend(section_texts)
+
+    content = f"Fonte: {url}\n\n" + "\n\n".join(parts)
+
+    max_chars = 20_000
+    if len(content) > max_chars:
+        content = content[:max_chars] + f"\n\n[Conteúdo truncado — {len(content)} caracteres originais]"
+
+    logger.info("Parser Impacta Cursos: extraído %d seções de %s", len(section_texts), url)
+    return {"success": True, "title": title or url, "content": content}
+
+
 def _extract_impacta_content(html: str, url: str) -> dict | None:
     """
     Tenta extrair conteúdo estruturado de uma página de curso Impacta.
@@ -260,11 +416,17 @@ async def fetch_url_content(url: str) -> dict:
 
             html = response.text
 
-            # ── Tenta parser especializado Impacta ──────────────────────
+            # ── Parser especializado: impacta.com.br/cursos/ ─────────────
+            if _is_impacta_cursos_url(url):
+                result = _extract_impacta_cursos_content(html, url)
+                if result:
+                    return result
+
+            # ── Parser especializado: mba.impacta.edu.br ─────────────────
             if _is_impacta_course_url(url):
                 result = _extract_impacta_content(html, url)
                 if result:
-                    max_chars = 15_000  # Mais generoso — conteúdo estruturado é valioso
+                    max_chars = 15_000
                     if len(result["content"]) > max_chars:
                         result["content"] = (
                             result["content"][:max_chars]
