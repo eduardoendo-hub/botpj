@@ -293,12 +293,13 @@ def _extract_impacta_cursos_content(html: str, url: str) -> dict | None:
         return {
             "success": False,
             "error": (
-                "Esta página é renderizada via JavaScript e não pode ser importada automaticamente.\n\n"
-                "Como importar manualmente:\n"
-                "1. Abra a página no navegador\n"
-                "2. Clique com botão direito → 'Ver código-fonte' (ou Ctrl+U)\n"
-                "3. Selecione tudo (Ctrl+A) e copie\n"
-                "4. Use a aba 'Colar HTML' no painel para extrair o conteúdo"
+                "Esta página carrega o conteúdo via JavaScript e não pode ser importada automaticamente.\n\n"
+                "Como importar:\n"
+                "1. Abra a página no navegador e aguarde carregar completamente\n"
+                "2. Pressione F12 para abrir o DevTools\n"
+                "3. Vá na aba 'Elements' (ou 'Elementos')\n"
+                "4. Clique com botão direito na tag <html> → Copy → Copy outerHTML\n"
+                "5. Cole na aba 'Colar HTML' deste painel"
             ),
         }
 
