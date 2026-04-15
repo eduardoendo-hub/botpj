@@ -488,12 +488,18 @@ def extract_phone_from_payload(data: dict) -> str:
             contact.get("cel_phone", "")
             or contact.get("phone", "")
             or contact.get("telephone", "")
+            or contact.get("phone_number", "")
         )
     else:
         phone = ""
 
     if not phone:
-        phone = data.get("cel_phone", "") or data.get("phone", "") or data.get("number", "")
+        phone = (
+            data.get("cel_phone", "")
+            or data.get("phone", "")
+            or data.get("number", "")
+            or data.get("phone_number", "")
+        )
 
     return _normalize_phone(phone) if phone else ""
 

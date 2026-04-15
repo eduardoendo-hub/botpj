@@ -138,50 +138,53 @@
 </div>
 
 <script>
-    let _fetchedContent = { title: '', content: '' };
-    let _htmlContent = { title: '', content: '' };
+    var _fetchedContent = { title: '', content: '' };
+    var _htmlContent    = { title: '', content: '' };
 
     function switchTab(tab) {
-        // Painéis das abas URL e HTML
-        ['url', 'html'].forEach(t => {
-            const panel = document.getElementById('panel-' + t);
-            if (panel) panel.style.display = (t === tab) ? 'block' : 'none';
-        });
-        // Estilo de todas as abas (incluindo manual)
-        ['manual', 'url', 'html'].forEach(t => {
-            const btn = document.getElementById('tab-' + t);
-            if (!btn) return;
-            const isActive = t === tab;
-            btn.style.color = isActive ? '#4f46e5' : '#6b7280';
-            btn.style.borderBottomColor = isActive ? '#4f46e5' : 'transparent';
-        });
-        // Formulário manual sempre visível
-        document.getElementById('main-form').style.display = 'block';
+        try {
+            ['url', 'html'].forEach(function(t) {
+                var panel = document.getElementById('panel-' + t);
+                if (panel) panel.style.display = (t === tab) ? 'block' : 'none';
+            });
+            ['manual', 'url', 'html'].forEach(function(t) {
+                var btn = document.getElementById('tab-' + t);
+                if (!btn) return;
+                var isActive = (t === tab);
+                btn.style.color = isActive ? '#4f46e5' : '#6b7280';
+                btn.style.borderBottomColor = isActive ? '#4f46e5' : 'transparent';
+            });
+            var form = document.getElementById('main-form');
+            if (form) form.style.display = 'block';
+        } catch(e) {
+            console.error('switchTab error:', e);
+        }
     }
 
     function clearPreview() {
-        document.getElementById('url-result').style.display = 'none';
+        var el = document.getElementById('url-result');
+        if (el) el.style.display = 'none';
     }
 
-    async function fetchUrl() {
-        const url = document.getElementById('url-input').value.trim();
+    function fetchUrl() {
+        var urlInput = document.getElementById('url-input');
+        var url = urlInput ? urlInput.value.trim() : '';
         if (!url) { alert('Digite uma URL primeiro.'); return; }
 
-        const btn = document.getElementById('fetch-btn');
+        var btn = document.getElementById('fetch-btn');
         btn.textContent = 'Buscando...';
         btn.disabled = true;
         document.getElementById('url-result').style.display = 'block';
         document.getElementById('url-error').style.display = 'none';
         document.getElementById('url-preview').style.display = 'none';
 
-        try {
-            const res = await fetch(`${prefix}/admin/knowledge/fetch-url`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url })
-            });
-            const data = await res.json();
-
+        fetch(prefix + '/admin/knowledge/fetch-url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
             if (data.success) {
                 _fetchedContent = { title: data.title, content: data.content };
                 document.getElementById('detected-title').textContent = data.title;
@@ -190,56 +193,61 @@
                 document.getElementById('url-error').textContent = '❌ ' + data.error;
                 document.getElementById('url-error').style.display = 'block';
             }
-        } catch (err) {
+        })
+        .catch(function(err) {
             document.getElementById('url-error').textContent = '❌ Erro: ' + err.message;
             document.getElementById('url-error').style.display = 'block';
-        }
-
-        btn.textContent = 'Buscar conteúdo';
-        btn.disabled = false;
+        })
+        .finally(function() {
+            btn.textContent = 'Buscar conteúdo';
+            btn.disabled = false;
+        });
     }
 
     function useUrlContent() {
-        document.getElementById('field-title').value = _fetchedContent.title;
+        document.getElementById('field-title').value   = _fetchedContent.title;
         document.getElementById('field-content').value = _fetchedContent.content;
         switchTab('manual');
         document.getElementById('field-title').scrollIntoView({ behavior: 'smooth' });
     }
 
     function parseHtml() {
-        const html = document.getElementById('html-input').value.trim();
+        var htmlInput = document.getElementById('html-input');
+        var html = htmlInput ? htmlInput.value.trim() : '';
         if (!html) { alert('Cole o HTML primeiro.'); return; }
 
-        // Extração simples de texto do HTML no lado cliente
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
+        try {
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(html, 'text/html');
 
-        // Remove scripts e estilos
-        doc.querySelectorAll('script, style, nav, footer, header, aside').forEach(el => el.remove());
+            doc.querySelectorAll('script, style, nav, footer, header, aside').forEach(function(el) { el.remove(); });
 
-        // Extrai título
-        const title = doc.querySelector('title')?.textContent?.trim()
-            || doc.querySelector('h1')?.textContent?.trim()
-            || 'Conteúdo importado';
+            var titleEl = doc.querySelector('title') || doc.querySelector('h1');
+            var title = (titleEl ? titleEl.textContent.trim() : '') || 'Conteúdo importado';
 
-        // Extrai texto
-        const text = (doc.body?.innerText || doc.body?.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
+            var body = doc.body;
+            var text = (body ? (body.textContent || '') : '').replace(/\n{3,}/g, '\n\n').trim();
 
-        if (!text) {
-            document.getElementById('html-error').textContent = '❌ Não foi possível extrair texto do HTML.';
+            if (!text) {
+                document.getElementById('html-error').textContent = '❌ Não foi possível extrair texto do HTML.';
+                document.getElementById('html-error').style.display = 'block';
+                document.getElementById('html-result').style.display = 'block';
+                return;
+            }
+
+            _htmlContent = { title: title, content: 'Fonte: (HTML importado)\n\n' + text.substring(0, 10000) };
+            document.getElementById('html-result').style.display  = 'block';
+            document.getElementById('html-preview').style.display = 'block';
+            document.getElementById('html-error').style.display   = 'none';
+        } catch(e) {
+            document.getElementById('html-error').textContent = '❌ Erro ao processar HTML: ' + e.message;
             document.getElementById('html-error').style.display = 'block';
             document.getElementById('html-result').style.display = 'block';
-            return;
         }
-
-        _htmlContent = { title, content: 'Fonte: (HTML importado)\n\n' + text.substring(0, 10000) };
-        document.getElementById('html-result').style.display = 'block';
-        document.getElementById('html-preview').style.display = 'block';
-        document.getElementById('html-error').style.display = 'none';
     }
 
     function useHtmlContent() {
-        document.getElementById('field-title').value = _htmlContent.title;
+        document.getElementById('field-title').value   = _htmlContent.title;
         document.getElementById('field-content').value = _htmlContent.content;
         switchTab('manual');
         document.getElementById('field-title').scrollIntoView({ behavior: 'smooth' });
