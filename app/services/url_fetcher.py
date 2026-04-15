@@ -1,5 +1,6 @@
 """Serviço para buscar e extrair conteúdo de URLs para a base de conhecimento."""
 
+import asyncio
 import httpx
 import re
 import logging
@@ -438,20 +439,32 @@ async def fetch_url_content(url: str) -> dict:
             follow_redirects=True,
             headers=headers,
         ) as client:
-            response = await client.get(url)
-            response.raise_for_status()
+            # Tenta até 3 vezes — páginas Impacta às vezes retornam skeleton JS
+            html = ""
+            for attempt in range(3):
+                response = await client.get(url)
+                response.raise_for_status()
 
-            content_type = response.headers.get("content-type", "")
-            if "text/html" not in content_type and "text/plain" not in content_type:
-                return {
-                    "success": False,
-                    "error": (
-                        f"Tipo de conteúdo não suportado: {content_type}. "
-                        "Só é possível importar páginas HTML."
-                    ),
-                }
+                content_type = response.headers.get("content-type", "")
+                if "text/html" not in content_type and "text/plain" not in content_type:
+                    return {
+                        "success": False,
+                        "error": (
+                            f"Tipo de conteúdo não suportado: {content_type}. "
+                            "Só é possível importar páginas HTML."
+                        ),
+                    }
 
-            html = response.text
+                html = response.text
+                # Se o HTML for robusto (>50KB) não precisa retry
+                if len(html) > 50_000:
+                    break
+                if attempt < 2:
+                    logger.info(
+                        "fetch_url: resposta pequena (%d bytes), tentativa %d/3 | %s",
+                        len(html), attempt + 1, url,
+                    )
+                    await asyncio.sleep(1)
 
             # ── Parser especializado: impacta.com.br/cursos/ ─────────────
             if _is_impacta_cursos_url(url):
