@@ -48,6 +48,9 @@
                 <th>Nome</th>
                 <th>Empresa</th>
                 <th>Cargo</th>
+                <th title="Serviço solicitado no formulário">Serviço / Tipo</th>
+                <th title="Identificador de origem (landing page, campanha)">Origem</th>
+                <th title="Quantidade de colaboradores na empresa">Colaboradores</th>
                 <th>Tema</th>
                 <th>Trail</th>
                 <th>Temp.</th>
@@ -77,6 +80,24 @@
                     {% if lead.company %}🏢 {{ lead.company }}{% else %}—{% endif %}
                 </td>
                 <td class="truncate" title="{{ lead.job_title or '' }}">{{ lead.job_title or '—' }}</td>
+                <td class="truncate" title="{{ lead.servico or '' }}">
+                    {% set svc = lead.servico %}
+                    {% if svc %}
+                        <span style="background:#ede9fe;color:#5b21b6;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500;">
+                            {{ svc }}
+                        </span>
+                    {% else %}—{% endif %}
+                </td>
+                <td style="font-size:11px;" title="{{ lead.identificador or '' }}">
+                    {% if lead.identificador %}
+                        <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500;">
+                            {{ lead.identificador }}
+                        </span>
+                    {% else %}—{% endif %}
+                </td>
+                <td style="font-size:11px; color:#6b7280; text-align:center;">
+                    {{ lead.qtd_colaboradores or '—' }}
+                </td>
                 <td class="truncate" title="{{ lead.tema_interesse or lead.training_interest or '' }}">
                     {% set tema = lead.tema_interesse or lead.training_interest %}
                     {% if tema %}

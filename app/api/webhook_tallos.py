@@ -30,6 +30,7 @@ NOTA SOBRE O WEBHOOK COMPARTILHADO:
 """
 
 import re
+import json
 import time
 import logging
 from fastapi import APIRouter, Request, BackgroundTasks, Header
@@ -349,16 +350,26 @@ async def _send_to_bot(
 
 async def _handle_form_lead(body: dict, source_channel: str = "tallos_form_pj") -> None:
     """Registra lead de formulário PJ no banco e cria sessão de espera."""
-    name     = (body.get("Nome", "") or "").strip()
-    email    = (body.get("E-mail", "") or body.get("Email", "") or "").strip()
-    company  = (body.get("Empresa", "") or body.get("Razão Social", "") or "").strip()
-    training = (body.get("Treinamento", "") or body.get("Curso", "") or "").strip()
-    canal    = (body.get("Canal", "") or "").strip()
-    phone    = _normalize_form_phone(body.get("Telefone", "") or body.get("Celular", "") or "")
+    name           = (body.get("Nome", "") or "").strip()
+    email          = (body.get("E-mail", "") or body.get("Email", "") or "").strip()
+    company        = (body.get("Empresa", "") or body.get("Razão Social", "") or "").strip()
+    job_title      = (body.get("Cargo", "") or "").strip()
+    training       = (body.get("Treinamento", "") or body.get("Curso", "") or "").strip()
+    identificador  = (body.get("Identificador", "") or "").strip()
+    qtd_colab      = (body.get("Quantidade de Colaboradores", "") or "").strip()
+    servico        = (body.get("Serviço", "") or body.get("Servico", "") or "").strip()
+    canal          = (body.get("Canal", "") or "").strip()
+    phone          = _normalize_form_phone(body.get("Telefone", "") or body.get("Celular", "") or "")
+
+    # Salva todo o payload original como JSON para exibição no detalhe do lead
+    try:
+        raw_form_data = json.dumps(body, ensure_ascii=False)
+    except Exception:
+        raw_form_data = ""
 
     logger.info(
         f"📋 FORM LEAD PJ | nome={name!r} | phone={phone} | "
-        f"empresa={company!r} | treinamento={training!r} | source={source_channel}"
+        f"empresa={company!r} | servico={servico!r} | identificador={identificador!r} | source={source_channel}"
     )
 
     if not phone:
@@ -381,7 +392,12 @@ async def _handle_form_lead(body: dict, source_channel: str = "tallos_form_pj") 
             contact_name=name,
             email=email,
             company=company,
-            training_interest=training,
+            job_title=job_title,
+            training_interest=training or servico,
+            identificador=identificador,
+            qtd_colaboradores=qtd_colab,
+            servico=servico,
+            raw_form_data=raw_form_data,
             source_channel=source_channel,
         )
         logger.info(f"[Tallos PJ Form] ✅ Lead registrado | phone={phone} | channel={source_channel}")

@@ -371,6 +371,7 @@ async def leads_export(request: Request):
     writer = csv.DictWriter(
         output,
         fieldnames=["phone_number", "contact_name", "email", "company", "job_title",
+                    "servico", "identificador", "qtd_colaboradores",
                     "training_interest", "interest", "stage", "source_channel",
                     "created_at", "updated_at"],
         extrasaction="ignore",

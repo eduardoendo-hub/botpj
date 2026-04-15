@@ -111,6 +111,11 @@ async def init_db():
             ("score",             "TEXT DEFAULT ''"),
             ("proximo_passo",     "TEXT DEFAULT ''"),
             ("status_conversa",   "TEXT DEFAULT ''"),
+            # campos de formulário PJ
+            ("identificador",     "TEXT DEFAULT ''"),
+            ("qtd_colaboradores", "TEXT DEFAULT ''"),
+            ("servico",           "TEXT DEFAULT ''"),
+            ("raw_form_data",     "TEXT DEFAULT ''"),
         ]:
             try:
                 await db.execute(f"ALTER TABLE leads ADD COLUMN {_col} {_type_def}")
@@ -607,6 +612,7 @@ async def upsert_lead(phone_number: str, contact_name: str = "", **kwargs):
             "tipo_interesse", "qtd_participantes", "formato", "cidade", "prazo",
             "urgencia", "objetivo_negocio", "lead_temperature", "trail", "score",
             "proximo_passo", "status_conversa", "interest", "stage", "notes",
+            "identificador", "qtd_colaboradores", "servico", "raw_form_data",
         )
 
         # Hierarquia de source_channel — nunca regride para valor menos específico
@@ -648,8 +654,9 @@ async def upsert_lead(phone_number: str, contact_name: str = "", **kwargs):
                     training_interest, tema_interesse, tipo_interesse, qtd_participantes,
                     formato, cidade, prazo, urgencia, objetivo_negocio,
                     lead_temperature, trail, score, proximo_passo, status_conversa,
-                    interest, stage, notes, source_channel)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    interest, stage, notes, source_channel,
+                    identificador, qtd_colaboradores, servico, raw_form_data)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (
                     phone_number, contact_name,
                     kwargs.get("email", ""),             kwargs.get("company", ""),
@@ -663,6 +670,8 @@ async def upsert_lead(phone_number: str, contact_name: str = "", **kwargs):
                     kwargs.get("status_conversa", ""),    kwargs.get("interest", ""),
                     kwargs.get("stage", "novo"),          kwargs.get("notes", ""),
                     kwargs.get("source_channel", "tallos_pj"),
+                    kwargs.get("identificador", ""),      kwargs.get("qtd_colaboradores", ""),
+                    kwargs.get("servico", ""),            kwargs.get("raw_form_data", ""),
                 )
             )
         await db.commit()

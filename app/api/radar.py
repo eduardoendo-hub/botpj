@@ -144,33 +144,47 @@ def _normalize_lead(lead: dict, session: dict | None) -> dict:
         "D": "Locação",
         "E": "In Company",
     }
-    tipo = lead.get("tipo_interesse") or tipo_map.get(trail, "Não definido")
+    # Prioridade: servico (do form) > tipo_interesse (da IA) > trail map
+    tipo = (
+        lead.get("servico")
+        or lead.get("tipo_interesse")
+        or tipo_map.get(trail, "Não definido")
+    )
+
+    # Origem: identificador do formulário (ex: "LP - Incompany")
+    origem = lead.get("identificador") or ""
+
+    # raw_form_data: todos os campos do formulário original (JSON string)
+    raw_form_data = lead.get("raw_form_data") or ""
 
     return {
-        "id":            lead.get("phone_number", ""),
-        "hora":          _hora_brt(lead.get("created_at") or ""),
-        "nome":          lead.get("contact_name") or "Lead sem nome",
-        "empresa":       lead.get("company") or "—",
-        "empresa_tier":  "comum",          # futuro: classificar via IA
-        "telefone":      lead.get("phone_number") or "—",
-        "tema":          lead.get("tema_interesse") or lead.get("training_interest") or "—",
-        "tipo":          tipo,
-        "formato":       lead.get("formato") or "Não informado",
-        "temp":          lead.get("lead_temperature") or "frio",
-        "score":         int(lead.get("score") or 0),
-        "status":        _map_status(lead.get("stage") or "novo", lead.get("status_conversa")),
-        "proximo_passo": lead.get("proximo_passo") or "—",
-        "quem":          quem,
-        "sla_min":       sla_min,
-        "trail":         trail or "?",
-        "qtd":           lead.get("qtd_participantes"),
-        "cidade":        lead.get("cidade") or "—",
-        "urgencia":      lead.get("urgencia") or "",
-        "objetivo":      lead.get("objetivo_negocio") or "—",
-        "email":         lead.get("email") or "—",
-        "cargo":         lead.get("job_title") or "—",
-        "prazo":         lead.get("prazo") or "—",
-        "canal":         lead.get("source_channel") or "tallos_chat",
+        "id":               lead.get("phone_number", ""),
+        "hora":             _hora_brt(lead.get("created_at") or ""),
+        "nome":             lead.get("contact_name") or "Lead sem nome",
+        "empresa":          lead.get("company") or "—",
+        "empresa_tier":     "comum",          # futuro: classificar via IA
+        "telefone":         lead.get("phone_number") or "—",
+        "tema":             lead.get("tema_interesse") or lead.get("training_interest") or "—",
+        "tipo":             tipo,
+        "formato":          lead.get("formato") or "Não informado",
+        "temp":             lead.get("lead_temperature") or "frio",
+        "score":            int(lead.get("score") or 0),
+        "status":           _map_status(lead.get("stage") or "novo", lead.get("status_conversa")),
+        "proximo_passo":    lead.get("proximo_passo") or "—",
+        "quem":             quem,
+        "sla_min":          sla_min,
+        "trail":            trail or "?",
+        "qtd":              lead.get("qtd_participantes"),
+        "cidade":           lead.get("cidade") or "—",
+        "urgencia":         lead.get("urgencia") or "",
+        "objetivo":         lead.get("objetivo_negocio") or "—",
+        "email":            lead.get("email") or "—",
+        "cargo":            lead.get("job_title") or "—",
+        "prazo":            lead.get("prazo") or "—",
+        "canal":            lead.get("source_channel") or "tallos_chat",
+        "origem":           origem,
+        "qtd_colaboradores": lead.get("qtd_colaboradores") or "—",
+        "raw_form_data":    raw_form_data,
     }
 
 
