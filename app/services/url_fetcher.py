@@ -241,29 +241,40 @@ def _extract_impacta_cursos_content(html: str, url: str) -> dict | None:
     Extrai: cabeçalho resumido, Sobre o Curso, Habilidades, Para quem,
     Conteúdo programático e Pré-requisitos. Remove todo o ruído da página.
     """
-    title   = _extract_title_from_html(html)
-    raw     = _extract_text_from_html(html)
+    title = _extract_title_from_html(html)
+    raw   = _extract_text_from_html(html)
     if not raw:
         return None
 
     lines = [l.strip() for l in raw.split("\n")]
 
-    def find_exact(marker: str) -> int:
+    def find_section(marker: str) -> int:
+        """Busca linha que seja exatamente o marcador OU que o contenha como trecho único."""
+        m = marker.lower()
         for i, l in enumerate(lines):
-            if l == marker:
+            ll = l.lower()
+            if ll == m:
+                return i
+            # aceita linha levemente maior (ex: marcador + pontuação)
+            if ll.startswith(m) and len(l) <= len(marker) + 5:
+                return i
+            # aceita linha que contenha o marcador inteiro se for curta
+            if m in ll and len(l) <= len(marker) + 10:
                 return i
         return -1
 
-    def find_stop() -> int:
-        for i, l in enumerate(lines):
+    def find_stop(from_line: int = 0) -> int:
+        """Localiza primeiro marcador de parada a partir de from_line."""
+        for i in range(from_line, len(lines)):
             for stop in _IMPACTA_CURSOS_STOP:
-                if stop in l:
+                if stop.lower() in lines[i].lower():
                     return i
         return len(lines)
 
     # A página precisa ter "Sobre o Curso" para usar este parser
-    sobre_pos = find_exact("Sobre o Curso")
+    sobre_pos = find_section("Sobre o Curso")
     if sobre_pos == -1:
+        logger.warning("Parser Impacta Cursos: 'Sobre o Curso' não encontrado em %s", url)
         return None
 
     # ── Cabeçalho: extrai tagline e info básica antes de "Sobre o Curso" ──
@@ -273,21 +284,29 @@ def _extract_impacta_cursos_content(html: str, url: str) -> dict | None:
             continue
         if _HEADER_SKIP_RE.match(line) or _HEADER_ALUNOS_RE.match(line):
             continue
-        if _HEADER_KEEP_RE.match(line):        # carga horária, módulos
+        if _HEADER_KEEP_RE.match(line):   # carga horária, módulos
             header_parts.append(line)
-        elif len(line) > 45:                   # tagline longa
+        elif len(line) > 45:              # tagline longa
             header_parts.append(line)
-        # linhas curtas sem padrão reconhecido → descarta (ruído)
 
-    # ── Localiza todas as seções e o ponto de parada ──────────────────────
+    # ── Localiza seções encontradas ───────────────────────────────────────
     sec_positions = []
     for marker in _IMPACTA_CURSOS_SECTIONS:
-        pos = find_exact(marker)
+        pos = find_section(marker)
         if pos != -1:
             sec_positions.append((pos, marker))
+        else:
+            logger.debug("Parser Impacta Cursos: seção '%s' não encontrada", marker)
     sec_positions.sort(key=lambda x: x[0])
 
-    stop_pos = find_stop()
+    # stop a partir da última seção encontrada
+    last_sec_pos = sec_positions[-1][0] if sec_positions else sobre_pos
+    stop_pos = find_stop(from_line=last_sec_pos)
+
+    logger.info(
+        "Parser Impacta Cursos: %d seções encontradas, stop_pos=%d, total_lines=%d | %s",
+        len(sec_positions), stop_pos, len(lines), url,
+    )
 
     # ── Extrai conteúdo de cada seção ─────────────────────────────────────
     section_texts = []
@@ -317,6 +336,7 @@ def _extract_impacta_cursos_content(html: str, url: str) -> dict | None:
             section_texts.append(text)
 
     if not section_texts:
+        logger.warning("Parser Impacta Cursos: nenhuma seção com conteúdo extraída de %s", url)
         return None
 
     parts = []
@@ -330,7 +350,7 @@ def _extract_impacta_cursos_content(html: str, url: str) -> dict | None:
     if len(content) > max_chars:
         content = content[:max_chars] + f"\n\n[Conteúdo truncado — {len(content)} caracteres originais]"
 
-    logger.info("Parser Impacta Cursos: extraído %d seções de %s", len(section_texts), url)
+    logger.info("Parser Impacta Cursos: conteúdo final %d chars | %s", len(content), url)
     return {"success": True, "title": title or url, "content": content}
 
 
