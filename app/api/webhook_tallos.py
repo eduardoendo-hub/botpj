@@ -84,8 +84,9 @@ _LOG_ONLY_EVENTS = {
 # ─────────────────────────────────────────────────────────────────────────
 
 def _is_form_lead(body: dict) -> bool:
-    """Detecta payload de formulário: tem 'Nome'+'Telefone' mas não 'content'."""
-    if not body.get("Telefone") or not body.get("Nome"):
+    """Detecta payload de formulário: tem 'Nome'+'Telefone'/'Celular' mas não 'content'."""
+    phone = body.get("Telefone") or body.get("Celular")
+    if not phone or not body.get("Nome"):
         return False
     if "event" in body or "message_data" in body or "content" in body:
         return False
@@ -353,7 +354,7 @@ async def _handle_form_lead(body: dict, source_channel: str = "tallos_form_pj") 
     company  = (body.get("Empresa", "") or body.get("Razão Social", "") or "").strip()
     training = (body.get("Treinamento", "") or body.get("Curso", "") or "").strip()
     canal    = (body.get("Canal", "") or "").strip()
-    phone    = _normalize_form_phone(body.get("Telefone", "") or "")
+    phone    = _normalize_form_phone(body.get("Telefone", "") or body.get("Celular", "") or "")
 
     logger.info(
         f"📋 FORM LEAD PJ | nome={name!r} | phone={phone} | "
