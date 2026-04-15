@@ -276,7 +276,7 @@ async def fetch_url_content(url: str) -> dict:
             title = _extract_title_from_html(html)
             text = _extract_text_from_html(html)
 
-            max_chars = 8_000
+            max_chars = 20_000
             if len(text) > max_chars:
                 text = text[:max_chars] + f"\n\n[Conteúdo truncado — {len(text)} caracteres originais]"
 
