@@ -208,9 +208,9 @@ _IMPACTA_CURSOS_STOP = [
     "Maior escola de tecnologia",
     "CURSOS RELACIONADOS",
     "Conhecer todas as formações",
-    "Download do conteúdo do curso",
     "Avise-me quando tiver novas datas",
     "ver mais datas",
+    # "Download do conteúdo do curso" — tratado em _PREREQ_STOP_RE, não usar aqui
 ]
 
 # Linhas de ruído no cabeçalho (antes de "Sobre o Curso")
@@ -343,6 +343,17 @@ def _extract_impacta_cursos_content(html: str, url: str) -> dict | None:
 
     if not section_texts:
         logger.warning("Parser Impacta Cursos: nenhuma seção com conteúdo extraída de %s", url)
+        return None
+
+    # Se o conteúdo útil for muito curto, a página provavelmente é JS-rendered
+    # e o httpx não conseguiu o conteúdo real → cai para extrator genérico
+    raw_content = "\n\n".join(section_texts)
+    if len(raw_content) < 400:
+        logger.warning(
+            "Parser Impacta Cursos: conteúdo muito curto (%d chars) — "
+            "página pode ser JS-rendered, usando extrator genérico | %s",
+            len(raw_content), url,
+        )
         return None
 
     parts = []
