@@ -422,20 +422,52 @@ const Drawer = ({ lead, onClose, basePath }) => {
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
                   {[
-                    ["Telefone",lead.telefone],["Canal",lead.canal],
-                    ["Tema",lead.tema],        ["Tipo",lead.tipo],
-                    ["Formato",lead.formato],  ["Qtd.",lead.qtd||"—"],
-                    ["Cidade",lead.cidade],    ["Cargo",lead.cargo],
-                    ["Email",lead.email],      ["Prazo",lead.prazo],
-                    ["Objetivo",lead.objetivo],
-                  ].filter(([,v]) => v && v !== "—").map(([k,v]) => (
+                    ["Telefone",    lead.telefone],
+                    ["Email",       lead.email],
+                    ["Cargo",       lead.cargo],
+                    ["Canal",       lead.canal],
+                    ["Origem",      lead.origem],
+                    ["Serviço",     lead.tipo],
+                    ["Tema",        lead.tema],
+                    ["Formato",     lead.formato],
+                    ["Qtd. Partic.",lead.qtd||"—"],
+                    ["Colaboradores",lead.qtd_colaboradores],
+                    ["Cidade",      lead.cidade],
+                    ["Prazo",       lead.prazo],
+                    ["Objetivo",    lead.objetivo],
+                  ].filter(([,v]) => v && v !== "—" && v !== "Não informado").map(([k,v]) => (
                     <div key={k} style={{background:"rgba(30,41,59,.6)",borderRadius:8,padding:"8px 10px",overflow:"hidden"}}>
                       <div style={{fontSize:10,color:C.txt3,marginBottom:2}}>{k}</div>
-                      <div className="truncate" title={v} style={{fontSize:12,fontWeight:600,color:C.txt1}}>{v}</div>
+                      <div className="truncate" title={String(v)} style={{fontSize:12,fontWeight:600,color:C.txt1}}>{v}</div>
                     </div>
                   ))}
                 </div>
               </div>
+
+              {/* Formulário Original */}
+              {lead.raw_form_data && (() => {
+                let form = null;
+                try { form = JSON.parse(lead.raw_form_data); } catch(e) {}
+                if (!form) return null;
+                const entries = Object.entries(form).filter(([,v]) => v !== null && v !== "" && v !== undefined);
+                if (!entries.length) return null;
+                return (
+                  <div>
+                    <div style={{fontSize:10,fontWeight:700,color:C.txt3,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>
+                      Formulário Original
+                    </div>
+                    <div style={{background:"rgba(15,23,42,.7)",border:"1px solid rgba(99,102,241,.18)",borderRadius:10,padding:"12px 14px",display:"flex",flexDirection:"column",gap:6}}>
+                      {entries.map(([k,v]) => (
+                        <div key={k} style={{display:"flex",gap:8,alignItems:"flex-start",borderBottom:"1px solid rgba(255,255,255,.04)",paddingBottom:5}}>
+                          <span style={{fontSize:11,color:C.txt3,minWidth:160,flexShrink:0}}>{k}</span>
+                          <span style={{fontSize:12,color:C.txt1,fontWeight:500,wordBreak:"break-word"}}>{String(v)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
             </div>
           )}
 
