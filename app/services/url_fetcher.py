@@ -236,6 +236,17 @@ _SOBRE_RATING_RE  = re.compile(r"^\d+[\.,]\d+\s+Avalia")
 _PREREQ_STOP_RE = re.compile(r"^(Certificação Impacta|Download do conteúdo)", re.IGNORECASE)
 
 
+def _is_impacta_skeleton(lines: list) -> bool:
+    """Detecta o skeleton JS da Impacta: valores dinâmicos ausentes nas primeiras linhas."""
+    first = set(lines[:30])
+    return (
+        "Voltar" in first
+        and "Módulo" in first          # sem "único" ou número
+        and "h de carga horária" in first  # sem número de horas
+        and "+ alunos" in first        # sem contagem de alunos
+    )
+
+
 def _extract_impacta_cursos_content(html: str, url: str) -> dict | None:
     """
     Parser especializado para páginas impacta.com.br/cursos/.
@@ -275,6 +286,21 @@ def _extract_impacta_cursos_content(html: str, url: str) -> dict | None:
                     )
                     return i
         return len(lines)
+
+    # Detecta skeleton JS antes de qualquer processamento
+    if _is_impacta_skeleton(lines):
+        logger.warning("Parser Impacta Cursos: skeleton JS detectado em %s", url)
+        return {
+            "success": False,
+            "error": (
+                "Esta página é renderizada via JavaScript e não pode ser importada automaticamente.\n\n"
+                "Como importar manualmente:\n"
+                "1. Abra a página no navegador\n"
+                "2. Clique com botão direito → 'Ver código-fonte' (ou Ctrl+U)\n"
+                "3. Selecione tudo (Ctrl+A) e copie\n"
+                "4. Use a aba 'Colar HTML' no painel para extrair o conteúdo"
+            ),
+        }
 
     # A página precisa ter "Sobre o Curso" para usar este parser
     sobre_pos = find_section("Sobre o Curso")
