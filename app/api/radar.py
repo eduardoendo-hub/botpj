@@ -423,3 +423,77 @@ async def radar_tallos_history(
     result["customer_id"] = customer_id
     result["phone"] = phone
     return JSONResponse(result)
+
+
+# ── RD Station CRM — OAuth2 callback ─────────────────────────────────────────
+
+@router.get("/rd-crm/callback", response_class=HTMLResponse)
+async def rd_crm_callback(request: Request, code: str = "", error: str = ""):
+    """
+    Recebe o código de autorização do RD Station CRM após o usuário autorizar o app.
+    Exibe o código para que seja trocado manualmente por um access_token.
+    """
+    if error:
+        html = f"""
+        <html><body style="font-family:monospace;padding:40px;background:#0f172a;color:#f87171">
+        <h2>❌ Erro na autorização</h2><pre>{error}</pre>
+        </body></html>"""
+        return HTMLResponse(html)
+
+    if not code:
+        html = """
+        <html><body style="font-family:monospace;padding:40px;background:#0f172a;color:#94a3b8">
+        <h2>⚠️ Nenhum código recebido</h2>
+        <p>Acesse esta URL via o fluxo de autorização do RD Station.</p>
+        </body></html>"""
+        return HTMLResponse(html)
+
+    # Tenta trocar o code por access_token automaticamente
+    client_id     = settings.rd_crm_client_id
+    client_secret = settings.rd_crm_client_secret
+    token_info    = ""
+
+    if client_id and client_secret:
+        try:
+            import httpx as _httpx
+            resp = await _httpx.AsyncClient(timeout=10).post(
+                "https://api.rd.services/auth/token",
+                json={
+                    "client_id":     client_id,
+                    "client_secret": client_secret,
+                    "code":          code,
+                },
+                headers={"Content-Type": "application/json"},
+            )
+            if resp.status_code == 200:
+                data         = resp.json()
+                access_token = data.get("access_token", "")
+                refresh_token = data.get("refresh_token", "")
+                token_info = f"""
+                <div style="margin-top:24px;padding:16px;background:#0d2d1a;border-radius:8px;border:1px solid #34d399">
+                  <p style="color:#34d399;margin:0 0 8px">✅ Token obtido com sucesso! Adicione ao .env do servidor:</p>
+                  <pre style="color:#a7f3d0;word-break:break-all">RD_CRM_TOKEN={access_token}</pre>
+                  <pre style="color:#6b7280;word-break:break-all">RD_CRM_REFRESH_TOKEN={refresh_token}</pre>
+                </div>"""
+            else:
+                token_info = f'<p style="color:#f87171">Troca falhou ({resp.status_code}): {resp.text[:200]}</p>'
+        except Exception as e:
+            token_info = f'<p style="color:#f87171">Erro na troca: {e}</p>'
+    else:
+        token_info = f"""
+        <div style="margin-top:16px;padding:12px;background:#1e293b;border-radius:8px">
+          <p style="color:#fbbf24;margin:0 0 8px">⚠️ client_id/client_secret não configurados. Troque manualmente:</p>
+          <pre style="color:#818cf8;word-break:break-all">CODE={code}</pre>
+          <p style="color:#94a3b8;font-size:12px">POST https://api.rd.services/auth/token<br>
+          {{"client_id":"...","client_secret":"...","code":"{code}"}}</p>
+        </div>"""
+
+    html = f"""
+    <html><head><title>RD CRM OAuth</title></head>
+    <body style="font-family:monospace;padding:40px;background:#0f172a;color:#e2e8f0">
+    <h2 style="color:#818cf8">🔐 RD Station CRM — Autorização</h2>
+    <p>Código de autorização recebido:</p>
+    <pre style="background:#1e293b;padding:12px;border-radius:6px;word-break:break-all;color:#34d399">{code}</pre>
+    {token_info}
+    </body></html>"""
+    return HTMLResponse(html)
