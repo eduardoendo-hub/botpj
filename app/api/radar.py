@@ -20,7 +20,7 @@ from app.core.database import (
     get_all_leads, get_bot_session, get_db, get_full_conversation, get_lead_by_phone,
 )
 from app.services.tallos_history import get_conversation_history, extract_customer_id_from_notes
-from app.services.rd_crm import get_funil_etapa
+from app.services.rd_crm import get_deal_info
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +170,9 @@ def _normalize_lead(lead: dict, session: dict | None) -> dict:
         "tipo":             tipo,
         "formato":          lead.get("formato") or "Não informado",
         "temp":             lead.get("lead_temperature") or "frio",
-        "funil":            lead.get("_funil_etapa") or "—",
+        "funil":            lead.get("_crm_etapa") or "—",
+        "crm_consultor":    lead.get("_crm_consultor") or "",
+        "crm_valor":        lead.get("_crm_valor") or 0.0,
         "score":            int(lead.get("score") or 0),
         "status":           _map_status(lead.get("stage") or "novo", lead.get("status_conversa")),
         "proximo_passo":    lead.get("proximo_passo") or "—",
@@ -304,14 +306,16 @@ async def radar_data(
     # Busca sessões e etapas do funil em paralelo
     phones = [l.get("phone_number", "") for l in leads_do_dia]
 
-    sessions_list, funil_list = await asyncio.gather(
+    sessions_list, crm_list = await asyncio.gather(
         asyncio.gather(*[get_bot_session(p) for p in phones]),
-        asyncio.gather(*[get_funil_etapa(p) for p in phones]),
+        asyncio.gather(*[get_deal_info(p) for p in phones]),
     )
 
     result: List[Dict[str, Any]] = []
-    for lead, session, funil in zip(leads_do_dia, sessions_list, funil_list):
-        lead["_funil_etapa"] = funil
+    for lead, session, crm in zip(leads_do_dia, sessions_list, crm_list):
+        lead["_crm_etapa"]     = crm.get("etapa", "—")
+        lead["_crm_consultor"] = crm.get("consultor", "")
+        lead["_crm_valor"]     = crm.get("valor", 0.0)
         result.append(_normalize_lead(lead, dict(session) if session else None))
 
     # Ordenar por hora desc (mais recentes primeiro)

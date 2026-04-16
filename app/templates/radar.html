@@ -147,17 +147,31 @@ const getFunilStyle = (etapa) => {
   return map[etapa] || { bg:"rgba(99,102,241,.15)", color:"#818cf8" };
 };
 
-const FunilPill = ({ etapa }) => {
+const FunilPill = ({ etapa, consultor }) => {
   const s = getFunilStyle(etapa);
   return (
-    <span style={{
-      display:"inline-flex", alignItems:"center", gap:4,
-      padding:"2px 8px", borderRadius:99, fontSize:11, fontWeight:600,
-      background:s.bg, color:s.color, whiteSpace:"nowrap",
-    }}>
-      {etapa || "—"}
-    </span>
+    <div style={{display:"flex", flexDirection:"column", gap:2}}>
+      <span style={{
+        display:"inline-flex", alignItems:"center", gap:4,
+        padding:"2px 8px", borderRadius:99, fontSize:11, fontWeight:600,
+        background:s.bg, color:s.color, whiteSpace:"nowrap",
+      }}>
+        {etapa || "—"}
+      </span>
+      {consultor && (
+        <span style={{fontSize:10, color:"#64748b", paddingLeft:2, whiteSpace:"nowrap"}}>
+          {consultor}
+        </span>
+      )}
+    </div>
   );
+};
+
+const fmtBRL = (v) => {
+  if (!v || v === 0) return "—";
+  return new Intl.NumberFormat("pt-BR", {
+    style:"currency", currency:"BRL", minimumFractionDigits:0, maximumFractionDigits:0,
+  }).format(v);
 };
 
 const getStatusStyle = (s) => ({
@@ -833,7 +847,7 @@ function Radar() {
                   <Th>Tipo</Th>
                   <Th>Formato</Th>
                   <Th col="funil">Funil</Th>
-                  <Th col="score">Score</Th>
+                  <Th col="crm_valor">$</Th>
                   <Th>Status</Th>
                   <Th>Próximo Passo</Th>
                   <Th col="quem">Quem</Th>
@@ -890,17 +904,12 @@ function Radar() {
                         <Pill bg={fSt.bg} color={fSt.color}>{lead.formato}</Pill>
                       </td>
                       <td style={tdStyle}>
-                        <FunilPill etapa={lead.funil} />
+                        <FunilPill etapa={lead.funil} consultor={lead.crm_consultor} />
                       </td>
                       <td style={tdStyle}>
-                        <div style={{display:"flex",alignItems:"center",gap:6}}>
-                          <span style={{fontSize:13,fontWeight:700,color:scoreColor(lead.score),fontVariantNumeric:"tabular-nums"}}>
-                            {lead.score}
-                          </span>
-                          <div style={{width:28,height:4,background:"rgba(148,163,184,.12)",borderRadius:2,overflow:"hidden"}}>
-                            <div style={{height:"100%",borderRadius:2,background:scoreBgColor(lead.score),width:`${lead.score}%`}} />
-                          </div>
-                        </div>
+                        <span style={{fontSize:12, fontWeight:700, color: lead.crm_valor > 0 ? "#34d399" : "#475569", fontVariantNumeric:"tabular-nums", whiteSpace:"nowrap"}}>
+                          {fmtBRL(lead.crm_valor)}
+                        </span>
                       </td>
                       <td style={{...tdStyle, whiteSpace:"nowrap"}}>
                         <Pill bg={sSt.bg} color={sSt.color}>{lead.status}</Pill>
