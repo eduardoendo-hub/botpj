@@ -270,7 +270,17 @@ async def _register_pj_lead(body: dict):
     """
     try:
         if _is_form_lead(body):
-            await _handle_form_lead(body, source_channel="tallos_pj")
+            # Distingue origem pelo campo Identificador:
+            # "Chat" → veio do fluxo de chat PJ → source_channel = "tallos_pj" (bot rastreia)
+            # Outros → veio de formulário → source_channel = "tallos_form_pj"
+            identificador = (body.get("Identificador", "") or "").strip().lower()
+            if "chat" in identificador:
+                source = "tallos_pj"
+                logger.info(f"[Tallos PJ] Identificador='{identificador}' → origem: CHAT (bot vai rastrear)")
+            else:
+                source = "tallos_form_pj"
+                logger.info(f"[Tallos PJ] Identificador='{identificador}' → origem: FORMULÁRIO")
+            await _handle_form_lead(body, source_channel=source)
             return
 
         phone_number, contact_name, contact_id, message_id, message_text, event, action, data = \
