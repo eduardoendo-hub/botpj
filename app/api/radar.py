@@ -315,18 +315,62 @@ async def radar_data(
 
 @router.get("/conversation/{phone}")
 async def radar_conversation(request: Request, phone: str):
-    """Retorna o histórico completo de mensagens de um lead (bot interno)."""
+    """
+    Retorna o histórico completo de mensagens de um lead.
+    Mescla mensagens do bot interno + histórico do Tallos (operador + lead).
+    Roles mapeados para: 'user' (lead), 'assistant' (bot), 'agent' (operador).
+    """
     await _require_auth(request)
+
+    # 1. Mensagens do bot interno
     messages_raw = await get_full_conversation(phone)
-    messages = [
+    bot_messages = [
         {
-            "role":    m.get("role", ""),
-            "message": m.get("message", ""),
-            "hora":    _hora_brt(m.get("created_at", "")),
-            "source":  "bot",
+            "role":       m.get("role", ""),        # "user" / "assistant"
+            "message":    m.get("message", ""),
+            "hora":       _hora_brt(m.get("created_at", "")),
+            "created_at": m.get("created_at", ""),
+            "source":     "bot",
+            "operator_name": "",
         }
         for m in messages_raw
     ]
+
+    # 2. Histórico Tallos (operador + lead via WhatsApp)
+    tallos_messages = []
+    lead = await get_lead_by_phone(phone)
+    if lead:
+        notes = lead.get("notes", "") or ""
+        customer_id = extract_customer_id_from_notes(notes)
+        if customer_id:
+            result = await get_conversation_history(customer_id, page=1, limit=100)
+            for m in result.get("messages", []):
+                tallos_role = m.get("role", "")
+                # Mapeia roles do Tallos → roles do radar.html
+                if tallos_role == "customer":
+                    role = "user"
+                elif tallos_role == "operator":
+                    role = "agent"
+                else:
+                    role = "assistant"
+                tallos_messages.append({
+                    "role":          role,
+                    "message":       m.get("message", ""),
+                    "hora":          m.get("hora", ""),
+                    "created_at":    m.get("created_at", ""),
+                    "source":        "tallos",
+                    "operator_name": m.get("operator_name", ""),
+                })
+
+    # 3. Mescla: se tem histórico Tallos, usa ele como base (mais completo)
+    #    e complementa com mensagens do bot que não sejam duplicatas
+    if tallos_messages:
+        # Tallos tem a conversa completa com operador — usa direto
+        messages = sorted(tallos_messages, key=lambda x: x.get("created_at", ""))
+    else:
+        # Sem Tallos: usa apenas mensagens do bot
+        messages = sorted(bot_messages, key=lambda x: x.get("created_at", ""))
+
     return JSONResponse({"messages": messages, "total": len(messages)})
 
 

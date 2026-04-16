@@ -493,7 +493,7 @@ const Drawer = ({ lead, onClose, basePath }) => {
                     return (
                       <div key={i} style={{display:"flex",flexDirection:"column",alignItems: isUser?"flex-end":"flex-start"}}>
                         <div style={{fontSize:10,color:C.txt3,marginBottom:3,paddingLeft:isUser?0:4,paddingRight:isUser?4:0}}>
-                          {isAgent ? "👤 " : ""}{roleLabel(m.role)} · {m.hora}
+                          {isAgent ? "👤 " : ""}{isAgent && m.operator_name ? m.operator_name : roleLabel(m.role)} · {m.hora}
                         </div>
                         <div className={bubbleCls(m.role)} style={{
                           maxWidth:"88%", padding:"8px 12px",
