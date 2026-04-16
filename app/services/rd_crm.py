@@ -49,11 +49,15 @@ async def get_deal_info(phone: str) -> Dict:
 
     try:
         async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
-            contact_id = await _find_contact_id(client, phone_clean)
-            if not contact_id:
+            contact = await _find_contact(client, phone_clean)
+            if not contact:
                 return _EMPTY.copy()
 
-            deal = await _find_latest_deal(client, contact_id)
+            deal_ids = contact.get("deal_ids", []) or []
+            if not deal_ids:
+                return _EMPTY.copy()
+
+            deal = await _find_best_deal(client, deal_ids)
             if not deal:
                 return _EMPTY.copy()
 
@@ -82,70 +86,62 @@ async def get_funil_etapa(phone: str) -> str:
     return info["etapa"]
 
 
-async def _find_contact_id(client: httpx.AsyncClient, phone: str) -> Optional[str]:
-    """Busca _id do contato pelo telefone."""
+async def _find_contact(client: httpx.AsyncClient, phone: str) -> Optional[Dict]:
+    """Busca o contato pelo telefone e retorna o objeto completo (com deal_ids)."""
     for variant in _phone_variants(phone):
         try:
-            resp = await client.get(
-                f"{_BASE}/contacts",
-                params=_p({"phone": variant}),
-            )
+            resp = await client.get(f"{_BASE}/contacts", params=_p({"phone": variant}))
             if resp.status_code != 200:
                 continue
             data     = resp.json()
             contacts = data.get("contacts", data) if isinstance(data, dict) else data
             if contacts and isinstance(contacts, list):
+                # Retorna o objeto completo do primeiro contato encontrado
                 cid = contacts[0].get("_id") or contacts[0].get("id")
-                if cid:
-                    return cid
+                if not cid:
+                    continue
+                # Busca o contato completo para ter deal_ids
+                r2 = await client.get(f"{_BASE}/contacts/{cid}", params=_p())
+                if r2.status_code == 200:
+                    return r2.json()
+                return contacts[0]
         except Exception:
             continue
     return None
 
 
-async def _find_latest_deal(client: httpx.AsyncClient, contact_id: str) -> Optional[Dict]:
-    """Busca o deal mais recente (não perdido) de um contato."""
-    try:
-        resp = await client.get(
-            f"{_BASE}/deals",
-            params=_p({"contact_id": contact_id, "order": "updated_at", "page": 1}),
-        )
-        if resp.status_code != 200:
-            logger.warning(f"[RD CRM] GET /deals → {resp.status_code}: {resp.text[:100]}")
-            return None
+async def _find_best_deal(client: httpx.AsyncClient, deal_ids: List[str]) -> Optional[Dict]:
+    """Busca os deals pelos IDs e retorna o melhor (em aberto, mais recente)."""
+    deals = []
+    for deal_id in deal_ids[:5]:  # limita a 5 para não sobrecarregar
+        try:
+            resp = await client.get(f"{_BASE}/deals/{deal_id}", params=_p())
+            if resp.status_code == 200:
+                deals.append(resp.json())
+        except Exception:
+            continue
 
-        data  = resp.json()
-        deals: List[Dict] = data.get("deals", data) if isinstance(data, dict) else data
-
-        if not deals:
-            return None
-
-        def _is_lost(d: Dict) -> bool:
-            if d.get("win") is True:
-                return False  # ganho, não perdido
-            if d.get("deal_lost_reason"):
-                return True   # tem razão de perda → perdido
-            stage_name = ""
-            s = d.get("deal_stage", {})
-            if isinstance(s, dict):
-                stage_name = s.get("name", "").lower()
-            return "perdido" in stage_name or "lost" in stage_name
-
-        # Prioriza deals em aberto (não perdidos e não ganhos fechados)
-        abertos = [d for d in deals if not _is_lost(d) and not d.get("win")]
-        if abertos:
-            return abertos[0]
-
-        # Fallback: ganhos
-        ganhos = [d for d in deals if d.get("win")]
-        if ganhos:
-            return ganhos[0]
-
-        return deals[0]
-
-    except Exception as e:
-        logger.error(f"[RD CRM] Erro em _find_latest_deal: {e}")
+    if not deals:
         return None
+
+    def _is_lost(d: Dict) -> bool:
+        if d.get("win") is True:
+            return False
+        if d.get("deal_lost_reason"):
+            return True
+        s = d.get("deal_stage", {})
+        name = s.get("name", "").lower() if isinstance(s, dict) else ""
+        return "perdido" in name or "lost" in name
+
+    abertos = [d for d in deals if not _is_lost(d) and not d.get("win")]
+    if abertos:
+        return abertos[0]
+
+    ganhos = [d for d in deals if d.get("win")]
+    if ganhos:
+        return ganhos[0]
+
+    return deals[0]
 
 
 def _clean_phone(phone: str) -> str:
