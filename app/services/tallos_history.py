@@ -76,22 +76,26 @@ def _fmt_datetime(iso_str: str) -> str:
 def _normalize_message(m: Dict) -> Dict:
     """Normaliza uma mensagem da API Tallos para o formato do Radar."""
     sent_by = m.get("sent_by", "")
-    content = m.get("content", "") or ""
+    # Tallos retorna o texto no campo "message"; fallback para "content"
+    content = m.get("message", m.get("content", "")) or ""
 
     # Operadores vêm com o nome no início: "*Nome Operador:*\nTexto"
     operator_name = ""
     text = content
     if sent_by == "operator" and content.startswith("*"):
+        # Formato: "*Celia Maciel:*\nOlá!" → split em "*\n"
         parts = content.split("*\n", 1)
         if len(parts) == 2:
-            operator_name = parts[0].strip("*").strip()
+            # parts[0] = "*Celia Maciel:" → remove * e : das extremidades
+            operator_name = parts[0].strip("*").rstrip(":").strip()
             text = parts[1].strip()
         else:
-            # Tenta sem \n
-            parts2 = content.split("*:", 1)
-            if len(parts2) == 2:
-                operator_name = parts2[0].strip("*").strip()
-                text = parts2[1].strip()
+            # Tenta formato "*Celia Maciel:* Texto"
+            import re
+            m2 = re.match(r"^\*([^*]+?)\*[:\s]+(.*)", content, re.DOTALL)
+            if m2:
+                operator_name = m2.group(1).rstrip(":").strip()
+                text = m2.group(2).strip()
 
     return {
         "role":          sent_by,           # "customer", "operator", "bot"
