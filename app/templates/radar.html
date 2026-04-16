@@ -133,15 +133,16 @@ const getTempConfig = (t) => ({
 }[t] || { label: t||"—", bg:"rgba(100,116,139,.15)", color:"#94a3b8", border:"rgba(100,116,139,.2)", icon:"help-circle" });
 
 const getFunilStyle = (etapa) => {
-  if (!etapa || etapa === "—") return { label:"—", bg:"rgba(100,116,139,.12)", color:"#64748b" };
+  if (!etapa || etapa === "—") return { bg:"rgba(100,116,139,.12)", color:"#64748b" };
   const map = {
-    "Prospecção":        { bg:"rgba(139,92,246,.15)",  color:"#a78bfa" },
-    "Qualificação":      { bg:"rgba(59,130,246,.15)",  color:"#60a5fa" },
-    "Apresentação":      { bg:"rgba(245,158,11,.15)",  color:"#fbbf24" },
-    "Proposta":          { bg:"rgba(249,115,22,.15)",  color:"#fb923c" },
-    "Negociação":        { bg:"rgba(239,68,68,.15)",   color:"#f87171" },
-    "Fechado - Ganho":   { bg:"rgba(16,185,129,.15)",  color:"#34d399" },
-    "Fechado - Perdido": { bg:"rgba(100,116,139,.15)", color:"#94a3b8" },
+    // Etapas do funil RD Station CRM
+    "Dia 1":                    { bg:"rgba(139,92,246,.15)",  color:"#a78bfa" },
+    "Aguardando atendimento":   { bg:"rgba(245,158,11,.15)",  color:"#fbbf24" },
+    "Pesquisa":                 { bg:"rgba(59,130,246,.15)",  color:"#60a5fa" },
+    "Em negociação":            { bg:"rgba(249,115,22,.15)",  color:"#fb923c" },
+    "Proposta enviada":         { bg:"rgba(249,115,22,.15)",  color:"#fb923c" },
+    "Ganho":                    { bg:"rgba(16,185,129,.15)",  color:"#34d399" },
+    "Perdido":                  { bg:"rgba(100,116,139,.15)", color:"#94a3b8" },
   };
   return map[etapa] || { bg:"rgba(99,102,241,.15)", color:"#818cf8" };
 };
