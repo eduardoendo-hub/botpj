@@ -46,10 +46,32 @@ from app.services.tallos import (
     is_agent_message,
 )
 from app.core.config import settings
-from app.core.database import log_webhook_event, upsert_lead, upsert_bot_session, is_pj_lead
+from app.core.database import log_webhook_event, upsert_lead, upsert_bot_session, is_pj_lead, get_lead_by_phone
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+async def _save_contact_id_if_missing(phone: str, contact_id: str) -> None:
+    """Salva tallos_contact_id nas notes APENAS se o lead ainda não tiver um.
+    Evita sobrescrever IDs antigos (que têm histórico) com IDs novos (vazios).
+    """
+    if not phone or not contact_id:
+        return
+    lead = await get_lead_by_phone(phone)
+    if lead:
+        notes = lead.get("notes", "") or ""
+        if "tallos_contact_id:" in notes:
+            existing_id = ""
+            for part in notes.split("|"):
+                if "tallos_contact_id:" in part:
+                    existing_id = part.split("tallos_contact_id:")[1].strip()
+            if existing_id:
+                logger.debug(f"[contact_id] Mantendo ID existente {existing_id} (novo ignorado: {contact_id})")
+                return
+    await upsert_lead(phone, notes=f"tallos_contact_id:{contact_id}")
+    logger.info(f"[contact_id] ✅ Salvo contact_id={contact_id} para phone={phone}")
+
 
 # ── Deduplicação ─────────────────────────────────────────────────────────
 _PROCESSED_IDS: dict = {}
@@ -191,11 +213,8 @@ async def _process_monitor(body: dict):
             try:
                 pj_check = await is_pj_lead(phone_number)
                 if pj_check:
-                    await upsert_lead(
-                        phone_number,
-                        contact_name=contact_name,
-                        notes=f"tallos_contact_id:{contact_id}",
-                    )
+                    await upsert_lead(phone_number, contact_name=contact_name)
+                    await _save_contact_id_if_missing(phone_number, contact_id)
             except Exception as e:
                 logger.error(f"[Tallos PJ Monitor] Erro ao atualizar contato: {e}")
 
@@ -306,13 +325,12 @@ async def _register_pj_lead(body: dict):
             return
 
         # ── Marca como lead PJ no banco ──────────────────────────────
-        notes = f"tallos_contact_id:{contact_id}" if contact_id else ""
         await upsert_lead(
             phone_number,
             contact_name=contact_name,
             source_channel="tallos_pj",
-            notes=notes if notes else "",
         )
+        await _save_contact_id_if_missing(phone_number, contact_id)
         await upsert_bot_session(phone_number, agent_active=0)
 
         logger.info(
@@ -427,7 +445,7 @@ async def _handle_form_lead(body: dict, source_channel: str = "tallos_form_pj") 
     try:
         await upsert_bot_session(phone, agent_active=0)
         if contact_id:
-            await upsert_lead(phone, notes=f"tallos_contact_id:{contact_id}")
+            await _save_contact_id_if_missing(phone, contact_id)
         logger.info(
             f"[Tallos PJ Form] ✅ Sessão criada | phone={phone} | "
             f"contact_id={contact_id or '(pendente)'}"
