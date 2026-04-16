@@ -17,8 +17,9 @@ from starlette.status import HTTP_303_SEE_OTHER
 
 from app.core.config import settings
 from app.core.database import (
-    get_all_leads, get_bot_session, get_db, get_full_conversation,
+    get_all_leads, get_bot_session, get_db, get_full_conversation, get_lead_by_phone,
 )
+from app.services.tallos_history import get_conversation_history, extract_customer_id_from_notes
 
 logger = logging.getLogger(__name__)
 
@@ -314,7 +315,7 @@ async def radar_data(
 
 @router.get("/conversation/{phone}")
 async def radar_conversation(request: Request, phone: str):
-    """Retorna o histórico completo de mensagens de um lead."""
+    """Retorna o histórico completo de mensagens de um lead (bot interno)."""
     await _require_auth(request)
     messages_raw = await get_full_conversation(phone)
     messages = [
@@ -322,7 +323,45 @@ async def radar_conversation(request: Request, phone: str):
             "role":    m.get("role", ""),
             "message": m.get("message", ""),
             "hora":    _hora_brt(m.get("created_at", "")),
+            "source":  "bot",
         }
         for m in messages_raw
     ]
     return JSONResponse({"messages": messages, "total": len(messages)})
+
+
+@router.get("/tallos-history/{phone}")
+async def radar_tallos_history(
+    request: Request,
+    phone: str,
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=50, le=100),
+):
+    """
+    Retorna o histórico completo de conversas do Tallos para um lead.
+    Inclui mensagens do lead (customer) e do operador (operator).
+    O customer_id é extraído do campo notes do lead no banco.
+    """
+    await _require_auth(request)
+
+    # Busca o lead no banco para pegar o customer_id
+    lead = await get_lead_by_phone(phone)
+    if not lead:
+        return JSONResponse({"messages": [], "total": 0, "error": "Lead não encontrado"}, status_code=404)
+
+    notes = lead.get("notes", "") or ""
+    customer_id = extract_customer_id_from_notes(notes)
+
+    if not customer_id:
+        return JSONResponse({
+            "messages":   [],
+            "total":      0,
+            "error":      "contact_id Tallos não encontrado para este lead",
+            "phone":      phone,
+            "notes":      notes,
+        })
+
+    result = await get_conversation_history(customer_id, page=page, limit=limit)
+    result["customer_id"] = customer_id
+    result["phone"] = phone
+    return JSONResponse(result)

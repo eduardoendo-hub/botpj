@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   Search, RefreshCw, ChevronDown, X, ChevronUp,
   Bot, ArrowUpRight, User, Clock, Flame, Wind, Snowflake,
@@ -203,6 +203,110 @@ const KpiCard = ({ icon, label, value, color = "text-slate-700", urgent = false 
   </div>
 );
 
+// ─── Conversa Tallos ──────────────────────────────────────────────────────────
+const TallosConversation = ({ phone }) => {
+  const [msgs, setMsgs]       = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState("");
+  const [page, setPage]       = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const bottomRef             = useRef(null);
+
+  const fetchHistory = async (p = 1, append = false) => {
+    setLoading(true);
+    setError("");
+    try {
+      const res  = await fetch(`/pj/radar/tallos-history/${phone}?page=${p}&limit=50`);
+      const data = await res.json();
+      if (data.error && !data.messages?.length) {
+        setError(data.error);
+      } else {
+        setMsgs(prev => append ? [...prev, ...data.messages] : data.messages);
+        setHasMore(data.has_more || false);
+        setPage(p);
+      }
+    } catch (e) {
+      setError("Erro ao carregar conversa.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchHistory(1); }, [phone]);
+
+  useEffect(() => {
+    if (!loading && bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [msgs, loading]);
+
+  if (loading && msgs.length === 0) return (
+    <div className="flex items-center gap-2 text-slate-400 text-xs py-4 justify-center">
+      <RefreshCw size={12} className="animate-spin" /> Carregando conversa...
+    </div>
+  );
+
+  if (error && msgs.length === 0) return (
+    <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 text-xs text-amber-700">
+      {error === "contact_id Tallos não encontrado para este lead"
+        ? "Histórico Tallos não disponível — contact_id ainda não registrado para este lead."
+        : error}
+    </div>
+  );
+
+  if (msgs.length === 0) return (
+    <div className="text-xs text-slate-400 text-center py-4">Nenhuma mensagem encontrada.</div>
+  );
+
+  return (
+    <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+      {hasMore && (
+        <button
+          onClick={() => fetchHistory(page + 1, true)}
+          className="w-full text-xs text-indigo-600 hover:text-indigo-800 py-1 text-center"
+          disabled={loading}
+        >
+          {loading ? "Carregando..." : "↑ Carregar mensagens anteriores"}
+        </button>
+      )}
+      {msgs.map((m, i) => {
+        const isOperator = m.role === "operator";
+        const isBot      = m.role === "bot";
+        const isCustomer = m.role === "customer";
+        return (
+          <div key={i} className={`flex gap-2 ${isCustomer ? "" : "flex-row-reverse"}`}>
+            {/* Avatar */}
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+              isOperator ? "bg-blue-100" : isBot ? "bg-indigo-100" : "bg-slate-200"
+            }`}>
+              {isOperator ? <User size={10} className="text-blue-600" /> :
+               isBot      ? <Bot  size={10} className="text-indigo-600" /> :
+                            <User size={10} className="text-slate-500" />}
+            </div>
+            {/* Balão */}
+            <div className={`flex flex-col max-w-[80%] ${isCustomer ? "" : "items-end"}`}>
+              {(isOperator || isBot) && (
+                <span className="text-[10px] text-slate-400 mb-0.5 px-1">
+                  {isOperator ? (m.operator_name || "Operador") : "Bot"}
+                </span>
+              )}
+              <div className={`rounded-xl px-3 py-2 text-xs ${
+                isOperator ? "bg-blue-50 text-blue-900 rounded-tr-sm" :
+                isBot      ? "bg-indigo-50 text-indigo-900 rounded-tr-sm" :
+                             "bg-slate-50 text-slate-700 rounded-tl-sm"
+              }`}>
+                {m.message}
+              </div>
+              <span className="text-[10px] text-slate-400 mt-0.5 px-1">{m.hora}</span>
+            </div>
+          </div>
+        );
+      })}
+      <div ref={bottomRef} />
+    </div>
+  );
+};
+
 // ─── Drawer ───────────────────────────────────────────────────────────────────
 const LeadDetailDrawer = ({ lead, onClose }) => {
   if (!lead) return null;
@@ -279,19 +383,19 @@ const LeadDetailDrawer = ({ lead, onClose }) => {
             </div>
           </div>
 
-          {/* Mensagens */}
+          {/* Conversa completa Tallos */}
           <div>
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Últimas Mensagens</h3>
-            <div className="space-y-2">
-              {lead.mensagens.map((msg, i) => (
-                <div key={i} className="flex gap-2">
-                  <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <User size={10} className="text-slate-500" />
-                  </div>
-                  <div className="bg-slate-50 rounded-xl rounded-tl-sm px-3 py-2 text-slate-700 text-xs flex-1">{msg}</div>
-                </div>
-              ))}
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                Conversa
+              </h3>
+              <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-slate-200 inline-block"/> Lead</span>
+                <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-blue-200 inline-block"/> Operador</span>
+                <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-indigo-200 inline-block"/> Bot</span>
+              </div>
             </div>
+            <TallosConversation phone={lead.telefone} />
           </div>
 
           {/* Histórico */}

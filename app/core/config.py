@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     tallos_api_token: str = ""             # API Token do RD Conversas (painel > Configurações > API)
     tallos_api_url: str = "https://api.tallos.com.br/v2"
     tallos_webhook_secret: str = ""        # Secret para validar autenticidade dos webhooks Tallos
+    tallos_jwk_key: str = ""               # Chave JWK completa (JSON) para descriptografar histórico
 
     # Anthropic
     anthropic_api_key: str = ""
