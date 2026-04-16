@@ -132,6 +132,33 @@ const getTempConfig = (t) => ({
   frio:   { label:"Frio",   bg:"rgba(59,130,246,.13)",  color:"#60a5fa", border:"rgba(59,130,246,.3)",  icon:"snowflake" },
 }[t] || { label: t||"—", bg:"rgba(100,116,139,.15)", color:"#94a3b8", border:"rgba(100,116,139,.2)", icon:"help-circle" });
 
+const getFunilStyle = (etapa) => {
+  if (!etapa || etapa === "—") return { label:"—", bg:"rgba(100,116,139,.12)", color:"#64748b" };
+  const map = {
+    "Prospecção":        { bg:"rgba(139,92,246,.15)",  color:"#a78bfa" },
+    "Qualificação":      { bg:"rgba(59,130,246,.15)",  color:"#60a5fa" },
+    "Apresentação":      { bg:"rgba(245,158,11,.15)",  color:"#fbbf24" },
+    "Proposta":          { bg:"rgba(249,115,22,.15)",  color:"#fb923c" },
+    "Negociação":        { bg:"rgba(239,68,68,.15)",   color:"#f87171" },
+    "Fechado - Ganho":   { bg:"rgba(16,185,129,.15)",  color:"#34d399" },
+    "Fechado - Perdido": { bg:"rgba(100,116,139,.15)", color:"#94a3b8" },
+  };
+  return map[etapa] || { bg:"rgba(99,102,241,.15)", color:"#818cf8" };
+};
+
+const FunilPill = ({ etapa }) => {
+  const s = getFunilStyle(etapa);
+  return (
+    <span style={{
+      display:"inline-flex", alignItems:"center", gap:4,
+      padding:"2px 8px", borderRadius:99, fontSize:11, fontWeight:600,
+      background:s.bg, color:s.color, whiteSpace:"nowrap",
+    }}>
+      {etapa || "—"}
+    </span>
+  );
+};
+
 const getStatusStyle = (s) => ({
   "Novo":                  { bg:"rgba(100,116,139,.18)", color:"#94a3b8" },
   "Em qualificação":       { bg:"rgba(139,92,246,.18)",  color:"#a78bfa" },
@@ -804,7 +831,7 @@ function Radar() {
                   <Th>Tema</Th>
                   <Th>Tipo</Th>
                   <Th>Formato</Th>
-                  <Th col="temp">Temp.</Th>
+                  <Th col="funil">Funil</Th>
                   <Th col="score">Score</Th>
                   <Th>Status</Th>
                   <Th>Próximo Passo</Th>
@@ -862,9 +889,7 @@ function Radar() {
                         <Pill bg={fSt.bg} color={fSt.color}>{lead.formato}</Pill>
                       </td>
                       <td style={tdStyle}>
-                        <Pill bg={temp.bg} color={temp.color} border={temp.border}>
-                          <Icon name={temp.icon} size={9} />{temp.label}
-                        </Pill>
+                        <FunilPill etapa={lead.funil} />
                       </td>
                       <td style={tdStyle}>
                         <div style={{display:"flex",alignItems:"center",gap:6}}>
