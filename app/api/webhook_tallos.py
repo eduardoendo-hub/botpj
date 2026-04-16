@@ -186,17 +186,18 @@ async def _process_monitor(body: dict):
         except Exception as e:
             logger.error(f"[Tallos PJ Monitor] Erro ao gravar log: {e}")
 
-        if phone_number:
+        # Só atualiza contact_id se o lead JÁ existe como PJ — não cria registros novos
+        if phone_number and contact_id:
             try:
-                notes = f"tallos_contact_id:{contact_id}" if contact_id else None
-                await upsert_lead(
-                    phone_number,
-                    contact_name=contact_name,
-                    notes=notes if notes else "",
-                    source_channel="tallos_monitor",
-                )
+                pj_check = await is_pj_lead(phone_number)
+                if pj_check:
+                    await upsert_lead(
+                        phone_number,
+                        contact_name=contact_name,
+                        notes=f"tallos_contact_id:{contact_id}",
+                    )
             except Exception as e:
-                logger.error(f"[Tallos PJ Monitor] Erro ao salvar contato: {e}")
+                logger.error(f"[Tallos PJ Monitor] Erro ao atualizar contato: {e}")
 
         if not phone_number or not message_text:
             return

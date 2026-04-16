@@ -709,9 +709,12 @@ async def is_pj_lead(phone_number: str) -> bool:
 
 
 async def get_all_leads() -> List[Dict]:
+    """Retorna apenas leads PJ reais (source_channel tallos_pj ou tallos_form_pj)."""
     db = await get_db()
     try:
-        cursor = await db.execute("SELECT * FROM leads ORDER BY updated_at DESC")
+        cursor = await db.execute(
+            "SELECT * FROM leads WHERE source_channel IN ('tallos_pj', 'tallos_form_pj') ORDER BY updated_at DESC"
+        )
         rows = await cursor.fetchall()
         return [dict(row) for row in rows]
     finally:
