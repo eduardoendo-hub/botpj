@@ -86,6 +86,111 @@ async def get_funil_etapa(phone: str) -> str:
     return info["etapa"]
 
 
+async def get_deal_full_info(phone: str) -> Dict:
+    """
+    Retorna dados completos do deal para exibição no histórico:
+    {
+      "pipeline": str,
+      "etapa": str,
+      "consultor": str,
+      "valor": float,
+      "next_task": dict | None,
+      "previous_task": dict | None,
+      "stage_histories": list[dict],  # [{stage_name, start_date, end_date}]
+    }
+    """
+    empty = {
+        "pipeline": "", "etapa": "—", "consultor": "", "valor": 0.0,
+        "next_task": None, "previous_task": None, "stage_histories": [],
+    }
+    if not settings.rd_crm_token:
+        return empty
+
+    phone_clean = _clean_phone(phone)
+    try:
+        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+            contact = await _find_contact(client, phone_clean)
+            if not contact:
+                return empty
+
+            deal_ids = contact.get("deal_ids", []) or []
+            if not deal_ids:
+                return empty
+
+            deal = await _find_best_deal(client, deal_ids)
+            if not deal:
+                return empty
+
+            # Etapa atual
+            stage = deal.get("deal_stage", {})
+            etapa = stage.get("name", "—") if isinstance(stage, dict) else str(stage or "—")
+
+            # Pipeline
+            pipeline_obj = deal.get("deal_pipeline", {}) or {}
+            pipeline = pipeline_obj.get("name", "") if isinstance(pipeline_obj, dict) else ""
+
+            # Consultor
+            user = deal.get("user", {}) or {}
+            consultor = user.get("name", "") if isinstance(user, dict) else ""
+
+            # Valor
+            valor = float(deal.get("amount_total") or deal.get("amount_unique") or 0)
+
+            # Próxima tarefa
+            next_task = deal.get("next_task") or None
+            # Última tarefa
+            prev_task = deal.get("previous_task") or None
+
+            # Histórico de etapas — precisamos resolver stage_id → nome
+            histories_raw = deal.get("deal_stage_histories") or []
+            stage_names = await _fetch_stage_names(client)
+            stage_histories = []
+            for h in histories_raw:
+                sid = h.get("deal_stage_id", "")
+                stage_histories.append({
+                    "stage_name": stage_names.get(sid, f"Etapa {sid[:8]}…" if sid else "—"),
+                    "start_date": h.get("start_date") or "",
+                    "end_date":   h.get("end_date") or "",
+                })
+
+            return {
+                "pipeline":       pipeline,
+                "etapa":          etapa,
+                "consultor":      consultor,
+                "valor":          valor,
+                "next_task":      next_task,
+                "previous_task":  prev_task,
+                "stage_histories": stage_histories,
+            }
+
+    except httpx.TimeoutException:
+        logger.warning(f"[RD CRM] Timeout get_deal_full_info phone={phone}")
+        return empty
+    except Exception as e:
+        logger.error(f"[RD CRM] Erro get_deal_full_info phone={phone}: {e}")
+        return empty
+
+
+async def _fetch_stage_names(client: httpx.AsyncClient) -> Dict[str, str]:
+    """Busca todas as etapas e retorna {id: name}. Usa cache de sessão."""
+    global _stage_cache
+    if _stage_cache:
+        return _stage_cache
+    try:
+        resp = await client.get(f"{_BASE}/deal_stages", params=_p())
+        if resp.status_code == 200:
+            data = resp.json()
+            stages = data if isinstance(data, list) else data.get("deal_stages", [])
+            for s in stages:
+                sid = s.get("_id") or s.get("id") or ""
+                name = s.get("name") or ""
+                if sid and name:
+                    _stage_cache[sid] = name
+    except Exception as e:
+        logger.warning(f"[RD CRM] Falha ao buscar stage_names: {e}")
+    return _stage_cache
+
+
 async def _find_contact(client: httpx.AsyncClient, phone: str) -> Optional[Dict]:
     """Busca o contato pelo telefone e retorna o objeto completo (com deal_ids)."""
     for variant in _phone_variants(phone):

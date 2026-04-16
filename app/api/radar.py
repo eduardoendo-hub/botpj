@@ -20,7 +20,7 @@ from app.core.database import (
     get_all_leads, get_bot_session, get_db, get_full_conversation, get_lead_by_phone,
 )
 from app.services.tallos_history import get_conversation_history, extract_customer_id_from_notes
-from app.services.rd_crm import get_deal_info
+from app.services.rd_crm import get_deal_info, get_deal_full_info
 
 logger = logging.getLogger(__name__)
 
@@ -427,6 +427,17 @@ async def radar_tallos_history(
     result["customer_id"] = customer_id
     result["phone"] = phone
     return JSONResponse(result)
+
+
+@router.get("/crm/{phone}")
+async def radar_crm_history(request: Request, phone: str):
+    """
+    Retorna dados completos do deal no RD CRM para exibição na aba Histórico.
+    Inclui: pipeline, etapa, consultor, valor, próxima tarefa, última tarefa e histórico de etapas.
+    """
+    await _require_auth(request)
+    data = await get_deal_full_info(phone)
+    return JSONResponse(data)
 
 
 # ── RD Station CRM — OAuth2 callback ─────────────────────────────────────────
