@@ -12,9 +12,7 @@ class Settings(BaseSettings):
     tallos_jwk_key: str = ""               # Chave JWK completa (JSON) para descriptografar histórico
 
     # ── RD Station CRM ───────────────────────────────────────────────────
-    rd_crm_client_id: str = ""              # client_id do app no RD Station App Publisher
-    rd_crm_client_secret: str = ""          # client_secret do app no RD Station App Publisher
-    rd_crm_token: str = ""                  # access_token OAuth2 (gerado via /pj/radar/rd-crm/callback)
+    rd_crm_token: str = ""                  # Token API do RD Station CRM (CRM → avatar → Integrações → Token API)
 
     # Anthropic
     anthropic_api_key: str = ""

@@ -1,14 +1,13 @@
 """
-Serviço de integração com RD Station CRM (API v2).
+Serviço de integração com RD Station CRM (API v1).
 
-Fluxo para buscar etapa do funil de um lead:
-  1. Busca contato pelo telefone  → GET /contacts?phone={phone}
-  2. Pega o deal mais recente     → GET /deals?contact_id={id}
-  3. Resolve stage_id → nome      → GET /pipeline_stages/{id}
-  4. Retorna nome da etapa        → exibido no Radar
+Autenticação simples via token de API (sem OAuth2).
+Token disponível em: CRM → avatar → Integrações → Token API
 
-Base URL: https://api.rd.services/crm/v2
-Auth: Authorization: Bearer {token}
+Fluxo para buscar etapa do funil:
+  1. Busca contato pelo telefone  → GET /contacts?phone={phone}&token={token}
+  2. Pega o deal mais recente     → GET /deals?contact_id={id}&token={token}
+  3. Retorna deal_stage.name      → etapa do funil
 """
 
 import logging
@@ -19,20 +18,20 @@ import httpx
 
 from app.core.config import settings
 
-logger = logging.getLogger(__name__)
-
+logger  = logging.getLogger(__name__)
+_BASE   = "https://crm.rdstation.com/api/v1"
 _TIMEOUT = 8
-_BASE    = "https://api.rd.services/crm/v2"
 
-# Cache simples de stage_id → nome (evita requisições repetidas)
+# Cache stage_id → nome para evitar requisições repetidas por sessão
 _stage_cache: Dict[str, str] = {}
 
 
-def _auth_headers() -> Dict[str, str]:
-    return {
-        "Authorization": f"Bearer {settings.rd_crm_token}",
-        "Accept":        "application/json",
-    }
+def _p(extra: Optional[Dict] = None) -> Dict:
+    """Monta params com token."""
+    p = {"token": settings.rd_crm_token}
+    if extra:
+        p.update(extra)
+    return p
 
 
 async def get_funil_etapa(phone: str) -> str:
@@ -49,18 +48,22 @@ async def get_funil_etapa(phone: str) -> str:
         async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
             contact_id = await _find_contact_id(client, phone_clean)
             if not contact_id:
-                logger.debug(f"[RD CRM] Contato não encontrado: phone={phone_clean}")
+                logger.debug(f"[RD CRM] Contato não encontrado: {phone_clean}")
                 return "—"
 
             deal = await _find_latest_deal(client, contact_id)
             if not deal:
-                logger.debug(f"[RD CRM] Sem deals para contact_id={contact_id}")
                 return "—"
 
-            stage_id   = deal.get("stage_id", "")
-            stage_name = await _resolve_stage_name(client, stage_id)
-            logger.info(f"[RD CRM] phone={phone_clean} | stage={stage_name}")
-            return stage_name or "—"
+            # deal_stage pode ser dict {id, name} ou string
+            stage = deal.get("deal_stage", {})
+            if isinstance(stage, dict):
+                etapa = stage.get("name", "—")
+            else:
+                etapa = str(stage) if stage else "—"
+
+            logger.info(f"[RD CRM] {phone_clean} → {etapa}")
+            return etapa
 
     except httpx.TimeoutException:
         logger.warning(f"[RD CRM] Timeout para phone={phone}")
@@ -71,20 +74,21 @@ async def get_funil_etapa(phone: str) -> str:
 
 
 async def _find_contact_id(client: httpx.AsyncClient, phone: str) -> Optional[str]:
-    """Busca _id do contato pelo telefone (tenta variantes com/sem DDI)."""
+    """Busca _id do contato pelo telefone."""
     for variant in _phone_variants(phone):
         try:
             resp = await client.get(
                 f"{_BASE}/contacts",
-                headers=_auth_headers(),
-                params={"phone": variant, "page": 1, "page_size": 5},
+                params=_p({"phone": variant}),
             )
             if resp.status_code != 200:
                 continue
             data     = resp.json()
             contacts = data.get("contacts", data) if isinstance(data, dict) else data
             if contacts and isinstance(contacts, list):
-                return contacts[0].get("id") or contacts[0].get("_id")
+                cid = contacts[0].get("_id") or contacts[0].get("id")
+                if cid:
+                    return cid
         except Exception:
             continue
     return None
@@ -95,11 +99,10 @@ async def _find_latest_deal(client: httpx.AsyncClient, contact_id: str) -> Optio
     try:
         resp = await client.get(
             f"{_BASE}/deals",
-            headers=_auth_headers(),
-            params={"contact_id": contact_id, "page": 1, "page_size": 10},
+            params=_p({"contact_id": contact_id, "order": "updated_at", "page": 1}),
         )
         if resp.status_code != 200:
-            logger.warning(f"[RD CRM] GET /deals → {resp.status_code}")
+            logger.warning(f"[RD CRM] GET /deals → {resp.status_code}: {resp.text[:100]}")
             return None
 
         data  = resp.json()
@@ -108,41 +111,18 @@ async def _find_latest_deal(client: httpx.AsyncClient, contact_id: str) -> Optio
         if not deals:
             return None
 
-        # Prioriza deals em aberto (status != lost/won)
+        # Prioriza deals em aberto
         for deal in deals:
-            if deal.get("status") not in ("lost", "won"):
+            stage = deal.get("deal_stage", {})
+            name  = stage.get("name", "") if isinstance(stage, dict) else str(stage)
+            if "perdido" not in name.lower() and "lost" not in name.lower():
                 return deal
 
-        # Fallback: retorna o mais recente mesmo que fechado
         return deals[0]
 
     except Exception as e:
         logger.error(f"[RD CRM] Erro em _find_latest_deal: {e}")
         return None
-
-
-async def _resolve_stage_name(client: httpx.AsyncClient, stage_id: str) -> str:
-    """Resolve stage_id → nome da etapa (com cache)."""
-    if not stage_id:
-        return "—"
-    if stage_id in _stage_cache:
-        return _stage_cache[stage_id]
-
-    try:
-        resp = await client.get(
-            f"{_BASE}/pipeline_stages/{stage_id}",
-            headers=_auth_headers(),
-        )
-        if resp.status_code == 200:
-            data = resp.json()
-            stage = data.get("data", data)
-            name  = stage.get("name", "—")
-            _stage_cache[stage_id] = name
-            return name
-    except Exception as e:
-        logger.warning(f"[RD CRM] Não resolveu stage_id={stage_id}: {e}")
-
-    return stage_id   # fallback: retorna o ID bruto
 
 
 def _clean_phone(phone: str) -> str:
@@ -152,7 +132,7 @@ def _clean_phone(phone: str) -> str:
 def _phone_variants(phone: str) -> List[str]:
     variants = [phone]
     if phone.startswith("55") and len(phone) >= 12:
-        variants.append(phone[2:])
+        variants.append(phone[2:])   # sem DDI
     elif len(phone) <= 11:
-        variants.append("55" + phone)
+        variants.append("55" + phone)  # com DDI
     return variants
