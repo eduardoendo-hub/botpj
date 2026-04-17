@@ -361,6 +361,83 @@ const taskTypeIcon = (t) => ({
   email: "message-square", call: "phone-call", meeting: "users", whatsapp: "message-square",
 }[t] || "check-circle");
 
+// ── Renderiza lista de atividades (tarefas + anotações) ───────────────────────
+const renderActivityList = (list) => {
+  if (!list.length) return null;
+  return (
+    <div>
+      <div style={{fontSize:10,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>
+        Atividades ({list.length})
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {list.map((item, i) => {
+          const isNote   = item._kind === "note";
+          const color    = isNote ? "#94a3b8" : taskTypeColor(item.ttype);
+          const borderC  = item.done ? "rgba(148,163,184,.15)" : "rgba(245,158,11,.25)";
+          const bgC      = isNote   ? "rgba(15,23,42,.6)"
+                         : item.done ? "rgba(30,41,59,.5)"
+                         : "rgba(245,158,11,.05)";
+
+          return (
+            <div key={i} style={{background:bgC,border:`1px solid ${borderC}`,borderRadius:10,padding:"12px 14px"}}>
+
+              {/* Cabeçalho */}
+              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8,marginBottom:6}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",flex:1}}>
+                  {isNote ? (
+                    <span style={{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:99,
+                      background:"rgba(148,163,184,.15)",color:"#94a3b8",border:"1px solid rgba(148,163,184,.25)"}}>
+                      📝 Anotação
+                    </span>
+                  ) : item.ttype ? (
+                    <span style={{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:99,
+                      background:`${color}22`,color,border:`1px solid ${color}44`,whiteSpace:"nowrap"}}>
+                      <Icon name={taskTypeIcon(item.ttype)} size={9} style={{marginRight:3}} />
+                      {taskTypeLabel(item.ttype)}
+                    </span>
+                  ) : null}
+                  {!isNote && (item.done
+                    ? <span style={{fontSize:10,color:"#34d399",fontWeight:600}}>✓ Concluída</span>
+                    : <span style={{fontSize:10,color:"#fbbf24",fontWeight:600}}>⏳ Pendente</span>
+                  )}
+                </div>
+                {item.dateStr && (
+                  <span style={{fontSize:10,color:"#64748b",whiteSpace:"nowrap",flexShrink:0}}>
+                    {fmtDateTimeBRT(item.dateStr)}
+                  </span>
+                )}
+              </div>
+
+              {/* Título */}
+              <div style={{fontSize:13,fontWeight:600,color:item.done?"#cbd5e1":"#f1f5f9",lineHeight:1.4,marginBottom:item.desc?8:0}}>
+                {item.subject}
+              </div>
+
+              {/* Corpo / descrição completa */}
+              {item.desc && (
+                <div style={{
+                  fontSize:12,color:"#94a3b8",lineHeight:1.7,
+                  whiteSpace:"pre-wrap",wordBreak:"break-word",
+                  borderTop:"1px solid rgba(255,255,255,.06)",paddingTop:8,
+                }}>
+                  {item.desc}
+                </div>
+              )}
+
+              {/* Responsável */}
+              {item.who && (
+                <div style={{fontSize:11,color:"#64748b",marginTop:6,display:"flex",alignItems:"center",gap:4}}>
+                  <Icon name="user" size={10} />{item.who}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 // ── Drawer com abas (Detalhes / Conversa / Histórico) ─────────────────────────
 const Drawer = ({ lead, onClose, basePath }) => {
   const [tab, setTab]           = useState("info");
@@ -668,94 +745,59 @@ const Drawer = ({ lead, onClose, basePath }) => {
                   </div>
                 )}
 
-                {/* ── Timeline completa de tarefas / atividades ── */}
+                {/* ── Timeline completa: tarefas + anotações intercaladas ── */}
                 {(() => {
-                  const tasks = crm.all_tasks || [];
-                  // Fallback: monta lista com prev + next se all_tasks vazio
-                  const fallback = [];
-                  if (!tasks.length) {
-                    if (crm.previous_task) fallback.push({...crm.previous_task, _isFallback:true, done:true});
-                    if (crm.next_task)     fallback.push({...crm.next_task, _isFallback:true, done:false});
+                  // Monta lista unificada: tasks + annotations, ordenadas por data desc
+                  const tasks = (crm.all_tasks || []).map(t => ({
+                    _kind:   "task",
+                    done:    !!(t.done || t.done_date),
+                    dateStr: t.done_date || t.date || t.due_date || "",
+                    subject: t.subject || t.name || "Sem título",
+                    desc:    t.description || t.body || t.note || "",
+                    who:     t.done_by?.name || t.assigned_to?.name || t.user?.name || "",
+                    ttype:   t.type || "",
+                  }));
+
+                  const notes = (crm.all_annotations || []).map(a => ({
+                    _kind:   "note",
+                    done:    true,
+                    dateStr: a.created_at || a.date || "",
+                    subject: a.title || a.subject || "Anotação",
+                    desc:    a.text || a.body || a.content || a.note || "",
+                    who:     a.user?.name || a.created_by?.name || "",
+                    ttype:   "note",
+                  }));
+
+                  // Fallback se ambos vazios
+                  if (!tasks.length && !notes.length) {
+                    const fb = [];
+                    if (crm.previous_task) fb.push({_kind:"task",done:true,
+                      dateStr: crm.previous_task.done_date||crm.previous_task.date||"",
+                      subject: crm.previous_task.subject||crm.previous_task.name||"",
+                      desc: crm.previous_task.description||"",
+                      who: crm.previous_task.done_by?.name||"",
+                      ttype: crm.previous_task.type||"",
+                    });
+                    if (crm.next_task) fb.push({_kind:"task",done:false,
+                      dateStr: crm.next_task.date||crm.next_task.due_date||"",
+                      subject: crm.next_task.subject||crm.next_task.name||"",
+                      desc: crm.next_task.description||"",
+                      who: crm.next_task.assigned_to?.name||"",
+                      ttype: crm.next_task.type||"",
+                    });
+                    if (!fb.length) return null;
+                    return renderActivityList(fb);
                   }
-                  const list = tasks.length ? tasks : fallback;
-                  if (!list.length) return null;
 
-                  return (
-                    <div>
-                      <div style={{fontSize:10,fontWeight:700,color:C.txt3,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>
-                        Atividades ({list.length})
-                      </div>
-                      <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                        {list.map((t, i) => {
-                          const done     = t.done || t.done_date;
-                          const dateStr  = t.done_date || t.date || t.due_date || "";
-                          const subject  = t.subject || t.name || "Sem título";
-                          const desc     = t.description || t.body || t.note || "";
-                          const who      = t.done_by?.name || t.assigned_to?.name || t.user?.name || "";
-                          const ttype    = t.type || "";
-                          const color    = taskTypeColor(ttype);
-                          const borderC  = done ? "rgba(148,163,184,.15)" : "rgba(245,158,11,.25)";
-                          const bgC      = done ? "rgba(30,41,59,.5)"     : "rgba(245,158,11,.05)";
+                  // Intercala e ordena por data desc
+                  const all = [...tasks, ...notes].sort((a,b) => {
+                    if (!a.dateStr && !b.dateStr) return 0;
+                    if (!a.dateStr) return 1;
+                    if (!b.dateStr) return -1;
+                    return b.dateStr.localeCompare(a.dateStr);
+                  });
 
-                          return (
-                            <div key={i} style={{
-                              background:bgC, border:`1px solid ${borderC}`,
-                              borderRadius:10, padding:"12px 14px",
-                            }}>
-                              {/* Cabeçalho da tarefa */}
-                              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8,marginBottom:6}}>
-                                <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",flex:1}}>
-                                  {ttype && (
-                                    <span style={{
-                                      fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:99,
-                                      background:`${color}22`,color,border:`1px solid ${color}44`,
-                                      whiteSpace:"nowrap",
-                                    }}>
-                                      <Icon name={taskTypeIcon(ttype)} size={9} style={{marginRight:3}} />
-                                      {taskTypeLabel(ttype)}
-                                    </span>
-                                  )}
-                                  {done
-                                    ? <span style={{fontSize:10,color:"#34d399",fontWeight:600}}>✓ Concluída</span>
-                                    : <span style={{fontSize:10,color:"#fbbf24",fontWeight:600}}>⏳ Pendente</span>
-                                  }
-                                </div>
-                                {dateStr && (
-                                  <span style={{fontSize:10,color:C.txt3,whiteSpace:"nowrap",flexShrink:0}}>
-                                    {fmtDateTimeBRT(dateStr)}
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* Título */}
-                              <div style={{fontSize:13,fontWeight:600,color:done?C.txt2:C.txt1,lineHeight:1.4,marginBottom:desc?6:0}}>
-                                {subject}
-                              </div>
-
-                              {/* Descrição completa */}
-                              {desc && (
-                                <div style={{
-                                  fontSize:12,color:C.txt2,lineHeight:1.6,
-                                  whiteSpace:"pre-wrap",wordBreak:"break-word",
-                                  borderTop:"1px solid rgba(255,255,255,.06)",
-                                  paddingTop:8, marginTop:2,
-                                }}>
-                                  {desc}
-                                </div>
-                              )}
-
-                              {/* Rodapé: responsável */}
-                              {who && (
-                                <div style={{fontSize:11,color:C.txt3,marginTop:6,display:"flex",alignItems:"center",gap:4}}>
-                                  <Icon name="user" size={10} />{who}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
+                  return renderActivityList(all);
                 })()}
 
               </>)}

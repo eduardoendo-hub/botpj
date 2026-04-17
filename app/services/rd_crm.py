@@ -154,7 +154,8 @@ async def get_deal_full_info(phone: str) -> Dict:
 
             # Todas as tarefas/atividades do deal
             deal_id = deal.get("_id") or deal.get("id") or ""
-            all_tasks = await _fetch_deal_tasks(client, deal_id)
+            all_tasks        = await _fetch_deal_tasks(client, deal_id)
+            all_annotations  = await _fetch_deal_annotations(client, deal_id)
 
             return {
                 "pipeline":        pipeline,
@@ -165,6 +166,7 @@ async def get_deal_full_info(phone: str) -> Dict:
                 "previous_task":   prev_task,
                 "stage_histories": stage_histories,
                 "all_tasks":       all_tasks,
+                "all_annotations": all_annotations,
             }
 
     except httpx.TimeoutException:
@@ -195,6 +197,25 @@ async def _fetch_deal_tasks(client: httpx.AsyncClient, deal_id: str) -> List[Dic
         return tasks
     except Exception as e:
         logger.warning(f"[RD CRM] Falha ao buscar tasks do deal {deal_id}: {e}")
+        return []
+
+
+async def _fetch_deal_annotations(client: httpx.AsyncClient, deal_id: str) -> List[Dict]:
+    """Busca anotações/notas do deal (onde ficam os corpos de e-mail etc.)."""
+    if not deal_id:
+        return []
+    try:
+        resp = await client.get(f"{_BASE}/annotations", params=_p({"deal_id": deal_id}))
+        if resp.status_code != 200:
+            logger.warning(f"[RD CRM] /annotations retornou {resp.status_code} deal {deal_id}")
+            return []
+        data = resp.json()
+        items = data if isinstance(data, list) else data.get("annotations", [])
+        # Ordena por data desc
+        items.sort(key=lambda x: x.get("created_at") or x.get("date") or "", reverse=True)
+        return items
+    except Exception as e:
+        logger.warning(f"[RD CRM] Falha ao buscar annotations do deal {deal_id}: {e}")
         return []
 
 
