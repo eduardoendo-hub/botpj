@@ -84,30 +84,42 @@ async def main(phone):
             if extras:
                 print(f"  outros campos com valor: {json.dumps(extras, ensure_ascii=False, indent=4)}")
 
-        # 4. Annotations
-        print(f"\n── ANNOTATIONS (/annotations?deal_id={deal_id}) ──")
-        r = await client.get(f"{BASE}/annotations", params=p({"deal_id": deal_id}))
-        print(f"Status: {r.status_code}")
-        ann_data = r.json()
-        anns = ann_data if isinstance(ann_data, list) else ann_data.get("annotations", [])
-        print(f"Total annotations: {len(anns)}")
-        for i, a in enumerate(anns[:3]):
-            print(f"\n  Annotation {i+1} — chaves: {sorted(a.keys())}")
-            print(f"  text: {repr(a.get('text', ''))[:200]}")
-            print(f"  body: {repr(a.get('body', ''))[:200]}")
-            print(f"  note: {repr(a.get('note', ''))[:200]}")
-            print(f"  content: {repr(a.get('content', ''))[:200]}")
+        # 4. Campos do deal: interactions e last_note_content
+        print(f"\n── DEAL['interactions'] ──────────────────────")
+        interactions = deal.get("interactions") or []
+        print(f"Tipo: {type(interactions)}, len: {len(interactions) if isinstance(interactions, list) else '?'}")
+        if isinstance(interactions, list) and interactions:
+            for i, inter in enumerate(interactions[:3]):
+                print(f"\n  interaction {i+1} — chaves: {sorted(inter.keys()) if isinstance(inter, dict) else type(inter)}")
+                print(f"  {json.dumps(inter, ensure_ascii=False, indent=4)[:600]}")
+        elif interactions:
+            print(f"  valor: {json.dumps(interactions, ensure_ascii=False)[:400]}")
 
-        # 5. Tenta /deal_activities ou /activities
-        for endpoint in ["/deal_activities", "/activities", "/deal_notes"]:
-            r = await client.get(f"{BASE}{endpoint}", params=p({"deal_id": deal_id}))
+        print(f"\n── DEAL['last_note_content'] ─────────────────")
+        print(repr(deal.get("last_note_content", ""))[:500])
+
+        # 5. Endpoints alternativos
+        for endpoint, extra_params in [
+            ("/annotations",     {"deal_id": deal_id}),
+            ("/interactions",    {"deal_id": deal_id}),
+            ("/deal_activities", {"deal_id": deal_id}),
+            ("/activities",      {"deal_id": deal_id}),
+            ("/notes",           {"deal_id": deal_id}),
+            (f"/deals/{deal_id}/interactions", {}),
+            (f"/deals/{deal_id}/notes",        {}),
+            (f"/deals/{deal_id}/activities",   {}),
+        ]:
+            r = await client.get(f"{BASE}{endpoint}", params=p(extra_params))
             print(f"\n── {endpoint} → status {r.status_code}")
             if r.status_code == 200:
-                d = r.json()
-                items = d if isinstance(d, list) else list(d.values())[0] if d else []
-                print(f"  Total: {len(items) if isinstance(items, list) else '?'}")
-                if isinstance(items, list) and items:
-                    print(f"  Chaves do primeiro: {sorted(items[0].keys())}")
-                    print(f"  Primeiro: {json.dumps(items[0], ensure_ascii=False, indent=4)[:500]}")
+                try:
+                    d = r.json()
+                    items = d if isinstance(d, list) else next((v for v in d.values() if isinstance(v, list)), [])
+                    print(f"  Total items: {len(items)}")
+                    if items:
+                        print(f"  Chaves do primeiro: {sorted(items[0].keys()) if isinstance(items[0], dict) else '?'}")
+                        print(f"  {json.dumps(items[0], ensure_ascii=False, indent=4)[:500]}")
+                except Exception as e:
+                    print(f"  Erro ao parsear: {e}")
 
 asyncio.run(main(sys.argv[1] if len(sys.argv) > 1 else "5511999999999"))
