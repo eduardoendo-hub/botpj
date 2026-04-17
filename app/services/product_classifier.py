@@ -12,8 +12,10 @@ Exemplos de saída:
   "In Company Customizado - Liderança"
   "SAP - Turma Aberta"
 
-Cache em memória: TTL de 2 horas por phone. O classificador NÃO é re-executado
-a cada refresh do Radar — só quando o lead muda ou o cache expira.
+Cache em memória: TTL de 2 horas por phone, com invalidação inteligente:
+  - Se o resultado cacheado era "A definir" e chegaram mais mensagens → re-executa
+  - Se o número de mensagens cresceu significativamente (>3 novas) → re-executa
+  - Resultado "A definir" com 0 mensagens não é cacheado (sempre re-tenta)
 """
 
 import logging
@@ -27,20 +29,37 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# ── Cache: phone → (produto, timestamp) ───────────────────────────────────────
-_cache: Dict[str, Tuple[str, float]] = {}
+# ── Cache: phone → (produto, timestamp, msg_count) ────────────────────────────
+_cache: Dict[str, Tuple[str, float, int]] = {}
 _CACHE_TTL = 7_200  # 2 horas
 
 
-def _cache_get(phone: str) -> Optional[str]:
+def _cache_get(phone: str, current_msg_count: int = 0) -> Optional[str]:
     entry = _cache.get(phone)
-    if entry and (time.time() - entry[1]) < _CACHE_TTL:
-        return entry[0]
-    return None
+    if not entry:
+        return None
+    produto, ts, cached_msg_count = entry
+    # Cache expirado
+    if (time.time() - ts) >= _CACHE_TTL:
+        return None
+    # Se cacheou "A definir" e agora há mais mensagens → re-executa
+    if produto == "A definir" and current_msg_count > cached_msg_count:
+        logger.info(f"[ProductClassifier] Cache invalidado para {phone}: "
+                    f"'A definir' + {current_msg_count} msgs > {cached_msg_count} antes")
+        return None
+    # Se chegaram 3+ novas mensagens → re-executa para capturar novas informações
+    if current_msg_count >= cached_msg_count + 3:
+        logger.info(f"[ProductClassifier] Cache invalidado para {phone}: "
+                    f"{current_msg_count} msgs vs {cached_msg_count} no cache")
+        return None
+    return produto
 
 
-def _cache_set(phone: str, produto: str):
-    _cache[phone] = (produto, time.time())
+def _cache_set(phone: str, produto: str, msg_count: int = 0):
+    # Não cacheia "A definir" quando não há nenhuma mensagem — sempre re-tenta
+    if produto == "A definir" and msg_count == 0:
+        return
+    _cache[phone] = (produto, time.time(), msg_count)
 
 
 # ── Prompt ─────────────────────────────────────────────────────────────────────
@@ -88,9 +107,10 @@ async def classify_product(lead: dict, last_messages: list[dict] | None = None) 
         String curta com o produto identificado.
     """
     phone = lead.get("phone_number") or lead.get("telefone") or lead.get("id") or ""
+    msg_count = len(last_messages) if last_messages else 0
 
-    # Verifica cache
-    cached = _cache_get(phone)
+    # Verifica cache (invalidação inteligente por contagem de mensagens)
+    cached = _cache_get(phone, msg_count)
     if cached:
         return cached
 
@@ -146,9 +166,9 @@ async def classify_product(lead: dict, last_messages: list[dict] | None = None) 
         except Exception:
             context_parts.append(f"Formulário: {raw[:300]}")
 
-    # Últimas mensagens da conversa (máx 5)
+    # Últimas mensagens da conversa (máx 12 — inclui Tallos + bot)
     if last_messages:
-        msgs = last_messages[-5:]
+        msgs = last_messages[-12:]
         chat_lines = []
         for m in msgs:
             role = m.get("role", "")
@@ -179,8 +199,8 @@ async def classify_product(lead: dict, last_messages: list[dict] | None = None) 
         logger.warning(f"[ProductClassifier] Erro para phone={phone}: {e}")
         produto = "A definir"
 
-    _cache_set(phone, produto)
-    logger.info(f"[ProductClassifier] {phone} → {produto}")
+    _cache_set(phone, produto, msg_count)
+    logger.info(f"[ProductClassifier] {phone} → {produto} (msgs={msg_count})")
     return produto
 
 

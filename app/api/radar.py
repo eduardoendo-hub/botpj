@@ -322,11 +322,37 @@ async def radar_data(
         lead["_crm_deal_products"] = crm.get("deal_products", [])
         lead["_session"]           = dict(session) if session else None
 
-    # Busca últimas mensagens de cada lead para alimentar o classificador
+    # Busca últimas mensagens de cada lead para alimentar o classificador.
+    # Combina mensagens do bot interno + histórico Tallos (para leads que foram
+    # direto para o atendente humano e cujos campos estruturados ficaram vazios).
     async def _get_last_msgs(lead: dict) -> list:
         try:
-            msgs = await get_full_conversation(lead.get("phone_number", ""))
-            return [dict(m) for m in msgs[-8:]] if msgs else []
+            # 1. Mensagens do bot interno (DB)
+            msgs_raw = await get_full_conversation(lead.get("phone_number", ""))
+            bot_msgs = [
+                {"role": m.get("role", ""), "message": m.get("message", ""), "created_at": m.get("created_at", "")}
+                for m in (msgs_raw or [])
+            ]
+
+            # 2. Histórico Tallos (mensagens do lead + operador via WhatsApp)
+            tallos_msgs: list = []
+            notes = lead.get("notes", "") or ""
+            customer_id = extract_customer_id_from_notes(notes)
+            if customer_id:
+                result = await get_conversation_history(customer_id, page=1, limit=30)
+                for m in result.get("messages", []):
+                    tallos_role = m.get("role", "")
+                    role = "user" if tallos_role == "customer" else "agent" if tallos_role == "operator" else "assistant"
+                    tallos_msgs.append({
+                        "role":       role,
+                        "message":    m.get("message", ""),
+                        "created_at": m.get("created_at", ""),
+                    })
+
+            # 3. Mescla, ordena por data e retorna as últimas 12
+            all_msgs = bot_msgs + tallos_msgs
+            all_msgs.sort(key=lambda x: x.get("created_at", ""))
+            return all_msgs[-12:]
         except Exception:
             return []
 
