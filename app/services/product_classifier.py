@@ -44,20 +44,36 @@ def _cache_set(phone: str, produto: str):
 
 
 # ── Prompt ─────────────────────────────────────────────────────────────────────
-_SYSTEM = """Você é um especialista comercial da Impacta Tecnologia, escola de TI e gestão.
+_SYSTEM = """Você é um especialista comercial sênior da Impacta Tecnologia, escola de TI e gestão.
 
-Portfólio de produtos que vendemos:
-- Cursos avulsos / turmas abertas: cursos com datas fixas no calendário regular (Python, Power BI, Excel, SAP, Java, AWS, Project, etc.)
-- Turmas fechadas (In Company): cursos exclusivos para a empresa, presencial ou online
-- Customizado / Consultoria: conteúdo desenvolvido sob medida
-- Locação de espaço: aluguel de salas de treinamento, laboratórios de informática
+PORTFÓLIO:
+- Calendário Regular / Matrícula Avulsa: aluno se matricula em turma já agendada. Indicado para 1 a 4 pessoas.
+- Turma Fechada (In Company): curso exclusivo para a empresa, mínimo ~6-8 pessoas, conteúdo fixo do catálogo.
+- Customizado / Consultoria: conteúdo desenvolvido sob medida para a empresa.
+- Locação de Espaço: aluguel de sala de treinamento, laboratório de informática, auditório.
 
-Sua tarefa: com base nos dados do lead, retorne UM ÚNICO label curto (máx 60 chars) identificando o produto.
-Formato ideal: "[Tema/Tecnologia] - [Modalidade]"
-Exemplos: "Power BI - Turma Fechada", "Excel - Calendário Regular", "Locação - Sala de Treinamento", "SAP - In Company Customizado", "Liderança - Turma Fechada", "AWS - Turma Aberta"
+REGRAS DE INFERÊNCIA (aplique sempre):
+1. Quantidade de pessoas:
+   - "2p", "2 pessoas", "2 participantes", "para 2" → Calendário Regular (poucos para fechar turma)
+   - "3p", "4p" → provavelmente Calendário Regular, a menos que haja indicação de in-company
+   - "5p" a "10p" → pode ser Turma Fechada, verifique outros sinais
+   - "10p+" ou "15p", "20p" etc → Turma Fechada / In Company
+2. Palavras-chave que indicam Turma Fechada: "in company", "turma fechada", "exclusivo", "personalizado", "nossa equipe", "para o time"
+3. Palavras-chave que indicam Calendário Regular: "matrícula", "calendário", "turma aberta", "próxima turma", "agenda"
+4. Palavras-chave que indicam Locação: "sala", "espaço", "laboratório", "lab", "auditório", "aluguel"
+5. Palavras-chave que indicam Customizado: "sob medida", "customizado", "consultoria", "adaptar conteúdo"
 
-Se não houver informação suficiente, retorne "A definir".
-Responda APENAS com o label, sem aspas, sem explicação."""
+TAREFA: analise todos os dados do lead (nome da negociação, quantidade de pessoas, tipo, tema, conversa) e retorne UM ÚNICO label curto (máx 60 chars) no formato:
+"[Tecnologia/Tema] - [Modalidade]"
+
+Exemplos corretos:
+- Nome "Power BI 2p" → "Power BI - Calendário Regular (2 pessoas)"
+- Nome "Excel 15p In Company" → "Excel - Turma Fechada (15 pessoas)"
+- Nome "Locação Lab Informática" → "Locação - Laboratório de Informática"
+- Nome "Python Avançado" + tema "Python" + tipo "In Company" → "Python Avançado - Turma Fechada"
+- Sem dados suficientes → "A definir"
+
+Responda APENAS com o label, sem aspas, sem ponto final, sem explicação."""
 
 
 async def classify_product(lead: dict, last_messages: list[dict] | None = None) -> str:
@@ -78,52 +94,42 @@ async def classify_product(lead: dict, last_messages: list[dict] | None = None) 
     if cached:
         return cached
 
-    # ── Fonte primária: nome e produtos do deal no CRM (mais confiável) ────────
-    deal_name = lead.get("_crm_deal_name") or lead.get("deal_name") or ""
-    deal_products = lead.get("_crm_deal_products") or lead.get("deal_products") or []
-
-    # Tenta extrair produto dos deal_products (lista de produtos vinculados)
-    if deal_products and isinstance(deal_products, list):
-        product_names = []
-        for dp in deal_products:
-            if isinstance(dp, dict):
-                name = dp.get("name") or dp.get("product_name") or dp.get("title") or ""
-                if name:
-                    product_names.append(name)
-        if product_names:
-            produto = " + ".join(product_names[:2])
-            _cache_set(phone, produto)
-            logger.info(f"[ProductClassifier] {phone} → {produto} (deal_products)")
-            return produto
-
-    # Se tem nome da negociação no CRM, usa como base (ainda pode complementar com IA)
-    if deal_name and len(deal_name) > 4:
-        _cache_set(phone, deal_name)
-        logger.info(f"[ProductClassifier] {phone} → {deal_name} (deal_name)")
-        return deal_name
-
     if not settings.anthropic_api_key:
         return "A definir"
 
-    # ── Fallback: Claude Haiku analisa os demais dados ─────────────────────────
+    # ── Claude Haiku interpreta todos os dados, incluindo nome da negociação ───
     # Monta contexto compacto para o modelo
     context_parts = []
 
-    # Campos estruturados do lead
+    # Campos estruturados do lead — CRM primeiro (mais confiável)
+    deal_name     = lead.get("_crm_deal_name") or lead.get("deal_name") or ""
+    deal_products = lead.get("_crm_deal_products") or lead.get("deal_products") or []
+
+    product_names = []
+    if isinstance(deal_products, list):
+        for dp in deal_products:
+            if isinstance(dp, dict):
+                n = dp.get("name") or dp.get("product_name") or dp.get("title") or ""
+                if n:
+                    product_names.append(n)
+
     fields = {
-        "Tema/Interesse":      lead.get("tema_interesse") or lead.get("training_interest") or "",
-        "Tipo de serviço":     lead.get("servico") or lead.get("tipo_interesse") or "",
-        "Formato":             lead.get("formato") or "",
-        "Trail":               lead.get("trail") or "",
-        "Objetivo":            lead.get("objetivo_negocio") or "",
-        "Prazo":               lead.get("prazo") or "",
-        "Qtd participantes":   str(lead.get("qtd_participantes") or ""),
-        "Qtd colaboradores":   str(lead.get("qtd_colaboradores") or ""),
-        "Empresa":             lead.get("company") or "",
-        "Cargo":               lead.get("job_title") or "",
-        "Urgência":            lead.get("urgencia") or "",
-        "Próximo passo":       lead.get("proximo_passo") or "",
-        "Etapa CRM":           lead.get("_crm_etapa") or lead.get("funil") or "",
+        # CRM — dados mais confiáveis vêm primeiro
+        "Nome da negociação (CRM)": deal_name,
+        "Produtos vinculados (CRM)": ", ".join(product_names) if product_names else "",
+        "Etapa CRM":               lead.get("_crm_etapa") or lead.get("funil") or "",
+        # Dados capturados pelo bot
+        "Tema/Interesse":          lead.get("tema_interesse") or lead.get("training_interest") or "",
+        "Tipo de serviço":         lead.get("servico") or lead.get("tipo_interesse") or "",
+        "Formato":                 lead.get("formato") or "",
+        "Qtd participantes":       str(lead.get("qtd_participantes") or ""),
+        "Qtd colaboradores":       str(lead.get("qtd_colaboradores") or ""),
+        "Objetivo":                lead.get("objetivo_negocio") or "",
+        "Urgência":                lead.get("urgencia") or "",
+        "Prazo":                   lead.get("prazo") or "",
+        "Próximo passo":           lead.get("proximo_passo") or "",
+        "Empresa":                 lead.get("company") or "",
+        "Cargo":                   lead.get("job_title") or "",
     }
     for k, v in fields.items():
         if v and v not in ("—", "Não informado"):
