@@ -136,12 +136,11 @@ async def get_deal_full_info(phone: str) -> Dict:
             # Valor
             valor = float(deal.get("amount_total") or deal.get("amount_unique") or 0)
 
-            # Próxima tarefa
+            # Próxima tarefa e última tarefa do objeto do deal
             next_task = deal.get("next_task") or None
-            # Última tarefa
             prev_task = deal.get("previous_task") or None
 
-            # Histórico de etapas — precisamos resolver stage_id → nome
+            # Histórico de etapas — resolve stage_id → nome
             histories_raw = deal.get("deal_stage_histories") or []
             stage_names = await _fetch_stage_names(client)
             stage_histories = []
@@ -153,14 +152,19 @@ async def get_deal_full_info(phone: str) -> Dict:
                     "end_date":   h.get("end_date") or "",
                 })
 
+            # Todas as tarefas/atividades do deal
+            deal_id = deal.get("_id") or deal.get("id") or ""
+            all_tasks = await _fetch_deal_tasks(client, deal_id)
+
             return {
-                "pipeline":       pipeline,
-                "etapa":          etapa,
-                "consultor":      consultor,
-                "valor":          valor,
-                "next_task":      next_task,
-                "previous_task":  prev_task,
+                "pipeline":        pipeline,
+                "etapa":           etapa,
+                "consultor":       consultor,
+                "valor":           valor,
+                "next_task":       next_task,
+                "previous_task":   prev_task,
                 "stage_histories": stage_histories,
+                "all_tasks":       all_tasks,
             }
 
     except httpx.TimeoutException:
@@ -169,6 +173,29 @@ async def get_deal_full_info(phone: str) -> Dict:
     except Exception as e:
         logger.error(f"[RD CRM] Erro get_deal_full_info phone={phone}: {e}")
         return empty
+
+
+async def _fetch_deal_tasks(client: httpx.AsyncClient, deal_id: str) -> List[Dict]:
+    """Busca todas as tarefas/atividades vinculadas ao deal e retorna ordenadas por data desc."""
+    if not deal_id:
+        return []
+    try:
+        resp = await client.get(f"{_BASE}/tasks", params=_p({"deal_id": deal_id}))
+        if resp.status_code != 200:
+            logger.warning(f"[RD CRM] /tasks retornou {resp.status_code} para deal {deal_id}")
+            return []
+        data = resp.json()
+        tasks = data if isinstance(data, list) else data.get("tasks", [])
+        # Ordena: feitas primeiro por done_date desc, pendentes por date asc
+        def _sort_key(t):
+            date = t.get("done_date") or t.get("date") or ""
+            done = bool(t.get("done"))
+            return (0 if done else 1, date)
+        tasks.sort(key=_sort_key)
+        return tasks
+    except Exception as e:
+        logger.warning(f"[RD CRM] Falha ao buscar tasks do deal {deal_id}: {e}")
+        return []
 
 
 async def _fetch_stage_names(client: httpx.AsyncClient) -> Dict[str, str]:

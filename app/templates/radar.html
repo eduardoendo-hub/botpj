@@ -329,30 +329,37 @@ const DateNav = ({ dateFilter, setDateFilter, availableDates }) => {
 };
 
 // ── Helpers para data legível ──────────────────────────────────────────────────
+const _parseDate = (iso) => {
+  if (!iso) return null;
+  // Normaliza: substitui espaço por T, garante segundos
+  let s = String(iso).replace(" ", "T");
+  if (/T\d{2}:\d{2}$/.test(s)) s += ":00";
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+};
 const fmtDateTimeBRT = (iso) => {
-  if (!iso) return "—";
-  try {
-    const d = new Date(iso.replace(" ", "T").replace(/(\d{2}:\d{2})$/, "$1:00"));
-    return d.toLocaleString("pt-BR", {
-      timeZone:"America/Sao_Paulo",
-      day:"2-digit", month:"2-digit", year:"numeric",
-      hour:"2-digit", minute:"2-digit",
-    });
-  } catch(e) { return iso; }
+  const d = _parseDate(iso);
+  if (!d) return iso || "—";
+  return d.toLocaleString("pt-BR", {
+    timeZone:"America/Sao_Paulo",
+    day:"2-digit", month:"2-digit", year:"numeric",
+    hour:"2-digit", minute:"2-digit",
+  });
 };
 const fmtDateBRT = (iso) => {
-  if (!iso) return "—";
-  try {
-    const d = new Date(iso.replace(" ", "T").replace(/(\d{2}:\d{2})$/, "$1:00"));
-    return d.toLocaleDateString("pt-BR", { timeZone:"America/Sao_Paulo", day:"2-digit", month:"2-digit", year:"numeric" });
-  } catch(e) { return iso; }
+  const d = _parseDate(iso);
+  if (!d) return iso || "—";
+  return d.toLocaleDateString("pt-BR", { timeZone:"America/Sao_Paulo", day:"2-digit", month:"2-digit", year:"numeric" });
 };
 const taskTypeLabel = (t) => ({
   email: "E-mail", call: "Ligação", meeting: "Reunião", task: "Tarefa", whatsapp: "WhatsApp",
-}[t] || t || "Tarefa");
+}[t] || t || "Atividade");
 const taskTypeColor = (t) => ({
-  email: "#60a5fa", call: "#34d399", meeting: "#a78bfa", whatsapp: "#4ade80",
+  email: "#60a5fa", call: "#34d399", meeting: "#a78bfa", whatsapp: "#4ade80", task: "#fb923c",
 }[t] || "#94a3b8");
+const taskTypeIcon = (t) => ({
+  email: "message-square", call: "phone-call", meeting: "users", whatsapp: "message-square",
+}[t] || "check-circle");
 
 // ── Drawer com abas (Detalhes / Conversa / Histórico) ─────────────────────────
 const Drawer = ({ lead, onClose, basePath }) => {
@@ -611,147 +618,147 @@ const Drawer = ({ lead, onClose, basePath }) => {
                   <p style={{color:C.txt3,fontSize:13,margin:0}}>Nenhum deal encontrado no CRM.</p>
                 </div>
               )}
-              {!loadingCrm && crm && crm.etapa && (
+              {!loadingCrm && crm && crm.etapa && (<>
 
-                <>
-                  {/* Pipeline + Etapa atual */}
-                  <div style={{background:"rgba(99,102,241,.08)",border:"1px solid rgba(99,102,241,.2)",borderRadius:12,padding:"14px 16px"}}>
-                    {crm.pipeline && (
-                      <div style={{fontSize:10,fontWeight:700,color:"#818cf8",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>
-                        {crm.pipeline}
-                      </div>
+                {/* ── Pipeline + Etapa atual ── */}
+                <div style={{background:"rgba(99,102,241,.08)",border:"1px solid rgba(99,102,241,.2)",borderRadius:12,padding:"14px 16px"}}>
+                  {crm.pipeline && (
+                    <div style={{fontSize:10,fontWeight:700,color:"#818cf8",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>
+                      {crm.pipeline}
+                    </div>
+                  )}
+                  <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+                    <FunilPill etapa={crm.etapa} consultor={crm.consultor} />
+                    {crm.valor > 0 && (
+                      <span style={{fontSize:14,fontWeight:700,color:"#34d399"}}>{fmtBRL(crm.valor)}</span>
                     )}
-                    <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-                      <FunilPill etapa={crm.etapa} consultor={crm.consultor} />
-                      {crm.valor > 0 && (
-                        <span style={{fontSize:13,fontWeight:700,color:"#34d399"}}>
-                          {fmtBRL(crm.valor)}
-                        </span>
-                      )}
+                  </div>
+                </div>
+
+                {/* ── Progresso no Funil ── */}
+                {crm.stage_histories && crm.stage_histories.length > 0 && (
+                  <div>
+                    <div style={{fontSize:10,fontWeight:700,color:C.txt3,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>
+                      Progresso no Funil
+                    </div>
+                    <div style={{position:"relative",paddingLeft:20}}>
+                      <div style={{position:"absolute",left:7,top:6,bottom:6,width:2,background:"rgba(99,102,241,.25)",borderRadius:1}} />
+                      {crm.stage_histories.map((h, i) => {
+                        const isLast = i === crm.stage_histories.length - 1;
+                        return (
+                          <div key={i} style={{position:"relative",paddingBottom:isLast?0:12}}>
+                            <div style={{
+                              position:"absolute",left:-20,top:4,
+                              width:10,height:10,borderRadius:"50%",
+                              background: isLast ? "#818cf8" : "rgba(99,102,241,.35)",
+                              border: `2px solid ${isLast ? "#6366f1" : "rgba(99,102,241,.2)"}`,
+                              zIndex:1,
+                            }} />
+                            <div style={{background:"rgba(30,41,59,.6)",borderRadius:8,padding:"8px 10px"}}>
+                              <div style={{fontSize:12,fontWeight:600,color:isLast?C.txt1:C.txt2}}>{h.stage_name}</div>
+                              <div style={{fontSize:10,color:C.txt3,marginTop:2}}>
+                                {h.start_date ? fmtDateBRT(h.start_date) : "—"}
+                                {h.end_date ? ` → ${fmtDateBRT(h.end_date)}` : h.start_date ? " → atual" : ""}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
+                )}
 
-                  {/* Próxima tarefa */}
-                  {crm.next_task && (
-                    <div style={{background:"rgba(245,158,11,.07)",border:"1px solid rgba(245,158,11,.22)",borderRadius:12,padding:"14px 16px"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
-                        <Icon name="check-circle" size={13} style={{color:"#fbbf24"}} />
-                        <span style={{fontSize:11,fontWeight:700,color:"#fbbf24",textTransform:"uppercase",letterSpacing:.8}}>
-                          Próxima Tarefa
-                        </span>
-                      </div>
-                      <div style={{display:"flex",flexDirection:"column",gap:5}}>
-                        <div style={{fontSize:13,fontWeight:600,color:"#fde68a",lineHeight:1.4}}>
-                          {crm.next_task.subject || crm.next_task.name || "—"}
-                        </div>
-                        <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginTop:2}}>
-                          {crm.next_task.type && (
-                            <span style={{
-                              fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:99,
-                              background:"rgba(245,158,11,.15)",color:taskTypeColor(crm.next_task.type),
-                            }}>
-                              {taskTypeLabel(crm.next_task.type)}
-                            </span>
-                          )}
-                          {(crm.next_task.date || crm.next_task.due_date) && (
-                            <span style={{fontSize:11,color:"#fcd34d"}}>
-                              <Icon name="calendar" size={10} style={{marginRight:3}} />
-                              {fmtDateTimeBRT(crm.next_task.date || crm.next_task.due_date)}
-                            </span>
-                          )}
-                        </div>
-                        {crm.next_task.assigned_to?.name && (
-                          <span style={{fontSize:11,color:"#94a3b8"}}>
-                            Responsável: {crm.next_task.assigned_to.name}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                {/* ── Timeline completa de tarefas / atividades ── */}
+                {(() => {
+                  const tasks = crm.all_tasks || [];
+                  // Fallback: monta lista com prev + next se all_tasks vazio
+                  const fallback = [];
+                  if (!tasks.length) {
+                    if (crm.previous_task) fallback.push({...crm.previous_task, _isFallback:true, done:true});
+                    if (crm.next_task)     fallback.push({...crm.next_task, _isFallback:true, done:false});
+                  }
+                  const list = tasks.length ? tasks : fallback;
+                  if (!list.length) return null;
 
-                  {/* Última tarefa realizada */}
-                  {crm.previous_task && (
-                    <div style={{background:"rgba(14,165,233,.07)",border:"1px solid rgba(14,165,233,.2)",borderRadius:12,padding:"14px 16px"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
-                        <Icon name="activity" size={13} style={{color:"#38bdf8"}} />
-                        <span style={{fontSize:11,fontWeight:700,color:"#38bdf8",textTransform:"uppercase",letterSpacing:.8}}>
-                          Última Atividade
-                        </span>
-                      </div>
-                      <div style={{display:"flex",flexDirection:"column",gap:5}}>
-                        <div style={{fontSize:13,fontWeight:600,color:"#bae6fd",lineHeight:1.4}}>
-                          {crm.previous_task.subject || crm.previous_task.name || "—"}
-                        </div>
-                        <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginTop:2}}>
-                          {crm.previous_task.type && (
-                            <span style={{
-                              fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:99,
-                              background:"rgba(14,165,233,.15)",color:taskTypeColor(crm.previous_task.type),
-                            }}>
-                              {taskTypeLabel(crm.previous_task.type)}
-                            </span>
-                          )}
-                          {(crm.previous_task.done_date || crm.previous_task.date) && (
-                            <span style={{fontSize:11,color:"#7dd3fc"}}>
-                              <Icon name="calendar" size={10} style={{marginRight:3}} />
-                              {fmtDateTimeBRT(crm.previous_task.done_date || crm.previous_task.date)}
-                            </span>
-                          )}
-                        </div>
-                        {crm.previous_task.done_by?.name && (
-                          <span style={{fontSize:11,color:"#94a3b8"}}>
-                            Realizada por: {crm.previous_task.done_by.name}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Histórico de etapas */}
-                  {crm.stage_histories && crm.stage_histories.length > 0 && (
+                  return (
                     <div>
                       <div style={{fontSize:10,fontWeight:700,color:C.txt3,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>
-                        Progresso no Funil
+                        Atividades ({list.length})
                       </div>
-                      <div style={{position:"relative", paddingLeft:20}}>
-                        {/* linha vertical */}
-                        <div style={{
-                          position:"absolute", left:7, top:6, bottom:6,
-                          width:2, background:"rgba(99,102,241,.25)", borderRadius:1,
-                        }} />
-                        {crm.stage_histories.map((h, i) => {
-                          const isLast = i === crm.stage_histories.length - 1;
+                      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                        {list.map((t, i) => {
+                          const done     = t.done || t.done_date;
+                          const dateStr  = t.done_date || t.date || t.due_date || "";
+                          const subject  = t.subject || t.name || "Sem título";
+                          const desc     = t.description || t.body || t.note || "";
+                          const who      = t.done_by?.name || t.assigned_to?.name || t.user?.name || "";
+                          const ttype    = t.type || "";
+                          const color    = taskTypeColor(ttype);
+                          const borderC  = done ? "rgba(148,163,184,.15)" : "rgba(245,158,11,.25)";
+                          const bgC      = done ? "rgba(30,41,59,.5)"     : "rgba(245,158,11,.05)";
+
                           return (
                             <div key={i} style={{
-                              position:"relative", paddingBottom: isLast?0:14, marginBottom: isLast?0:0,
+                              background:bgC, border:`1px solid ${borderC}`,
+                              borderRadius:10, padding:"12px 14px",
                             }}>
-                              {/* bolinha */}
-                              <div style={{
-                                position:"absolute", left:-20, top:3,
-                                width:10, height:10, borderRadius:"50%",
-                                background: isLast ? "#818cf8" : "rgba(99,102,241,.35)",
-                                border: `2px solid ${isLast ? "#6366f1" : "rgba(99,102,241,.2)"}`,
-                                zIndex:1,
-                              }} />
-                              <div style={{
-                                background:"rgba(30,41,59,.6)", borderRadius:8, padding:"8px 10px",
-                              }}>
-                                <div style={{fontSize:12,fontWeight:600,color: isLast ? C.txt1 : C.txt2}}>
-                                  {h.stage_name}
+                              {/* Cabeçalho da tarefa */}
+                              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8,marginBottom:6}}>
+                                <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",flex:1}}>
+                                  {ttype && (
+                                    <span style={{
+                                      fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:99,
+                                      background:`${color}22`,color,border:`1px solid ${color}44`,
+                                      whiteSpace:"nowrap",
+                                    }}>
+                                      <Icon name={taskTypeIcon(ttype)} size={9} style={{marginRight:3}} />
+                                      {taskTypeLabel(ttype)}
+                                    </span>
+                                  )}
+                                  {done
+                                    ? <span style={{fontSize:10,color:"#34d399",fontWeight:600}}>✓ Concluída</span>
+                                    : <span style={{fontSize:10,color:"#fbbf24",fontWeight:600}}>⏳ Pendente</span>
+                                  }
                                 </div>
-                                <div style={{fontSize:10,color:C.txt3,marginTop:2}}>
-                                  {h.start_date ? fmtDateBRT(h.start_date) : "—"}
-                                  {h.end_date ? ` → ${fmtDateBRT(h.end_date)}` : h.start_date ? " → atual" : ""}
-                                </div>
+                                {dateStr && (
+                                  <span style={{fontSize:10,color:C.txt3,whiteSpace:"nowrap",flexShrink:0}}>
+                                    {fmtDateTimeBRT(dateStr)}
+                                  </span>
+                                )}
                               </div>
+
+                              {/* Título */}
+                              <div style={{fontSize:13,fontWeight:600,color:done?C.txt2:C.txt1,lineHeight:1.4,marginBottom:desc?6:0}}>
+                                {subject}
+                              </div>
+
+                              {/* Descrição completa */}
+                              {desc && (
+                                <div style={{
+                                  fontSize:12,color:C.txt2,lineHeight:1.6,
+                                  whiteSpace:"pre-wrap",wordBreak:"break-word",
+                                  borderTop:"1px solid rgba(255,255,255,.06)",
+                                  paddingTop:8, marginTop:2,
+                                }}>
+                                  {desc}
+                                </div>
+                              )}
+
+                              {/* Rodapé: responsável */}
+                              {who && (
+                                <div style={{fontSize:11,color:C.txt3,marginTop:6,display:"flex",alignItems:"center",gap:4}}>
+                                  <Icon name="user" size={10} />{who}
+                                </div>
+                              )}
                             </div>
                           );
                         })}
                       </div>
                     </div>
-                  )}
-                </>
-              )}
+                  );
+                })()}
+
+              </>)}
             </div>
           )}
         </div>
