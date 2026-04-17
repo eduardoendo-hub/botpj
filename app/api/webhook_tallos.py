@@ -184,6 +184,10 @@ async def _process_monitor(body: dict):
     - Se for lead PJ → passa para o bot (sujeito às regras normais)
     """
     try:
+        # ── DEBUG TEMPORÁRIO: loga payload completo para inspeção ──────────────
+        logger.info(f"[WEBHOOK_RAW] {json.dumps(body, ensure_ascii=False, default=str)}")
+        # ───────────────────────────────────────────────────────────────────────
+
         if _is_form_lead(body):
             await _handle_form_lead(body, source_channel="tallos_form_pj")
             return
