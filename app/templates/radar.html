@@ -389,6 +389,11 @@ const renderActivityList = (list) => {
                       background:"rgba(148,163,184,.15)",color:"#94a3b8",border:"1px solid rgba(148,163,184,.25)"}}>
                       📝 Anotação
                     </span>
+                  ) : item.ttype === "activity" ? (
+                    <span style={{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:99,
+                      background:"rgba(99,102,241,.15)",color:"#818cf8",border:"1px solid rgba(99,102,241,.25)"}}>
+                      📋 Registro
+                    </span>
                   ) : item.ttype ? (
                     <span style={{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:99,
                       background:`${color}22`,color,border:`1px solid ${color}44`,whiteSpace:"nowrap"}}>
@@ -408,17 +413,20 @@ const renderActivityList = (list) => {
                 )}
               </div>
 
-              {/* Título */}
-              <div style={{fontSize:13,fontWeight:600,color:item.done?"#cbd5e1":"#f1f5f9",lineHeight:1.4,marginBottom:item.desc?8:0}}>
-                {item.subject}
-              </div>
+              {/* Título (para task) ou texto direto (para activity) */}
+              {item.ttype !== "activity" && (
+                <div style={{fontSize:13,fontWeight:600,color:item.done?"#cbd5e1":"#f1f5f9",lineHeight:1.4,marginBottom:item.desc?8:0}}>
+                  {item.subject}
+                </div>
+              )}
 
-              {/* Corpo / descrição completa */}
+              {/* Corpo / texto completo */}
               {item.desc && (
                 <div style={{
-                  fontSize:12,color:"#94a3b8",lineHeight:1.7,
+                  fontSize:12,color:"#cbd5e1",lineHeight:1.7,
                   whiteSpace:"pre-wrap",wordBreak:"break-word",
-                  borderTop:"1px solid rgba(255,255,255,.06)",paddingTop:8,
+                  borderTop: item.ttype !== "activity" ? "1px solid rgba(255,255,255,.06)" : "none",
+                  paddingTop: item.ttype !== "activity" ? 8 : 0,
                 }}>
                   {item.desc}
                 </div>
@@ -745,58 +753,47 @@ const Drawer = ({ lead, onClose, basePath }) => {
                   </div>
                 )}
 
-                {/* ── Timeline completa: tarefas + anotações intercaladas ── */}
+                {/* ── Timeline de atividades (/activities) + fallback next/prev_task ── */}
                 {(() => {
-                  // Monta lista unificada: tasks + annotations, ordenadas por data desc
-                  const tasks = (crm.all_tasks || []).map(t => ({
-                    _kind:   "task",
-                    done:    !!(t.done || t.done_date),
-                    dateStr: t.done_date || t.date || t.due_date || "",
-                    subject: t.subject || t.name || "Sem título",
-                    desc:    t.description || t.body || t.note || "",
-                    who:     t.done_by?.name || t.assigned_to?.name || t.user?.name || "",
-                    ttype:   t.type || "",
-                  }));
-
-                  const notes = (crm.all_annotations || []).map(a => ({
-                    _kind:   "note",
+                  // /activities retorna {_id, date, text, user_id}
+                  const activities = (crm.all_activities || []).map(a => ({
+                    _kind:   "activity",
                     done:    true,
-                    dateStr: a.created_at || a.date || "",
-                    subject: a.title || a.subject || "Anotação",
-                    desc:    a.text || a.body || a.content || a.note || "",
-                    who:     a.user?.name || a.created_by?.name || "",
-                    ttype:   "note",
+                    dateStr: a.date || "",
+                    subject: "Atividade",   // /activities não tem subject próprio
+                    desc:    a.text || "",
+                    who:     "",            // user_id só, sem nome — omite
+                    ttype:   "activity",
                   }));
 
-                  // Fallback se ambos vazios
-                  if (!tasks.length && !notes.length) {
-                    const fb = [];
-                    if (crm.previous_task) fb.push({_kind:"task",done:true,
-                      dateStr: crm.previous_task.done_date||crm.previous_task.date||"",
-                      subject: crm.previous_task.subject||crm.previous_task.name||"",
-                      desc: crm.previous_task.description||"",
-                      who: crm.previous_task.done_by?.name||"",
-                      ttype: crm.previous_task.type||"",
-                    });
-                    if (crm.next_task) fb.push({_kind:"task",done:false,
-                      dateStr: crm.next_task.date||crm.next_task.due_date||"",
-                      subject: crm.next_task.subject||crm.next_task.name||"",
-                      desc: crm.next_task.description||"",
-                      who: crm.next_task.assigned_to?.name||"",
-                      ttype: crm.next_task.type||"",
-                    });
-                    if (!fb.length) return null;
-                    return renderActivityList(fb);
-                  }
+                  // Fallback: next_task + previous_task do objeto do deal
+                  const taskItems = [];
+                  if (crm.previous_task) taskItems.push({
+                    _kind:   "task", done: true,
+                    dateStr: crm.previous_task.done_date || crm.previous_task.date || "",
+                    subject: crm.previous_task.subject || crm.previous_task.name || "Tarefa",
+                    desc:    crm.previous_task.description || "",
+                    who:     crm.previous_task.done_by?.name || "",
+                    ttype:   crm.previous_task.type || "task",
+                  });
+                  if (crm.next_task) taskItems.push({
+                    _kind:   "task", done: false,
+                    dateStr: crm.next_task.date || crm.next_task.due_date || "",
+                    subject: crm.next_task.subject || crm.next_task.name || "Tarefa",
+                    desc:    crm.next_task.description || "",
+                    who:     crm.next_task.assigned_to?.name || "",
+                    ttype:   crm.next_task.type || "task",
+                  });
 
-                  // Intercala e ordena por data desc
-                  const all = [...tasks, ...notes].sort((a,b) => {
+                  // Junta tudo e ordena por data desc
+                  const all = [...taskItems, ...activities].sort((a,b) => {
                     if (!a.dateStr && !b.dateStr) return 0;
                     if (!a.dateStr) return 1;
                     if (!b.dateStr) return -1;
                     return b.dateStr.localeCompare(a.dateStr);
                   });
 
+                  if (!all.length) return null;
                   return renderActivityList(all);
                 })()}
 
