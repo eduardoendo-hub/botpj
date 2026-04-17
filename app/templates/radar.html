@@ -705,11 +705,16 @@ const Drawer = ({ lead, onClose, basePath }) => {
               )}
               {!loadingCrm && crm && crm.etapa && (<>
 
-                {/* ── Pipeline + Etapa atual ── */}
+                {/* ── Pipeline + Negociação + Etapa atual ── */}
                 <div style={{background:"rgba(99,102,241,.08)",border:"1px solid rgba(99,102,241,.2)",borderRadius:12,padding:"14px 16px"}}>
                   {crm.pipeline && (
-                    <div style={{fontSize:10,fontWeight:700,color:"#818cf8",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>
+                    <div style={{fontSize:10,fontWeight:700,color:"#818cf8",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>
                       {crm.pipeline}
+                    </div>
+                  )}
+                  {crm.deal_name && (
+                    <div style={{fontSize:13,fontWeight:700,color:"#f1f5f9",marginBottom:8,lineHeight:1.3}}>
+                      {crm.deal_name}
                     </div>
                   )}
                   <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>

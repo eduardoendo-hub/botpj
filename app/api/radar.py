@@ -315,10 +315,12 @@ async def radar_data(
 
     # Enriquece leads com dados do CRM antes de classificar o produto
     for lead, session, crm in zip(leads_do_dia, sessions_list, crm_list):
-        lead["_crm_etapa"]     = crm.get("etapa", "—")
-        lead["_crm_consultor"] = crm.get("consultor", "")
-        lead["_crm_valor"]     = crm.get("valor", 0.0)
-        lead["_session"]       = dict(session) if session else None
+        lead["_crm_etapa"]         = crm.get("etapa", "—")
+        lead["_crm_consultor"]     = crm.get("consultor", "")
+        lead["_crm_valor"]         = crm.get("valor", 0.0)
+        lead["_crm_deal_name"]     = crm.get("deal_name", "")
+        lead["_crm_deal_products"] = crm.get("deal_products", [])
+        lead["_session"]           = dict(session) if session else None
 
     # Busca últimas mensagens de cada lead para alimentar o classificador
     async def _get_last_msgs(lead: dict) -> list:

@@ -69,8 +69,16 @@ async def get_deal_info(phone: str) -> Dict:
 
             valor = float(deal.get("amount_total") or deal.get("amount_unique") or 0)
 
-            logger.info(f"[RD CRM] {phone_clean} → {etapa} | {consultor} | R${valor:.2f}")
-            return {"etapa": etapa, "consultor": consultor, "valor": valor}
+            deal_name     = deal.get("name") or ""
+            deal_products = deal.get("deal_products") or []
+            logger.info(f"[RD CRM] {phone_clean} → {etapa} | {consultor} | R${valor:.2f} | {deal_name}")
+            return {
+                "etapa":         etapa,
+                "consultor":     consultor,
+                "valor":         valor,
+                "deal_name":     deal_name,
+                "deal_products": deal_products,
+            }
 
     except httpx.TimeoutException:
         logger.warning(f"[RD CRM] Timeout para phone={phone}")
@@ -156,6 +164,10 @@ async def get_deal_full_info(phone: str) -> Dict:
             deal_id        = deal.get("_id") or deal.get("id") or ""
             all_activities = await _fetch_deal_activities(client, deal_id)
 
+            # Nome e produtos da negociação
+            deal_name     = deal.get("name") or ""
+            deal_products = deal.get("deal_products") or []
+
             return {
                 "pipeline":        pipeline,
                 "etapa":           etapa,
@@ -165,6 +177,8 @@ async def get_deal_full_info(phone: str) -> Dict:
                 "previous_task":   prev_task,
                 "stage_histories": stage_histories,
                 "all_activities":  all_activities,
+                "deal_name":       deal_name,
+                "deal_products":   deal_products,
             }
 
     except httpx.TimeoutException:

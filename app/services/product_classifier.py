@@ -78,9 +78,34 @@ async def classify_product(lead: dict, last_messages: list[dict] | None = None) 
     if cached:
         return cached
 
-    if not settings.anthropic_api_key:
-        return "—"
+    # ── Fonte primária: nome e produtos do deal no CRM (mais confiável) ────────
+    deal_name = lead.get("_crm_deal_name") or lead.get("deal_name") or ""
+    deal_products = lead.get("_crm_deal_products") or lead.get("deal_products") or []
 
+    # Tenta extrair produto dos deal_products (lista de produtos vinculados)
+    if deal_products and isinstance(deal_products, list):
+        product_names = []
+        for dp in deal_products:
+            if isinstance(dp, dict):
+                name = dp.get("name") or dp.get("product_name") or dp.get("title") or ""
+                if name:
+                    product_names.append(name)
+        if product_names:
+            produto = " + ".join(product_names[:2])
+            _cache_set(phone, produto)
+            logger.info(f"[ProductClassifier] {phone} → {produto} (deal_products)")
+            return produto
+
+    # Se tem nome da negociação no CRM, usa como base (ainda pode complementar com IA)
+    if deal_name and len(deal_name) > 4:
+        _cache_set(phone, deal_name)
+        logger.info(f"[ProductClassifier] {phone} → {deal_name} (deal_name)")
+        return deal_name
+
+    if not settings.anthropic_api_key:
+        return "A definir"
+
+    # ── Fallback: Claude Haiku analisa os demais dados ─────────────────────────
     # Monta contexto compacto para o modelo
     context_parts = []
 
