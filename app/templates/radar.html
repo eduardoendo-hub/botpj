@@ -605,7 +605,7 @@ const Drawer = ({ lead, onClose, basePath }) => {
                     ["Cargo",       lead.cargo],
                     ["Canal",       lead.canal],
                     ["Origem",      lead.origem],
-                    ["Serviço",     lead.tipo],
+                    ["Produto",      lead.produto],
                     ["Tema",        lead.tema],
                     ["Formato",     lead.formato],
                     ["Qtd. Partic.",lead.qtd||"—"],
@@ -1091,9 +1091,7 @@ function Radar() {
                   <Th col="hora">Hora</Th>
                   <Th>Nome / Empresa</Th>
                   <Th>Telefone</Th>
-                  <Th>Tema</Th>
-                  <Th>Tipo</Th>
-                  <Th>Formato</Th>
+                  <Th>Produto</Th>
                   <Th col="funil">Funil</Th>
                   <Th col="crm_valor">$</Th>
                   <Th>Status</Th>
@@ -1116,8 +1114,6 @@ function Radar() {
                   const temp  = getTempConfig(lead.temp);
                   const sla   = slaStyle(lead.sla_min);
                   const sSt   = getStatusStyle(lead.status);
-                  const tSt   = getTipoStyle(lead.tipo);
-                  const fSt   = getFormatoStyle(lead.formato);
                   const isSel = selected?.id === lead.id;
                   return (
                     <tr key={lead.id}
@@ -1141,15 +1137,11 @@ function Radar() {
                       <td style={tdStyle}>
                         <span style={{fontFamily:"monospace",fontSize:11,color:C.txt3}}>{lead.telefone}</span>
                       </td>
-                      <td style={{...tdStyle, maxWidth:130}}>
-                        <span className="truncate" title={lead.tema}
-                          style={{fontSize:12,color:C.txt2,fontWeight:500,display:"block"}}>{lead.tema}</span>
-                      </td>
-                      <td style={tdStyle}>
-                        <Pill bg={tSt.bg} color={tSt.color}>{lead.tipo}</Pill>
-                      </td>
-                      <td style={tdStyle}>
-                        <Pill bg={fSt.bg} color={fSt.color}>{lead.formato}</Pill>
+                      <td style={{...tdStyle, maxWidth:180}}>
+                        <span className="truncate" title={lead.produto}
+                          style={{fontSize:12,color:C.txt1,fontWeight:600,display:"block"}}>
+                          {lead.produto || "A definir"}
+                        </span>
                       </td>
                       <td style={tdStyle}>
                         <FunilPill etapa={lead.funil} consultor={lead.crm_consultor} />

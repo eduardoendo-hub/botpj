@@ -21,6 +21,7 @@ from app.core.database import (
 )
 from app.services.tallos_history import get_conversation_history, extract_customer_id_from_notes
 from app.services.rd_crm import get_deal_info, get_deal_full_info
+from app.services.product_classifier import classify_product
 
 logger = logging.getLogger(__name__)
 
@@ -170,6 +171,7 @@ def _normalize_lead(lead: dict, session: dict | None) -> dict:
         "tipo":             tipo,
         "formato":          lead.get("formato") or "Não informado",
         "temp":             lead.get("lead_temperature") or "frio",
+        "produto":          lead.get("_produto") or "A definir",
         "funil":            lead.get("_crm_etapa") or "—",
         "crm_consultor":    lead.get("_crm_consultor") or "",
         "crm_valor":        lead.get("_crm_valor") or 0.0,
@@ -311,12 +313,33 @@ async def radar_data(
         asyncio.gather(*[get_deal_info(p) for p in phones]),
     )
 
-    result: List[Dict[str, Any]] = []
+    # Enriquece leads com dados do CRM antes de classificar o produto
     for lead, session, crm in zip(leads_do_dia, sessions_list, crm_list):
         lead["_crm_etapa"]     = crm.get("etapa", "—")
         lead["_crm_consultor"] = crm.get("consultor", "")
         lead["_crm_valor"]     = crm.get("valor", 0.0)
-        result.append(_normalize_lead(lead, dict(session) if session else None))
+        lead["_session"]       = dict(session) if session else None
+
+    # Busca últimas mensagens de cada lead para alimentar o classificador
+    async def _get_last_msgs(lead: dict) -> list:
+        try:
+            msgs = await get_full_conversation(lead.get("phone_number", ""))
+            return [dict(m) for m in msgs[-8:]] if msgs else []
+        except Exception:
+            return []
+
+    msgs_list = await asyncio.gather(*[_get_last_msgs(l) for l in leads_do_dia])
+
+    # Classifica produto em paralelo (Claude Haiku, com cache de 2h)
+    produtos = await asyncio.gather(*[
+        classify_product(lead, msgs)
+        for lead, msgs in zip(leads_do_dia, msgs_list)
+    ])
+
+    result: List[Dict[str, Any]] = []
+    for lead, produto in zip(leads_do_dia, produtos):
+        lead["_produto"] = produto
+        result.append(_normalize_lead(lead, lead.pop("_session", None)))
 
     # Ordenar por hora desc (mais recentes primeiro)
     result.sort(key=lambda x: x.get("hora", ""), reverse=True)
