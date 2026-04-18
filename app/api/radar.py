@@ -270,6 +270,39 @@ def _lead_date_brt(lead: dict) -> str:
         return ""
 
 
+def _lead_updated_date_brt(lead: dict) -> str:
+    """Retorna a data de última atualização do lead em BRT (YYYY-MM-DD), ou string vazia."""
+    updated_at = lead.get("updated_at")
+    if not updated_at:
+        return ""
+    try:
+        dt = datetime.fromisoformat(str(updated_at).replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(_BRT).date().isoformat()
+    except Exception:
+        return ""
+
+
+def _lead_matches_date(lead: dict, target_date_iso: str) -> bool:
+    """Retorna True se o lead deve aparecer no dia solicitado.
+    Critérios:
+      1. Criado no dia (regra principal), OU
+      2. Atualizado no dia com novo formulário (raw_form_data preenchido)
+         — captura leads antigos que submeteram novo form hoje.
+    """
+    if _lead_date_brt(lead) == target_date_iso:
+        return True
+    # Lead antigo que submeteu novo formulário hoje
+    if (
+        _lead_updated_date_brt(lead) == target_date_iso
+        and lead.get("raw_form_data")
+        and _lead_date_brt(lead) != target_date_iso  # não duplicar
+    ):
+        return True
+    return False
+
+
 @router.get("/data")
 async def radar_data(
     request: Request,
@@ -291,18 +324,24 @@ async def radar_data(
     leads_raw = await get_all_leads()
 
     # Datas disponíveis (últimos 30 dias com dados)
+    # Inclui tanto a data de criação quanto a de atualização com formulário
     available_dates: set = set()
     for lead in leads_raw:
-        d = _lead_date_brt(dict(lead))
-        if d:
-            available_dates.add(d)
+        ld = dict(lead)
+        d_criacao = _lead_date_brt(ld)
+        if d_criacao:
+            available_dates.add(d_criacao)
+        d_update = _lead_updated_date_brt(ld)
+        if d_update and ld.get("raw_form_data") and d_update != d_criacao:
+            available_dates.add(d_update)
 
     import asyncio
 
-    # Filtra leads do dia solicitado
+    # Filtra leads do dia solicitado (criados no dia OU atualizados com novo form)
+    target_iso = target_date.isoformat()
     leads_do_dia = [
         dict(lead) for lead in leads_raw
-        if _lead_date_brt(dict(lead)) == target_date.isoformat()
+        if _lead_matches_date(dict(lead), target_iso)
     ]
 
     # Busca sessões e etapas do funil em paralelo
