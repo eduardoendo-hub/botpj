@@ -107,9 +107,16 @@ _LOG_ONLY_EVENTS = {
 # ─────────────────────────────────────────────────────────────────────────
 
 def _is_form_lead(body: dict) -> bool:
-    """Detecta payload de formulário: tem 'Nome'+'Telefone'/'Celular' mas não 'content'."""
+    """Detecta payload de formulário: tem 'Telefone'/'Celular' e chave 'Identificador' mas não 'content'.
+    Nome pode vir vazio — não bloqueia o registro.
+    """
     phone = body.get("Telefone") or body.get("Celular")
-    if not phone or not body.get("Nome"):
+    if not phone:
+        return False
+    # Presença de 'Identificador' é marcador forte de formulário PJ
+    # (mesmo que Nome venha vazio)
+    has_form_keys = "Identificador" in body or "E-mail" in body or "Nome" in body
+    if not has_form_keys:
         return False
     if "event" in body or "message_data" in body or "content" in body:
         return False
