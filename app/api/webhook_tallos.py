@@ -106,15 +106,33 @@ _LOG_ONLY_EVENTS = {
 # HELPERS
 # ─────────────────────────────────────────────────────────────────────────
 
+def _extract_form_phone(body: dict) -> str:
+    """Extrai telefone de qualquer campo de phone do formulário.
+    Tenta em ordem: Telefone → Celular → Telefone 2 → Telefone2 → WhatsApp → Celular 2.
+    Retorna string normalizada ou vazia.
+    """
+    raw = (
+        body.get("Telefone")
+        or body.get("Celular")
+        or body.get("Telefone 2")
+        or body.get("Telefone2")
+        or body.get("Telefone2 ")
+        or body.get("WhatsApp")
+        or body.get("Whatsapp")
+        or body.get("Celular 2")
+        or body.get("Celular2")
+        or ""
+    )
+    return _normalize_form_phone(raw or "")
+
+
 def _is_form_lead(body: dict) -> bool:
-    """Detecta payload de formulário: tem 'Telefone'/'Celular' e chave 'Identificador' mas não 'content'.
+    """Detecta payload de formulário: tem telefone em qualquer campo e chave de formulário mas não 'content'.
     Nome pode vir vazio — não bloqueia o registro.
     """
-    phone = body.get("Telefone") or body.get("Celular")
-    if not phone:
+    if not _extract_form_phone(body):
         return False
-    # Presença de 'Identificador' é marcador forte de formulário PJ
-    # (mesmo que Nome venha vazio)
+    # Presença de 'Identificador', 'E-mail' ou 'Nome' é marcador de formulário PJ
     has_form_keys = "Identificador" in body or "E-mail" in body or "Nome" in body
     if not has_form_keys:
         return False
@@ -395,7 +413,7 @@ async def _handle_form_lead(body: dict, source_channel: str = "tallos_form_pj") 
     qtd_colab      = (body.get("Quantidade de Colaboradores", "") or "").strip()
     servico        = (body.get("Serviço", "") or body.get("Servico", "") or "").strip()
     canal          = (body.get("Canal", "") or "").strip()
-    phone          = _normalize_form_phone(body.get("Telefone", "") or body.get("Celular", "") or "")
+    phone          = _extract_form_phone(body)
 
     # Salva todo o payload original como JSON para exibição no detalhe do lead
     try:
