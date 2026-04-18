@@ -20,8 +20,11 @@ from app.core.database import (
     get_all_leads, get_bot_session, get_db, get_full_conversation, get_lead_by_phone,
 )
 from app.services.tallos_history import get_conversation_history, extract_customer_id_from_notes
-from app.services.rd_crm import get_deal_info, get_deal_full_info
+from app.services.rd_crm import get_deal_info, get_deal_full_info, sync_pipeline_deals_to_leads
 from app.services.product_classifier import classify_product
+
+# Funil B2B - Corporativo no RD CRM
+_CRM_PIPELINE_ID = "6894b0eb767596001722fd1f"
 
 logger = logging.getLogger(__name__)
 
@@ -311,6 +314,8 @@ async def radar_data(
     """API JSON que alimenta o Radar com dados reais do banco."""
     await _require_auth(request)
 
+    import asyncio
+
     # Data-alvo (BRT)
     today_brt = datetime.now(_BRT).date()
     if date:
@@ -321,7 +326,23 @@ async def radar_data(
     else:
         target_date = today_brt
 
+    # Sincroniza oportunidades do funil B2B - Corporativo em background
+    # (não bloqueia a resposta — roda em paralelo com a busca de leads)
+    target_iso = target_date.isoformat()
+    sync_task = asyncio.create_task(
+        sync_pipeline_deals_to_leads(target_iso, _CRM_PIPELINE_ID)
+    )
+
     leads_raw = await get_all_leads()
+
+    # Aguarda o sync terminar (já temos os leads antigos; leads novos entram no próximo refresh)
+    try:
+        imported = await asyncio.wait_for(sync_task, timeout=12)
+        if imported:
+            # Relê os leads para incluir os recém-importados do CRM
+            leads_raw = await get_all_leads()
+    except asyncio.TimeoutError:
+        logger.warning("[Radar] Sync CRM demorou mais de 12s — continuando sem esperar")
 
     # Datas disponíveis (últimos 30 dias com dados)
     # Inclui tanto a data de criação quanto a de atualização com formulário
@@ -335,10 +356,7 @@ async def radar_data(
         if d_update and ld.get("raw_form_data") and d_update != d_criacao:
             available_dates.add(d_update)
 
-    import asyncio
-
     # Filtra leads do dia solicitado (criados no dia OU atualizados com novo form)
-    target_iso = target_date.isoformat()
     leads_do_dia = [
         dict(lead) for lead in leads_raw
         if _lead_matches_date(dict(lead), target_iso)

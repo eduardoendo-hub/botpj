@@ -300,3 +300,285 @@ def _phone_variants(phone: str) -> List[str]:
     elif len(phone) <= 11:
         variants.append("55" + phone)  # com DDI
     return variants
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SYNC: RD CRM → tabela de leads
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _normalize_phone(raw: str) -> str:
+    """Normaliza telefone para formato 55XXXXXXXXXXX."""
+    digits = re.sub(r"\D", "", raw or "")
+    if not digits:
+        return ""
+    if len(digits) in (10, 11) and not digits.startswith("55"):
+        return "55" + digits
+    if len(digits) == 13 and digits.startswith("55"):
+        return digits
+    if len(digits) == 12 and digits.startswith("55"):
+        return digits
+    return digits
+
+
+async def get_deals_by_date(date_iso: str, pipeline_id: str) -> List[Dict]:
+    """
+    Retorna todos os deals de um pipeline criados em date_iso (YYYY-MM-DD).
+    Usa a API v1 com created_at_period + start_date/end_date.
+    """
+    if not settings.rd_crm_token:
+        return []
+
+    start = f"{date_iso}T00:00:00"
+    end   = f"{date_iso}T23:59:59"
+
+    query = {
+        "token":              settings.rd_crm_token,
+        "created_at_period":  "true",
+        "start_date":         start,
+        "end_date":           end,
+        "deal_pipeline_id":   pipeline_id,
+        "limit":              200,
+        "page":               1,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.get(f"{_BASE}/deals", params=query)
+            if resp.status_code != 200:
+                logger.warning(f"[RD CRM sync] GET /deals retornou {resp.status_code}")
+                return []
+            data = resp.json()
+            deals = data if isinstance(data, list) else data.get("deals", [])
+            logger.info(f"[RD CRM sync] {len(deals)} deal(s) encontrados para {date_iso}")
+            return deals
+    except Exception as e:
+        logger.error(f"[RD CRM sync] Erro ao buscar deals: {e}")
+        return []
+
+
+async def _get_contact_phone_from_deal(client: httpx.AsyncClient, deal: Dict) -> tuple[str, str]:
+    """
+    Extrai (phone, contact_id) do deal.
+    Tenta o campo 'contacts' embutido; se não tiver, busca via GET /contacts?deal_id=.
+    Retorna ("", "") se não encontrar.
+    """
+    deal_id = deal.get("_id") or deal.get("id") or ""
+
+    # 1. Tenta campo contacts embutido no deal
+    contacts_raw = deal.get("contacts") or []
+    if isinstance(contacts_raw, list) and contacts_raw:
+        for c in contacts_raw:
+            if isinstance(c, dict):
+                cid = c.get("_id") or c.get("id") or ""
+                phones = c.get("phones") or []
+                for ph in phones:
+                    raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
+                    normalized = _normalize_phone(raw)
+                    if normalized:
+                        return normalized, cid
+            elif isinstance(c, str):
+                # c é apenas o ID — busca o contato
+                try:
+                    r = await client.get(f"{_BASE}/contacts/{c}", params={"token": settings.rd_crm_token})
+                    if r.status_code == 200:
+                        contact = r.json()
+                        cid = contact.get("_id") or c
+                        for ph in (contact.get("phones") or []):
+                            raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
+                            normalized = _normalize_phone(raw)
+                            if normalized:
+                                return normalized, cid
+                except Exception:
+                    pass
+
+    # 2. Fallback: GET /contacts?deal_id=
+    if deal_id:
+        try:
+            r = await client.get(
+                f"{_BASE}/contacts",
+                params={"token": settings.rd_crm_token, "deal_id": deal_id}
+            )
+            if r.status_code == 200:
+                data = r.json()
+                contacts = data.get("contacts", data) if isinstance(data, dict) else data
+                if isinstance(contacts, list) and contacts:
+                    c = contacts[0]
+                    cid = c.get("_id") or c.get("id") or ""
+                    for ph in (c.get("phones") or []):
+                        raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
+                        normalized = _normalize_phone(raw)
+                        if normalized:
+                            return normalized, cid
+        except Exception:
+            pass
+
+    return "", ""
+
+
+async def _backfill_webhook_messages(phone: str, days: int = 3) -> None:
+    """
+    Varre webhook_logs dos últimos `days` dias buscando mensagens deste telefone
+    e as grava na tabela conversations (apenas as que ainda não existem).
+    """
+    import json as _json
+    from app.core.database import get_db, save_message_external
+
+    try:
+        db = await get_db()
+        try:
+            cursor = await db.execute(
+                """SELECT raw_payload, created_at FROM webhook_logs
+                   WHERE phone_number = ?
+                     AND created_at >= datetime('now', ? || ' days')
+                   ORDER BY created_at""",
+                (phone, f"-{days}")
+            )
+            rows = await cursor.fetchall()
+        finally:
+            await db.close()
+
+        count = 0
+        for row in rows:
+            try:
+                payload = _json.loads(row["raw_payload"] or "{}")
+                content = payload.get("content", {})
+                if not isinstance(content, dict):
+                    continue
+                message = content.get("message", "").strip()
+                action  = content.get("action", "")
+                msg_id  = content.get("id", "")
+                if not message or action == "automation":
+                    continue
+
+                # Role: agent_message = atendente, on_attendance = lead (user)
+                payload_event = (payload.get("event") or payload.get("action") or action or "")
+                role = "agent" if "agent" in payload_event.lower() else "user"
+
+                saved = await save_message_external(
+                    phone_number=phone,
+                    role=role,
+                    message=message,
+                    external_id=msg_id,
+                    created_at=str(row["created_at"]),
+                )
+                if saved:
+                    count += 1
+            except Exception:
+                continue
+
+        if count:
+            logger.info(f"[RD CRM sync] Backfill: {count} mensagem(ns) importadas para {phone}")
+    except Exception as e:
+        logger.error(f"[RD CRM sync] Erro no backfill de mensagens para {phone}: {e}")
+
+
+async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
+    """
+    Sincroniza oportunidades do funil pipeline_id criadas em date_iso
+    com a tabela de leads interna.
+
+    Para cada deal do CRM:
+      - Extrai o telefone do contato associado
+      - Se o lead já existe na tabela → ignora (ou atualiza deal_id se faltando)
+      - Se não existe → cria o lead com source_channel='tallos_crm_sync'
+      - Faz backfill das mensagens dos últimos 3 dias do webhook_logs
+
+    Retorna o número de leads novos importados.
+    """
+    from app.core.database import get_lead_by_phone, upsert_lead, upsert_bot_session
+
+    if not settings.rd_crm_token:
+        return 0
+
+    deals = await get_deals_by_date(date_iso, pipeline_id)
+    if not deals:
+        return 0
+
+    imported = 0
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            for deal in deals:
+                deal_id   = deal.get("_id") or deal.get("id") or ""
+                deal_name = deal.get("name") or ""
+
+                # Extrai nome e etapa do deal
+                stage_obj = deal.get("deal_stage", {}) or {}
+                etapa     = stage_obj.get("name", "") if isinstance(stage_obj, dict) else ""
+                user_obj  = deal.get("user", {}) or {}
+                consultor = user_obj.get("name", "") if isinstance(user_obj, dict) else ""
+
+                phone, contact_id = await _get_contact_phone_from_deal(client, deal)
+                if not phone:
+                    logger.debug(f"[RD CRM sync] Deal {deal_id} ({deal_name}) sem telefone — ignorado")
+                    continue
+
+                existing = await get_lead_by_phone(phone)
+
+                if existing:
+                    # Lead já existe — apenas garante que o deal_id está salvo
+                    if not existing.get("rd_crm_deal_id") and deal_id:
+                        await upsert_lead(phone, rd_crm_deal_id=deal_id)
+                        logger.debug(f"[RD CRM sync] deal_id atualizado para {phone}")
+                    continue
+
+                # Lead novo — importa do CRM
+                logger.info(
+                    f"[RD CRM sync] ✅ Importando lead CRM | phone={phone} | "
+                    f"deal={deal_name!r} | etapa={etapa} | consultor={consultor}"
+                )
+
+                # Nome: tenta extrair do deal_name (ex: "Fernanda Fonseca - Power Automate")
+                nome = deal_name.split(" - ")[0].strip() if " - " in deal_name else deal_name
+
+                notes = f"tallos_contact_id:{contact_id}" if contact_id else ""
+
+                # Preserva a data original do deal no CRM (para o Radar filtrar corretamente)
+                crm_created_at = deal.get("created_at") or ""
+                # Converte "2026-04-17T10:51:24.460-03:00" → "2026-04-17 13:51:24" (UTC para SQLite)
+                crm_created_utc = ""
+                if crm_created_at:
+                    try:
+                        from datetime import datetime, timezone
+                        dt = datetime.fromisoformat(crm_created_at.replace("Z", "+00:00"))
+                        crm_created_utc = dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+                    except Exception:
+                        crm_created_utc = ""
+
+                await upsert_lead(
+                    phone,
+                    contact_name=nome,
+                    training_interest=deal_name,
+                    source_channel="tallos_crm_sync",
+                    rd_crm_deal_id=deal_id,
+                    notes=notes,
+                    stage="novo",
+                )
+
+                # Ajusta o created_at para a data original do deal (para filtro de data no Radar)
+                if crm_created_utc:
+                    from app.core.database import get_db as _get_db
+                    _db = await _get_db()
+                    try:
+                        await _db.execute(
+                            "UPDATE leads SET created_at=? WHERE phone_number=?",
+                            (crm_created_utc, phone)
+                        )
+                        await _db.commit()
+                    finally:
+                        await _db.close()
+
+                await upsert_bot_session(phone, agent_active=0)
+
+                # Backfill das conversas dos últimos 3 dias
+                await _backfill_webhook_messages(phone, days=3)
+
+                imported += 1
+
+    except Exception as e:
+        logger.error(f"[RD CRM sync] Erro geral na sincronização: {e}", exc_info=True)
+
+    if imported:
+        logger.info(f"[RD CRM sync] {imported} lead(s) novo(s) importado(s) do CRM para {date_iso}")
+
+    return imported
