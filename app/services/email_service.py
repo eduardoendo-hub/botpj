@@ -1,8 +1,8 @@
 """
 Serviço de notificação por email — Gmail SMTP — Bot SDR PJ.
 
-Enviado automaticamente quando o bot qualifica um lead PJ
-(Nome, WhatsApp, Email, Empresa, Cargo, Treinamento de interesse).
+Enviado automaticamente quando um novo lead PJ é registrado
+(Nome, WhatsApp/Telefone, Cargo, Data/Hora, Produto, Origem).
 """
 
 import logging
@@ -21,7 +21,8 @@ def _build_html(lead: Dict) -> str:
     email      = lead.get("email") or "—"
     empresa    = lead.get("company") or lead.get("empresa") or "—"
     cargo      = lead.get("job_title") or lead.get("cargo") or "—"
-    treinamento = lead.get("training_interest") or lead.get("treinamento") or "—"
+    produto    = lead.get("produto") or lead.get("training_interest") or lead.get("treinamento") or "—"
+    origem     = lead.get("origem") or lead.get("source_channel") or "—"
     ocorrencia = lead.get("ocorrencia") or datetime.now().strftime("%d/%m/%Y %H:%M")
 
     return f"""
@@ -53,19 +54,20 @@ def _build_html(lead: Dict) -> str:
 <body>
   <div class="container">
     <div class="header">
-      <h1>🏢 Novo Lead PJ Qualificado</h1>
-      <p>O Bot SDR PJ coletou os dados de contato de um novo lead corporativo.</p>
+      <h1>🏢 Novo Lead PJ</h1>
+      <p>Um novo lead corporativo foi registrado no Bot SDR PJ.</p>
     </div>
     <div class="body">
-      <span class="badge">✅ Dados coletados pelo Bot SDR PJ</span>
+      <span class="badge">✅ Novo lead recebido</span>
       <table>
         <tr><td>👤 Nome</td><td>{nome}</td></tr>
-        <tr><td>📱 WhatsApp</td><td>{whatsapp}</td></tr>
+        <tr><td>📱 WhatsApp / Telefone</td><td>{whatsapp}</td></tr>
         <tr><td>✉️ Email</td><td>{email}</td></tr>
         <tr><td>🏢 Empresa</td><td>{empresa}</td></tr>
         <tr><td>💼 Cargo</td><td>{cargo}</td></tr>
-        <tr><td>🎯 Treinamento</td><td>{treinamento}</td></tr>
         <tr><td>🕐 Data / Hora</td><td>{ocorrencia}</td></tr>
+        <tr><td>🎯 Produto</td><td>{produto}</td></tr>
+        <tr><td>📌 Origem</td><td>{origem}</td></tr>
       </table>
     </div>
     <div class="footer">
@@ -78,23 +80,25 @@ def _build_html(lead: Dict) -> str:
 
 
 def _build_plain(lead: Dict) -> str:
-    nome        = lead.get("contact_name") or lead.get("nome") or "—"
-    whatsapp    = lead.get("phone_number") or lead.get("whatsapp") or "—"
-    email       = lead.get("email") or "—"
-    empresa     = lead.get("company") or lead.get("empresa") or "—"
-    cargo       = lead.get("job_title") or lead.get("cargo") or "—"
-    treinamento = lead.get("training_interest") or lead.get("treinamento") or "—"
-    ocorrencia  = lead.get("ocorrencia") or datetime.now().strftime("%d/%m/%Y %H:%M")
+    nome       = lead.get("contact_name") or lead.get("nome") or "—"
+    whatsapp   = lead.get("phone_number") or lead.get("whatsapp") or "—"
+    email      = lead.get("email") or "—"
+    empresa    = lead.get("company") or lead.get("empresa") or "—"
+    cargo      = lead.get("job_title") or lead.get("cargo") or "—"
+    produto    = lead.get("produto") or lead.get("training_interest") or lead.get("treinamento") or "—"
+    origem     = lead.get("origem") or lead.get("source_channel") or "—"
+    ocorrencia = lead.get("ocorrencia") or datetime.now().strftime("%d/%m/%Y %H:%M")
 
     return (
-        f"Novo Lead PJ Qualificado — Bot SDR PJ\n\n"
-        f"Nome:           {nome}\n"
-        f"WhatsApp:       {whatsapp}\n"
-        f"Email:          {email}\n"
-        f"Empresa:        {empresa}\n"
-        f"Cargo:          {cargo}\n"
-        f"Treinamento:    {treinamento}\n"
-        f"Data/Hora:      {ocorrencia}\n\n"
+        f"Novo Lead PJ — Bot SDR PJ\n\n"
+        f"Nome:              {nome}\n"
+        f"WhatsApp/Telefone: {whatsapp}\n"
+        f"Email:             {email}\n"
+        f"Empresa:           {empresa}\n"
+        f"Cargo:             {cargo}\n"
+        f"Data / Hora:       {ocorrencia}\n"
+        f"Produto:           {produto}\n"
+        f"Origem:            {origem}\n\n"
         "Enviado automaticamente pelo Bot SDR PJ"
     )
 
@@ -129,14 +133,14 @@ async def send_lead_notification(lead: Dict, config: Dict) -> bool:
         )
         return False
 
-    nome        = lead.get("contact_name") or lead.get("nome") or "Lead PJ"
-    empresa     = lead.get("company") or lead.get("empresa") or ""
-    treinamento = lead.get("training_interest") or lead.get("treinamento") or "Treinamento"
+    nome    = lead.get("contact_name") or lead.get("nome") or "Lead PJ"
+    produto = lead.get("produto") or lead.get("training_interest") or lead.get("treinamento") or "Novo lead"
+    origem  = lead.get("origem") or lead.get("source_channel") or ""
 
     subject_parts = [nome]
-    if empresa:
-        subject_parts.append(empresa)
-    subject = f"🏢 Novo lead PJ: {' — '.join(subject_parts)} | {treinamento}"
+    if origem:
+        subject_parts.append(origem)
+    subject = f"🏢 Novo lead PJ: {' — '.join(subject_parts)} | {produto}"
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject

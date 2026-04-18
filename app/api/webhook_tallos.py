@@ -45,8 +45,9 @@ from app.services.tallos import (
     extract_contact_id_from_payload,
     is_agent_message,
 )
+from app.services.email_service import send_lead_notification
 from app.core.config import settings
-from app.core.database import log_webhook_event, upsert_lead, upsert_bot_session, is_pj_lead, get_lead_by_phone
+from app.core.database import log_webhook_event, upsert_lead, upsert_bot_session, is_pj_lead, get_lead_by_phone, get_bot_config
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -363,6 +364,20 @@ async def _register_pj_lead(body: dict):
             f"contact_id={contact_id or '(pendente)'}"
         )
 
+        # ── Notificação por email ─────────────────────────────────────────
+        try:
+            cfg = await get_bot_config()
+            lead_payload = {
+                "contact_name": contact_name or "—",
+                "phone_number": phone_number,
+                "job_title":    "",
+                "produto":      message_text[:120] if message_text else "—",
+                "origem":       "Chat / Tallos",
+            }
+            await send_lead_notification(lead_payload, cfg)
+        except Exception as e:
+            logger.error(f"[Tallos PJ] Erro ao enviar notificação de email: {e}")
+
         if message_text and not (event in _LOG_ONLY_EVENTS or is_agent_message(data)):
             if not (message_id and _is_duplicate(message_id)):
                 await _send_to_bot(phone_number, message_text, contact_name, message_id, contact_id)
@@ -477,6 +492,22 @@ async def _handle_form_lead(body: dict, source_channel: str = "tallos_form_pj") 
         )
     except Exception as e:
         logger.error(f"[Tallos PJ Form] Erro ao criar sessão: {e}")
+
+    # ── Notificação por email ─────────────────────────────────────────────
+    try:
+        cfg = await get_bot_config()
+        lead_payload = {
+            "contact_name": name or "—",
+            "phone_number": phone,
+            "email":        email,
+            "company":      company,
+            "job_title":    job_title,
+            "produto":      training or servico or "—",
+            "origem":       identificador or canal or source_channel,
+        }
+        await send_lead_notification(lead_payload, cfg)
+    except Exception as e:
+        logger.error(f"[Tallos PJ Form] Erro ao enviar notificação de email: {e}")
 
 
 # ─────────────────────────────────────────────────────────────────────────
