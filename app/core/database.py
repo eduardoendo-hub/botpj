@@ -715,11 +715,11 @@ async def is_pj_lead(phone_number: str) -> bool:
 
 
 async def get_all_leads() -> List[Dict]:
-    """Retorna apenas leads PJ reais (source_channel tallos_pj ou tallos_form_pj)."""
+    """Retorna leads PJ reais (tallos_pj, tallos_form_pj) e leads importados do RD CRM (tallos_crm_sync)."""
     db = await get_db()
     try:
         cursor = await db.execute(
-            "SELECT * FROM leads WHERE source_channel IN ('tallos_pj', 'tallos_form_pj') ORDER BY updated_at DESC"
+            "SELECT * FROM leads WHERE source_channel IN ('tallos_pj', 'tallos_form_pj', 'tallos_crm_sync') ORDER BY updated_at DESC"
         )
         rows = await cursor.fetchall()
         return [dict(row) for row in rows]
