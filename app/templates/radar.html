@@ -826,8 +826,9 @@ function Radar() {
 
   const basePath = window.location.pathname.replace(/\/+$/, "");
 
-  const fetchData = useCallback(async (date) => {
-    setLoading(true);
+  // silent=true → refresh em background sem mostrar loading (evita piscar)
+  const fetchData = useCallback(async (date, silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res  = await fetch(`${basePath}/data?date=${date}`);
       const json = await res.json();
@@ -835,13 +836,14 @@ function Radar() {
       if (json.available_dates?.length) setAvailableDates(json.available_dates);
       setLastUpd(new Date().toLocaleTimeString("pt-BR", {hour:"2-digit",minute:"2-digit"}));
     } catch(e) { console.error(e); }
-    finally    { setLoading(false); }
+    finally    { if (!silent) setLoading(false); }
   }, [basePath]);
 
   useEffect(() => {
     fetchData(dateFilter);
     if (dateFilter !== todayBRT()) return;
-    const id = setInterval(() => fetchData(dateFilter), 30000);
+    // Auto-refresh a cada 2 minutos em background (sem piscar)
+    const id = setInterval(() => fetchData(dateFilter, true), 120000);
     return () => clearInterval(id);
   }, [dateFilter, fetchData]);
 
