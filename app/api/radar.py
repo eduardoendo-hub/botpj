@@ -23,8 +23,12 @@ from app.services.tallos_history import get_conversation_history, extract_custom
 from app.services.rd_crm import get_deal_info, get_deal_full_info, sync_pipeline_deals_to_leads
 from app.services.product_classifier import classify_product
 
-# Funil B2B - Corporativo no RD CRM
-_CRM_PIPELINE_ID = "6894b0eb767596001722fd1f"
+# Funis PJ rastreados no RD CRM
+_CRM_PIPELINES = {
+    "6894b0eb767596001722fd1f": "B2B - Corporativo",
+    "6824d026974083001417dc6a": "SDR - B2B Corporativo",
+    "64873529c1b1860028cf34f1": "B2B - Farmer",
+}
 
 logger = logging.getLogger(__name__)
 
@@ -176,6 +180,7 @@ def _normalize_lead(lead: dict, session: dict | None) -> dict:
         "temp":             lead.get("lead_temperature") or "frio",
         "produto":          lead.get("_produto") or "A definir",
         "funil":            lead.get("_crm_etapa") or "—",
+        "funil_venda":      lead.get("_crm_pipeline") or "",
         "crm_consultor":    lead.get("_crm_consultor") or "",
         "crm_valor":        lead.get("_crm_valor") or 0.0,
         "score":            int(lead.get("score") or 0),
@@ -326,23 +331,22 @@ async def radar_data(
     else:
         target_date = today_brt
 
-    # Sincroniza oportunidades do funil B2B - Corporativo em background
-    # (não bloqueia a resposta — roda em paralelo com a busca de leads)
+    # Sincroniza oportunidades de todos os funis PJ em background
     target_iso = target_date.isoformat()
-    sync_task = asyncio.create_task(
-        sync_pipeline_deals_to_leads(target_iso, _CRM_PIPELINE_ID)
-    )
+    sync_tasks = [
+        asyncio.create_task(sync_pipeline_deals_to_leads(target_iso, pid))
+        for pid in _CRM_PIPELINES
+    ]
 
     leads_raw = await get_all_leads()
 
-    # Aguarda o sync terminar (já temos os leads antigos; leads novos entram no próximo refresh)
+    # Aguarda todos os syncs (até 15s total)
     try:
-        imported = await asyncio.wait_for(sync_task, timeout=12)
-        if imported:
-            # Relê os leads para incluir os recém-importados do CRM
+        results = await asyncio.wait_for(asyncio.gather(*sync_tasks), timeout=15)
+        if any(results):
             leads_raw = await get_all_leads()
     except asyncio.TimeoutError:
-        logger.warning("[Radar] Sync CRM demorou mais de 12s — continuando sem esperar")
+        logger.warning("[Radar] Sync CRM demorou mais de 15s — continuando sem esperar")
 
     # Datas disponíveis (últimos 30 dias com dados)
     # Inclui tanto a data de criação quanto a de atualização com formulário
@@ -375,6 +379,7 @@ async def radar_data(
         lead["_crm_etapa"]         = crm.get("etapa", "—")
         lead["_crm_consultor"]     = crm.get("consultor", "")
         lead["_crm_valor"]         = crm.get("valor", 0.0)
+        lead["_crm_pipeline"]      = crm.get("pipeline", "")
         lead["_crm_deal_name"]     = crm.get("deal_name", "")
         lead["_crm_deal_products"] = crm.get("deal_products", [])
         lead["_session"]           = dict(session) if session else None

@@ -69,6 +69,9 @@ async def get_deal_info(phone: str) -> Dict:
 
             valor = float(deal.get("amount_total") or deal.get("amount_unique") or 0)
 
+            pipeline_obj = deal.get("deal_pipeline", {}) or {}
+            pipeline = pipeline_obj.get("name", "") if isinstance(pipeline_obj, dict) else ""
+
             deal_name     = deal.get("name") or ""
             deal_products = deal.get("deal_products") or []
             logger.info(f"[RD CRM] {phone_clean} → {etapa} | {consultor} | R${valor:.2f} | {deal_name}")
@@ -76,6 +79,7 @@ async def get_deal_info(phone: str) -> Dict:
                 "etapa":         etapa,
                 "consultor":     consultor,
                 "valor":         valor,
+                "pipeline":      pipeline,
                 "deal_name":     deal_name,
                 "deal_products": deal_products,
             }
