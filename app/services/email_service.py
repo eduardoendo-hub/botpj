@@ -133,14 +133,20 @@ async def send_lead_notification(lead: Dict, config: Dict) -> bool:
         )
         return False
 
-    nome    = lead.get("contact_name") or lead.get("nome") or "Lead PJ"
-    produto = lead.get("produto") or lead.get("training_interest") or lead.get("treinamento") or "Novo lead"
-    origem  = lead.get("origem") or lead.get("source_channel") or ""
+    # Fallbacks para quando o form chega com campos nulos
+    nome    = (lead.get("contact_name") or lead.get("nome") or "").strip()
+    email_c = (lead.get("email") or "").strip()
+    produto = (lead.get("produto") or lead.get("training_interest") or lead.get("treinamento") or "").strip()
+    origem  = (lead.get("origem") or lead.get("source_channel") or "").strip()
 
-    subject_parts = [nome]
-    if origem:
+    # Subject: usa email do lead quando não tem nome, e identificador quando não tem produto
+    nome_subject   = nome or email_c or lead.get("phone_number") or "Lead PJ"
+    produto_subject = produto or origem or "Novo lead PJ"
+
+    subject_parts = [nome_subject]
+    if origem and origem != nome_subject:
         subject_parts.append(origem)
-    subject = f"🏢 Novo lead PJ: {' — '.join(subject_parts)} | {produto}"
+    subject = f"🏢 Novo lead PJ: {' — '.join(subject_parts)} | {produto_subject}"
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
