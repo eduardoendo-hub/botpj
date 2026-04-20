@@ -123,6 +123,19 @@ def _hora_brt(iso_str: str) -> str:
         return "—"
 
 
+def _hora_brt_date(iso_str: str) -> str:
+    """Formata timestamp UTC como dd/mm/yyyy HH:MM no horário de Brasília."""
+    if not iso_str:
+        return "—"
+    try:
+        dt = datetime.fromisoformat(str(iso_str).replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(_BRT).strftime("%d/%m/%Y %H:%M")
+    except Exception:
+        return "—"
+
+
 def _normalize_lead(lead: dict, session: dict | None) -> dict:
     """Converte row do banco para o formato esperado pelo Radar React."""
     agent_active = bool(session and session.get("agent_active"))
@@ -200,6 +213,7 @@ def _normalize_lead(lead: dict, session: dict | None) -> dict:
         "origem":           origem,
         "qtd_colaboradores": lead.get("qtd_colaboradores") or "—",
         "raw_form_data":    raw_form_data,
+        "criado_em":        _hora_brt_date(lead.get("created_at") or ""),
     }
 
 
@@ -292,23 +306,25 @@ def _lead_updated_date_brt(lead: dict) -> str:
         return ""
 
 
+def _lead_reference_date(lead: dict) -> str:
+    """
+    Data de referência do lead para exibição no Radar.
+    Regra: se o lead tem raw_form_data (veio de formulário), usa updated_at.
+           Caso contrário, usa created_at.
+    Isso garante que o lead apareça em um único dia, sempre o mais relevante.
+    """
+    if lead.get("raw_form_data"):
+        d = _lead_updated_date_brt(lead)
+        if d:
+            return d
+    return _lead_date_brt(lead)
+
+
 def _lead_matches_date(lead: dict, target_date_iso: str) -> bool:
     """Retorna True se o lead deve aparecer no dia solicitado.
-    Critérios:
-      1. Criado no dia (regra principal), OU
-      2. Atualizado no dia com novo formulário (raw_form_data preenchido)
-         — captura leads antigos que submeteram novo form hoje.
+    Um lead aparece em um único dia — o de referência (_lead_reference_date).
     """
-    if _lead_date_brt(lead) == target_date_iso:
-        return True
-    # Lead antigo que submeteu novo formulário hoje
-    if (
-        _lead_updated_date_brt(lead) == target_date_iso
-        and lead.get("raw_form_data")
-        and _lead_date_brt(lead) != target_date_iso  # não duplicar
-    ):
-        return True
-    return False
+    return _lead_reference_date(lead) == target_date_iso
 
 
 @router.get("/data")
@@ -349,16 +365,13 @@ async def radar_data(
         logger.warning("[Radar] Sync CRM demorou mais de 15s — continuando sem esperar")
 
     # Datas disponíveis (últimos 30 dias com dados)
-    # Inclui tanto a data de criação quanto a de atualização com formulário
+    # Usa a mesma regra de _lead_reference_date para consistência
     available_dates: set = set()
     for lead in leads_raw:
         ld = dict(lead)
-        d_criacao = _lead_date_brt(ld)
-        if d_criacao:
-            available_dates.add(d_criacao)
-        d_update = _lead_updated_date_brt(ld)
-        if d_update and ld.get("raw_form_data") and d_update != d_criacao:
-            available_dates.add(d_update)
+        d = _lead_reference_date(ld)
+        if d:
+            available_dates.add(d)
 
     # Filtra leads do dia solicitado (criados no dia OU atualizados com novo form)
     leads_do_dia = [
