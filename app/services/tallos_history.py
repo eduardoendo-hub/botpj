@@ -73,11 +73,22 @@ def _fmt_datetime(iso_str: str) -> str:
         return iso_str[:16]
 
 
+def _clean_system_prefix(text: str) -> str:
+    """Remove prefixos de sistema do Tallos (ex: >\x16: Aguardando atendente...)."""
+    import re
+    # Remove qualquer sequência de controle no início do tipo ">\x16: " ou ">?: "
+    text = re.sub(r"^[>\s]*[\x00-\x1f]+[:\s]*", "", text)
+    return text.strip()
+
+
 def _normalize_message(m: Dict) -> Dict:
     """Normaliza uma mensagem da API Tallos para o formato do Radar."""
     sent_by = m.get("sent_by", "")
     # Tallos retorna o texto no campo "message"; fallback para "content"
     content = m.get("message", m.get("content", "")) or ""
+
+    # Limpa prefixos de sistema (ex: ">\x16: Aguardando atendente...")
+    content = _clean_system_prefix(content)
 
     # Operadores vêm com o nome no início: "*Nome Operador:*\nTexto"
     operator_name = ""
@@ -138,7 +149,7 @@ async def get_conversation_history(
         return {"messages": [], "total": 0, "page": page, "has_more": False}
 
     if sent_by is None:
-        sent_by = ["customer", "operator"]
+        sent_by = ["customer", "operator", "bot"]
 
     url = f"{settings.tallos_api_url}/messages/history"
     headers = {"Authorization": f"Bearer {settings.tallos_api_token}"}
