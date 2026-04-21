@@ -22,6 +22,7 @@ from app.core.database import (
 from app.services.tallos_history import get_conversation_history, extract_customer_id_from_notes
 from app.services.rd_crm import get_deal_info, get_deal_full_info, sync_pipeline_deals_to_leads
 from app.services.product_classifier import classify_product
+from app.services.company_intel import get_company_intel
 
 # Funis PJ rastreados no RD CRM
 _CRM_PIPELINES = {
@@ -567,6 +568,26 @@ async def radar_crm_history(request: Request, phone: str):
 
 
 # ── RD Station CRM — OAuth2 callback ─────────────────────────────────────────
+
+@router.get("/company-intel/{phone}")
+async def radar_company_intel(request: Request, phone: str):
+    """
+    Retorna informações sobre a empresa do lead pesquisadas via IA + web.
+    Resultado em cache de 24h por nome de empresa.
+    """
+    await _require_auth(request)
+
+    lead = await get_lead_by_phone(phone)
+    if not lead:
+        return JSONResponse({"intel": "", "company": ""}, status_code=404)
+
+    company = (lead.get("company") or "").strip()
+    if not company or company == "—":
+        return JSONResponse({"intel": "", "company": company})
+
+    intel = await get_company_intel(company)
+    return JSONResponse({"intel": intel, "company": company})
+
 
 @router.get("/rd-crm/callback", response_class=HTMLResponse)
 async def rd_crm_callback(request: Request, code: str = "", error: str = ""):

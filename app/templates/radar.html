@@ -453,10 +453,12 @@ const Drawer = ({ lead, onClose, basePath }) => {
   const [loadingMsgs, setLM]    = useState(false);
   const [crm, setCrm]           = useState(null);   // dados CRM completos
   const [loadingCrm, setLC]     = useState(false);
+  const [companyIntel, setCI]   = useState(null);   // intel da empresa
+  const [loadingCI, setLCI]     = useState(false);
   const chatEndRef               = useRef(null);
 
   // Fecha ao trocar de lead
-  useEffect(() => { setTab("info"); setMsgs(null); setCrm(null); }, [lead?.id]);
+  useEffect(() => { setTab("info"); setMsgs(null); setCrm(null); setCI(null); }, [lead?.id]);
 
   const loadChat = useCallback(async () => {
     if (msgs !== null || loadingMsgs) return;
@@ -480,10 +482,26 @@ const Drawer = ({ lead, onClose, basePath }) => {
     finally    { setLC(false); }
   }, [crm, loadingCrm, lead, basePath]);
 
+  const loadCompanyIntel = useCallback(async () => {
+    if (companyIntel !== null || loadingCI) return;
+    if (!lead.empresa || lead.empresa === "—") { setCI(""); return; }
+    setLCI(true);
+    try {
+      const res  = await fetch(`${basePath}/company-intel/${encodeURIComponent(lead.telefone)}`);
+      const json = await res.json();
+      setCI(json.intel || "");
+    } catch(e) { setCI(""); }
+    finally    { setLCI(false); }
+  }, [companyIntel, loadingCI, lead, basePath]);
+
   useEffect(() => {
     if (tab === "chat")    { loadChat(); }
     if (tab === "history") { loadCrm();  }
+    if (tab === "info")    { loadCompanyIntel(); }
   }, [tab]);
+
+  // Carrega intel da empresa logo ao abrir o drawer (aba info é a padrão)
+  useEffect(() => { loadCompanyIntel(); }, [lead?.id]);
 
   useEffect(() => {
     if (tab === "chat" && msgs && chatEndRef.current) {
@@ -647,6 +665,64 @@ const Drawer = ({ lead, onClose, basePath }) => {
                   </div>
                 );
               })()}
+
+              {/* ── Detalhes da Empresa (IA + Web) ── */}
+              {lead.empresa && lead.empresa !== "—" && (
+                <div>
+                  <div style={{fontSize:10,fontWeight:700,color:C.txt3,textTransform:"uppercase",letterSpacing:1,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+                    <Icon name="building-2" size={12} />
+                    Detalhes da Empresa
+                  </div>
+                  <div style={{
+                    background:"rgba(15,23,42,.7)",
+                    border:"1px solid rgba(20,184,166,.2)",
+                    borderLeft:"3px solid rgba(20,184,166,.6)",
+                    borderRadius:"0 10px 10px 0",
+                    padding:"14px 16px",
+                    position:"relative",
+                  }}>
+                    {/* Cabeçalho com nome da empresa */}
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                      <div style={{
+                        background:"rgba(20,184,166,.15)",
+                        border:"1px solid rgba(20,184,166,.3)",
+                        borderRadius:8,
+                        padding:"4px 10px",
+                        fontSize:12,
+                        fontWeight:700,
+                        color:"#2dd4bf",
+                      }}>
+                        {lead.empresa}
+                      </div>
+                      <span style={{fontSize:10,color:C.txt3}}>· Pesquisa via IA</span>
+                    </div>
+
+                    {/* Conteúdo */}
+                    {loadingCI && (
+                      <div style={{display:"flex",alignItems:"center",gap:8,color:C.txt3,fontSize:12}}>
+                        <div className="pulse" style={{width:8,height:8,borderRadius:"50%",background:"#2dd4bf"}} />
+                        Pesquisando informações da empresa…
+                      </div>
+                    )}
+                    {!loadingCI && companyIntel === "" && (
+                      <p style={{margin:0,fontSize:12,color:C.txt3,fontStyle:"italic"}}>
+                        Nenhuma informação encontrada para esta empresa.
+                      </p>
+                    )}
+                    {!loadingCI && companyIntel && (
+                      <p style={{margin:0,fontSize:13,color:C.txt2,lineHeight:1.65}}>
+                        {companyIntel}
+                      </p>
+                    )}
+                    {!loadingCI && companyIntel === null && (
+                      <div style={{display:"flex",alignItems:"center",gap:8,color:C.txt3,fontSize:12}}>
+                        <div className="pulse" style={{width:8,height:8,borderRadius:"50%",background:"#2dd4bf"}} />
+                        Carregando…
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
             </div>
           )}
