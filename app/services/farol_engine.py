@@ -29,13 +29,13 @@ _cache: Dict[str, Tuple[dict, float, str]] = {}
 _CACHE_TTL = 1_200  # 20 minutos
 
 _DEFAULT = {
-    "semaforo":        "?",
-    "score_risco":     0,
-    "urgencia":        "",
-    "pendencia_principal": "",
-    "motivo_principal": "Dados insuficientes para análise.",
+    "semaforo":        "AMARELO",
+    "score_risco":     30,
+    "urgencia":        "MÉDIA",
+    "pendencia_principal": "INDEFINIDO",
+    "motivo_principal": "Análise indisponível — dados insuficientes ou erro de processamento.",
     "resumo_executivo": "",
-    "acao_recomendada_supervisor": "",
+    "acao_recomendada_supervisor": "Verificar manualmente o status deste lead.",
     "nivel_intervencao_supervisor": "MONITORAR",
 }
 
@@ -118,37 +118,16 @@ CLIENTE → time fez tudo certo e aguarda resposta do cliente
 AMBOS → falha dos dois lados
 INDEFINIDO → dados insuficientes
 
-Retorne APENAS um JSON válido com esta estrutura exata:
+Retorne APENAS um JSON válido com exatamente estes campos (sem campos extras, sem markdown):
 {
   "semaforo": "VERDE | AMARELO | VERMELHO",
   "score_risco": 0,
   "urgencia": "BAIXA | MÉDIA | ALTA | IMEDIATA",
   "pendencia_principal": "TIME | CLIENTE | AMBOS | INDEFINIDO",
-  "motivo_principal": "texto objetivo com a principal razão",
-  "resumo_executivo": "texto curto explicando a situação geral",
-  "sinais_considerados": ["sinal 1", "sinal 2"],
-  "eventos_criticos_detectados": ["evento 1"],
-  "ultima_acao_relevante": {
-    "autor": "CLIENTE | TIME | DESCONHECIDO",
-    "descricao": "descrição curta",
-    "data": "YYYY-MM-DD HH:MM ou null"
-  },
-  "proxima_acao_esperada": {
-    "responsavel": "TIME | CLIENTE | AMBOS | INDEFINIDO",
-    "descricao": "descrição curta"
-  },
-  "acao_recomendada_supervisor": "ação objetiva e prática",
-  "nivel_intervencao_supervisor": "NENHUM | MONITORAR | COBRAR_TIME | INTERVIR_IMEDIATAMENTE",
-  "confianca_analise": 0,
-  "justificativa_detalhada": {
-    "tempo_resposta_time": "avaliação textual",
-    "tempo_resposta_cliente": "avaliação textual",
-    "estagio_funil": "avaliação textual",
-    "porte_empresa": "avaliação textual",
-    "status_followup": "avaliação textual",
-    "status_proposta_orcamento": "avaliação textual",
-    "lado_parado": "TIME | CLIENTE | AMBOS | INDEFINIDO"
-  }
+  "motivo_principal": "texto curto com a principal razão (máx 120 chars)",
+  "resumo_executivo": "situação geral do lead em 1-2 linhas (máx 200 chars)",
+  "acao_recomendada_supervisor": "ação objetiva e prática (máx 120 chars)",
+  "nivel_intervencao_supervisor": "NENHUM | MONITORAR | COBRAR_TIME | INTERVIR_IMEDIATAMENTE"
 }"""
 
 
@@ -258,27 +237,47 @@ async def classify_farol(
     if not settings.anthropic_api_key:
         return _DEFAULT.copy()
 
+    # Leads sem nenhum dado relevante: retorna amarelo sem chamar a IA
+    has_msgs    = msg_count > 0
+    has_company = bool(lead.get("company") or lead.get("contact_name"))
+    has_crm     = bool((crm or {}).get("etapa"))
+    if not has_msgs and not has_crm and not has_company:
+        fallback = _DEFAULT.copy()
+        fallback["motivo_principal"] = "Sem dados suficientes para análise de farol."
+        fallback["resumo_executivo"] = "Lead recém-criado sem histórico de conversa ou CRM."
+        return fallback
+
     user_msg = _build_user_message(lead, msgs, crm)
 
     try:
         response = await client.messages.create(
             model="claude-haiku-4-5-20251001",
-            max_tokens=900,
+            max_tokens=400,   # Schema simplificado cabe bem em 400 tokens
             system=_SYSTEM,
             messages=[{"role": "user", "content": user_msg}],
         )
         raw = response.content[0].text.strip()
 
-        # Extrai JSON (pode ter texto ao redor)
-        match = re.search(r"\{.*\}", raw, re.DOTALL)
+        # Extrai o primeiro objeto JSON da resposta
+        match = re.search(r"\{[^{}]*\}", raw, re.DOTALL)
         if not match:
-            raise ValueError("JSON não encontrado na resposta")
+            # Tenta o padrão mais amplo (JSON aninhado)
+            match = re.search(r"\{.*\}", raw, re.DOTALL)
+        if not match:
+            logger.warning(f"[Farol] JSON não encontrado para {phone}. Resposta: {raw[:200]}")
+            result = _DEFAULT.copy()
+            _cache_set(phone, cache_key, result)
+            return result
 
         result = json.loads(match.group())
 
-        # Garante campos obrigatórios
+        # Valida semáforo — se vier valor inválido, corrige
+        if result.get("semaforo") not in ("VERDE", "AMARELO", "VERMELHO"):
+            result["semaforo"] = "AMARELO"
+
+        # Garante todos os campos obrigatórios
         for field, default in _DEFAULT.items():
-            if field not in result:
+            if field not in result or result[field] is None:
                 result[field] = default
 
         _cache_set(phone, cache_key, result)
@@ -288,6 +287,11 @@ async def classify_farol(
         )
         return result
 
+    except json.JSONDecodeError as e:
+        logger.warning(f"[Farol] JSON inválido para {phone}: {e} | raw={raw[:200] if 'raw' in dir() else 'N/A'}")
+        result = _DEFAULT.copy()
+        _cache_set(phone, cache_key, result)
+        return result
     except Exception as e:
         logger.warning(f"[Farol] Falha para {phone}: {e}")
         return _DEFAULT.copy()
