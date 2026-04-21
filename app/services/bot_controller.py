@@ -296,7 +296,11 @@ async def _run_lead_analysis(phone_number: str, contact_name: str) -> None:
             update_kwargs["stage"] = "qualificado"
 
         if update_kwargs:
-            await upsert_lead(phone_number, contact_name=contact_name, **update_kwargs)
+            # Garante contact_name sem duplicar — se já está em update_kwargs
+            # (via extracted["nome"]) não passa como kwarg separado também
+            if "contact_name" not in update_kwargs and contact_name:
+                update_kwargs["contact_name"] = contact_name
+            await upsert_lead(phone_number, **update_kwargs)
             logger.info(
                 f"[{phone_number}] Lead atualizado — trail={extracted.get('trail')} "
                 f"temp={extracted.get('lead_temperature')} score={extracted.get('score')}"

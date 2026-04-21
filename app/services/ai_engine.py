@@ -331,11 +331,9 @@ def _detect_escalation_needed(text: str) -> bool:
         if signal in text_lower:
             return True
 
-    b_hits = sum(1 for s in signals_b if s in text_lower)
-    if b_hits >= 1:
-        data_signals = ["whatsapp", "e-mail", "email", "empresa", "cargo", "nome"]
-        if any(d in text_lower for d in data_signals) or b_hits >= 2:
-            return True
+    # Qualquer signal_b é suficiente — são frases específicas de encerramento
+    if any(s in text_lower for s in signals_b):
+        return True
 
     return False
 
