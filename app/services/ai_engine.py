@@ -492,6 +492,49 @@ async def extract_lead_data(phone_number: str, history: List[Dict]) -> Dict:
     return {}
 
 
+async def generate_conversation_summary(
+    phone_number: str,
+    history: List[Dict],
+) -> str:
+    """
+    Gera um resumo textual da conversa para ser incluído no email de notificação.
+    Destaca: perfil do lead, necessidade identificada, trilha, dados coletados e próximo passo.
+    """
+    if not history or len(history) < 2:
+        return "Conversa sem histórico suficiente para gerar resumo."
+
+    conv_text = "\n".join(
+        f"[{'Lead' if m['role'] == 'user' else 'Bot'}]: {m['message'][:300]}"
+        for m in history[-30:]
+    )
+
+    prompt = (
+        "Você é um assistente comercial. Analise a conversa abaixo entre o Bot SDR PJ e um lead corporativo "
+        "e escreva um RESUMO EXECUTIVO em português, em texto corrido (sem bullet points, sem markdown), "
+        "com no máximo 5 linhas. O resumo deve destacar:\n"
+        "1) Quem é o lead (nome, empresa, cargo se disponíveis)\n"
+        "2) O que ele quer (tipo de treinamento, locação ou consultoria)\n"
+        "3) Principais dados coletados (quantidade de participantes, formato, prazo, cidade etc.)\n"
+        "4) Nível de interesse e urgência\n"
+        "5) Próximo passo recomendado\n\n"
+        f"CONVERSA:\n{conv_text}\n\n"
+        "Escreva apenas o resumo, sem títulos ou cabeçalhos."
+    )
+
+    try:
+        response = await client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=300,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        summary = response.content[0].text.strip()
+        logger.info(f"[{phone_number}] Resumo da conversa gerado ({len(summary)} chars)")
+        return summary
+    except Exception as e:
+        logger.warning(f"[{phone_number}] Falha ao gerar resumo: {e}")
+        return "Não foi possível gerar o resumo automático da conversa."
+
+
 async def classify_conversation_context(phone_number: str) -> bool:
     """Verifica se o lead está aguardando (vai pensar, buscar aprovação interna)."""
     try:

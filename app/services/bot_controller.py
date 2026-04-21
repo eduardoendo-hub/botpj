@@ -21,6 +21,7 @@ from app.core.database import (
 from app.services.ai_engine import (
     generate_response, classify_conversation_context,
     extract_lead_data, analyze_and_update_lead,
+    generate_conversation_summary,
 )
 from app.services.email_service import send_lead_notification
 
@@ -368,9 +369,13 @@ async def _notify_lead_escalation(
             "ocorrencia":        datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M"),
         }
 
+        # Gera resumo da conversa via IA
+        resumo = await generate_conversation_summary(phone_number, history)
+        lead_payload["resumo"] = resumo
+
         # Persiste no banco antes de enviar o email
         upsert_kwargs = {k: v for k, v in lead_payload.items()
-                        if k not in ("ocorrencia", "phone_number") and v}
+                        if k not in ("ocorrencia", "phone_number", "resumo") and v}
         upsert_kwargs["stage"] = "negociando"
         await upsert_lead(phone_number, **upsert_kwargs)
 

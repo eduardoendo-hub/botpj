@@ -24,6 +24,15 @@ def _build_html(lead: Dict) -> str:
     produto    = lead.get("produto") or lead.get("training_interest") or lead.get("treinamento") or "—"
     origem     = lead.get("origem") or lead.get("source_channel") or "—"
     ocorrencia = lead.get("ocorrencia") or datetime.now().strftime("%d/%m/%Y %H:%M")
+    resumo     = lead.get("resumo") or ""
+
+    resumo_block = ""
+    if resumo:
+        resumo_block = f"""
+      <div class="resumo-box">
+        <div class="resumo-title">📝 Resumo da Conversa</div>
+        <div class="resumo-text">{resumo}</div>
+      </div>"""
 
     return f"""
 <!DOCTYPE html>
@@ -47,8 +56,13 @@ def _build_html(lead: Dict) -> str:
     td {{ padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; }}
     td:first-child {{ color: #6b7280; width: 160px; font-weight: 500; }}
     td:last-child {{ color: #111827; font-weight: 600; }}
+    .resumo-box {{ margin-top: 24px; background: #f8faff; border-left: 4px solid #3b82f6;
+                   border-radius: 0 8px 8px 0; padding: 16px 18px; }}
+    .resumo-title {{ font-size: 13px; font-weight: 700; color: #1e40af; margin-bottom: 8px; }}
+    .resumo-text {{ font-size: 14px; color: #374151; line-height: 1.6; white-space: pre-wrap; }}
     .footer {{ background: #f9fafb; padding: 16px 28px; font-size: 12px;
-               color: #9ca3af; text-align: center; border-top: 1px solid #f3f4f6; }}
+               color: #9ca3af; text-align: center; border-top: 1px solid #f3f4f6;
+               margin-top: 24px; }}
   </style>
 </head>
 <body>
@@ -68,7 +82,7 @@ def _build_html(lead: Dict) -> str:
         <tr><td>🕐 Data / Hora</td><td>{ocorrencia}</td></tr>
         <tr><td>🎯 Produto</td><td>{produto}</td></tr>
         <tr><td>📌 Origem</td><td>{origem}</td></tr>
-      </table>
+      </table>{resumo_block}
     </div>
     <div class="footer">
       Enviado automaticamente pelo Bot SDR PJ — Departamento de Treinamentos
@@ -88,8 +102,9 @@ def _build_plain(lead: Dict) -> str:
     produto    = lead.get("produto") or lead.get("training_interest") or lead.get("treinamento") or "—"
     origem     = lead.get("origem") or lead.get("source_channel") or "—"
     ocorrencia = lead.get("ocorrencia") or datetime.now().strftime("%d/%m/%Y %H:%M")
+    resumo     = lead.get("resumo") or ""
 
-    return (
+    body = (
         f"Novo Lead PJ — Bot SDR PJ\n\n"
         f"Nome:              {nome}\n"
         f"WhatsApp/Telefone: {whatsapp}\n"
@@ -98,9 +113,12 @@ def _build_plain(lead: Dict) -> str:
         f"Cargo:             {cargo}\n"
         f"Data / Hora:       {ocorrencia}\n"
         f"Produto:           {produto}\n"
-        f"Origem:            {origem}\n\n"
-        "Enviado automaticamente pelo Bot SDR PJ"
+        f"Origem:            {origem}\n"
     )
+    if resumo:
+        body += f"\n── Resumo da Conversa ──\n{resumo}\n"
+    body += "\nEnviado automaticamente pelo Bot SDR PJ"
+    return body
 
 
 def _parse_recipients(raw: str) -> List[str]:
