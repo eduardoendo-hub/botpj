@@ -23,6 +23,7 @@ from app.services.tallos_history import get_conversation_history, extract_custom
 from app.services.rd_crm import get_deal_info, get_deal_full_info, sync_pipeline_deals_to_leads
 from app.services.product_classifier import classify_product
 from app.services.company_intel import get_company_intel
+from app.services.farol_engine import classify_farol
 
 # Funis PJ rastreados no RD CRM
 _CRM_PIPELINES = {
@@ -215,6 +216,15 @@ def _normalize_lead(lead: dict, session: dict | None) -> dict:
         "qtd_colaboradores": lead.get("qtd_colaboradores") or "—",
         "raw_form_data":    raw_form_data,
         "criado_em":        _hora_brt_date(lead.get("created_at") or ""),
+        # Farol — preenchido depois pela classificação paralela
+        "farol":            lead.get("_farol") or "?",
+        "farol_score":      int(lead.get("_farol_score") or 0),
+        "farol_urgencia":   lead.get("_farol_urgencia") or "",
+        "farol_motivo":     lead.get("_farol_motivo") or "",
+        "farol_pendencia":  lead.get("_farol_pendencia") or "",
+        "farol_acao":       lead.get("_farol_acao") or "",
+        "farol_intervencao": lead.get("_farol_intervencao") or "",
+        "farol_resumo":     lead.get("_farol_resumo") or "",
     }
 
 
@@ -434,15 +444,34 @@ async def radar_data(
 
     msgs_list = await asyncio.gather(*[_get_last_msgs(l) for l in leads_do_dia])
 
-    # Classifica produto em paralelo (Claude Haiku, com cache de 2h)
-    produtos = await asyncio.gather(*[
-        classify_product(lead, msgs)
-        for lead, msgs in zip(leads_do_dia, msgs_list)
-    ])
+    # Classifica produto e farol em paralelo (Claude Haiku, com cache)
+    produtos, farois = await asyncio.gather(
+        asyncio.gather(*[
+            classify_product(lead, msgs)
+            for lead, msgs in zip(leads_do_dia, msgs_list)
+        ]),
+        asyncio.gather(*[
+            classify_farol(lead, msgs, {
+                "etapa":      lead.get("_crm_etapa") or "",
+                "consultor":  lead.get("_crm_consultor") or "",
+                "valor":      lead.get("_crm_valor") or 0,
+                "pipeline":   lead.get("_crm_pipeline") or "",
+            })
+            for lead, msgs in zip(leads_do_dia, msgs_list)
+        ]),
+    )
 
     result: List[Dict[str, Any]] = []
-    for lead, produto in zip(leads_do_dia, produtos):
-        lead["_produto"] = produto
+    for lead, produto, farol in zip(leads_do_dia, produtos, farois):
+        lead["_produto"]          = produto
+        lead["_farol"]            = farol.get("semaforo", "?")
+        lead["_farol_score"]      = farol.get("score_risco", 0)
+        lead["_farol_urgencia"]   = farol.get("urgencia", "")
+        lead["_farol_motivo"]     = farol.get("motivo_principal", "")
+        lead["_farol_pendencia"]  = farol.get("pendencia_principal", "")
+        lead["_farol_acao"]       = farol.get("acao_recomendada_supervisor", "")
+        lead["_farol_intervencao"] = farol.get("nivel_intervencao_supervisor", "")
+        lead["_farol_resumo"]     = farol.get("resumo_executivo", "")
         result.append(_normalize_lead(lead, lead.pop("_session", None)))
 
     # Ordenar por hora desc (mais recentes primeiro)

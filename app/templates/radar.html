@@ -203,11 +203,18 @@ const getFormatoStyle = (f) => ({
 const scoreColor = (s) => s>=80?"#34d399":s>=60?"#fbbf24":s>=40?"#fb923c":"#f87171";
 const scoreBgColor = (s) => s>=80?"#34d399":s>=60?"#fbbf24":s>=40?"#fb923c":"#f87171";
 
-const slaStyle = (m) => {
-  if (m<=10) return { bg:"rgba(16,185,129,.13)",  color:"#34d399", label:`${m}m` };
-  if (m<=25) return { bg:"rgba(245,158,11,.13)",  color:"#fbbf24", label:`${m}m` };
-  return            { bg:"rgba(239,68,68,.15)",   color:"#f87171", label:`${m}m ⚠` };
-};
+const farolConfig = (f) => ({
+  "VERDE":   { color:"#22c55e", glow:"rgba(34,197,94,.5)",  label:"Verde",   bg:"rgba(34,197,94,.12)",  border:"rgba(34,197,94,.3)"  },
+  "AMARELO": { color:"#f59e0b", glow:"rgba(245,158,11,.5)", label:"Amarelo", bg:"rgba(245,158,11,.12)", border:"rgba(245,158,11,.3)" },
+  "VERMELHO":{ color:"#ef4444", glow:"rgba(239,68,68,.5)",  label:"Vermelho",bg:"rgba(239,68,68,.12)",  border:"rgba(239,68,68,.3)"  },
+}[f] || { color:"#475569", glow:"transparent", label:"—", bg:"rgba(71,85,105,.1)", border:"rgba(71,85,105,.2)" });
+
+const urgenciaConfig = (u) => ({
+  "IMEDIATA": { color:"#ef4444", label:"IMEDIATA" },
+  "ALTA":     { color:"#f97316", label:"ALTA"     },
+  "MÉDIA":    { color:"#f59e0b", label:"MÉDIA"    },
+  "BAIXA":    { color:"#22c55e", label:"BAIXA"    },
+}[u] || null);
 
 const quemConfig = (q) => ({
   bot:         { icon:"bot",          label:"Bot SDR",            bg:"rgba(139,92,246,.2)",  color:"#a78bfa" },
@@ -511,8 +518,8 @@ const Drawer = ({ lead, onClose, basePath }) => {
   }, [msgs, tab]);
 
   if (!lead) return null;
-  const temp = getTempConfig(lead.temp);
-  const sla  = slaStyle(lead.sla_min);
+  const temp  = getTempConfig(lead.temp);
+  const farol = farolConfig(lead.farol);
 
   const roleLabel = (r) => r === "assistant" ? "Bot" : r === "user" ? "Lead" : "Consultor";
   const bubbleCls = (r) => r === "user" ? "bubble-user" : r === "agent" ? "bubble-agent" : "bubble-bot";
@@ -581,9 +588,16 @@ const Drawer = ({ lead, onClose, basePath }) => {
                   <Icon name={temp.icon} size={10} />{temp.label}
                 </Pill>
                 {(() => { const s = getStatusStyle(lead.status); return <Pill bg={s.bg} color={s.color}>{lead.status}</Pill>; })()}
-                <Pill bg={sla.bg} color={sla.color}>
-                  <Icon name="clock" size={10} />{sla.label}
-                </Pill>
+                {lead.farol && lead.farol !== "?" && (
+                  <Pill bg={farol.bg} color={farol.color} border={farol.border}>
+                    <span style={{width:7,height:7,borderRadius:"50%",background:farol.color,display:"inline-block",boxShadow:`0 0 5px ${farol.glow}`}} />
+                    Farol {farol.label}
+                  </Pill>
+                )}
+                {lead.farol_urgencia && lead.farol_urgencia !== "BAIXA" && (() => {
+                  const uc = urgenciaConfig(lead.farol_urgencia);
+                  return uc ? <Pill bg="rgba(0,0,0,.2)" color={uc.color}>{uc.label}</Pill> : null;
+                })()}
                 {lead.trail && lead.trail !== "?" && (
                   <Pill bg="rgba(99,102,241,.15)" color="#818cf8">Trail {lead.trail}</Pill>
                 )}
@@ -609,6 +623,83 @@ const Drawer = ({ lead, onClose, basePath }) => {
                     <Icon name="alert-circle" size={12} /> Urgência
                   </div>
                   <p style={{margin:0,fontSize:13,color:"#fca5a5"}}>{lead.urgencia}</p>
+                </div>
+              )}
+
+              {/* ── Bloco Farol Operacional ── */}
+              {lead.farol && lead.farol !== "?" && (
+                <div style={{
+                  background: farol.bg,
+                  border: `1px solid ${farol.border}`,
+                  borderLeft: `3px solid ${farol.color}`,
+                  borderRadius: "0 10px 10px 0",
+                  padding: "14px 16px",
+                }}>
+                  {/* Cabeçalho */}
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+                    <div style={{
+                      width:20,height:20,borderRadius:"50%",
+                      background:farol.color,
+                      boxShadow:`0 0 10px ${farol.glow}`,
+                      flexShrink:0,
+                    }} />
+                    <div>
+                      <div style={{fontSize:13,fontWeight:700,color:farol.color}}>
+                        Farol {farol.label}
+                        {lead.farol_urgencia && lead.farol_urgencia !== "BAIXA" && (() => {
+                          const uc = urgenciaConfig(lead.farol_urgencia);
+                          return uc ? (
+                            <span style={{marginLeft:8,fontSize:10,fontWeight:700,color:uc.color,
+                              background:"rgba(0,0,0,.25)",padding:"1px 6px",borderRadius:4}}>
+                              {uc.label}
+                            </span>
+                          ) : null;
+                        })()}
+                      </div>
+                      {lead.farol_pendencia && (
+                        <div style={{fontSize:10,color:C.txt3,marginTop:1}}>
+                          Pendência: <strong style={{color:C.txt2}}>{lead.farol_pendencia}</strong>
+                        </div>
+                      )}
+                    </div>
+                    {lead.farol_score > 0 && (
+                      <div style={{marginLeft:"auto",textAlign:"right"}}>
+                        <div style={{fontSize:18,fontWeight:800,color:farol.color,lineHeight:1}}>
+                          {lead.farol_score}
+                        </div>
+                        <div style={{fontSize:9,color:C.txt3}}>risco</div>
+                      </div>
+                    )}
+                  </div>
+                  {/* Motivo */}
+                  {lead.farol_motivo && (
+                    <p style={{margin:"0 0 8px",fontSize:12,color:C.txt1,fontWeight:600,lineHeight:1.5}}>
+                      {lead.farol_motivo}
+                    </p>
+                  )}
+                  {/* Resumo executivo */}
+                  {lead.farol_resumo && lead.farol_resumo !== lead.farol_motivo && (
+                    <p style={{margin:"0 0 10px",fontSize:12,color:C.txt2,lineHeight:1.55}}>
+                      {lead.farol_resumo}
+                    </p>
+                  )}
+                  {/* Ação recomendada */}
+                  {lead.farol_acao && (
+                    <div style={{
+                      background:"rgba(0,0,0,.25)",
+                      borderRadius:8,
+                      padding:"8px 12px",
+                      display:"flex",alignItems:"flex-start",gap:8,
+                    }}>
+                      <Icon name="zap" size={12} style={{color:farol.color,marginTop:1,flexShrink:0}} />
+                      <div>
+                        <div style={{fontSize:10,fontWeight:700,color:farol.color,marginBottom:2}}>
+                          Ação recomendada
+                        </div>
+                        <div style={{fontSize:12,color:C.txt1}}>{lead.farol_acao}</div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -999,7 +1090,8 @@ function Radar() {
     bot:         leads.filter(l => l.quem==="bot").length,
     transferido: leads.filter(l => l.quem==="transferido").length,
     humano:      leads.filter(l => l.quem==="consultor").length,
-    parados:     leads.filter(l => l.sla_min>25).length,
+    vermelho:    leads.filter(l => l.farol==="VERMELHO").length,
+    amarelo:     leads.filter(l => l.farol==="AMARELO").length,
     qualificado: leads.filter(l => l.status==="Qualificado").length,
     locacao:     leads.filter(l => l.tipo==="Locação").length,
   }), [leads]);
@@ -1172,7 +1264,7 @@ function Radar() {
           <KpiCard iconName="bot"            label="Com o bot"     value={kpis.bot}         color="#a78bfa" />
           <KpiCard iconName="arrow-up-right" label="Transferidos"  value={kpis.transferido} color="#fb923c" />
           <KpiCard iconName="phone-call"     label="Com consultor" value={kpis.humano}      color="#60a5fa" />
-          <KpiCard iconName="alert-circle"   label="SLA crítico"   value={kpis.parados}     urgent={isToday && kpis.parados>0} />
+          <KpiCard iconName="alert-circle"   label="Farol Vermelho" value={kpis.vermelho}    urgent={isToday && kpis.vermelho>0} />
           <KpiCard iconName="check-circle"   label="Qualificados"  value={kpis.qualificado} color="#34d399" />
           <KpiCard iconName="building-2"     label="Locação"       value={kpis.locacao}     color="#2dd4bf" />
         </div>
@@ -1244,7 +1336,7 @@ function Radar() {
                   <Th>Status</Th>
                   <Th>Próximo Passo</Th>
                   <Th col="quem">Quem</Th>
-                  <Th col="sla_min">SLA</Th>
+                  <Th col="farol">Farol</Th>
                 </tr>
               </thead>
               <tbody>
@@ -1259,12 +1351,12 @@ function Radar() {
                   </td></tr>
                 ) : filtered.map((lead, idx) => {
                   const temp  = getTempConfig(lead.temp);
-                  const sla   = slaStyle(lead.sla_min);
+                  const frl   = farolConfig(lead.farol);
                   const sSt   = getStatusStyle(lead.status);
                   const isSel = selected?.id === lead.id;
                   return (
                     <tr key={lead.id}
-                      className={`tr-hover ${isSel?"tr-sel":""} ${isToday&&lead.sla_min>25?"tr-sla":""}`}
+                      className={`tr-hover ${isSel?"tr-sel":""} ${isToday&&lead.farol==="VERMELHO"?"tr-sla":""}`}
                       onClick={() => setSelected(isSel ? null : lead)}
                       style={{cursor:"pointer",borderBottom:`1px solid ${C.borderSm}`,transition:"background .12s"}}>
                       <td style={tdStyle}>
@@ -1306,10 +1398,27 @@ function Radar() {
                           style={{fontSize:11,color:C.txt3,display:"block"}}>{lead.proximo_passo}</span>
                       </td>
                       <td style={tdStyle}><QuemIcon quem={lead.quem} /></td>
-                      <td style={{...tdStyle, whiteSpace:"nowrap"}}>
-                        <Pill bg={sla.bg} color={sla.color}>
-                          <Icon name="clock" size={9} />{sla.label}
-                        </Pill>
+                      <td style={{...tdStyle, textAlign:"center"}}>
+                        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}
+                          title={lead.farol_motivo || ""}>
+                          {/* Semáforo circular */}
+                          <div style={{
+                            width:16, height:16, borderRadius:"50%",
+                            background: frl.color,
+                            boxShadow: lead.farol!=="?" ? `0 0 7px ${frl.glow}` : "none",
+                            flexShrink:0,
+                          }} />
+                          {/* Badge urgência */}
+                          {(() => {
+                            const uc = urgenciaConfig(lead.farol_urgencia);
+                            if (!uc || lead.farol_urgencia === "BAIXA") return null;
+                            return (
+                              <span style={{fontSize:9,fontWeight:700,color:uc.color,letterSpacing:.3,lineHeight:1}}>
+                                {uc.label}
+                              </span>
+                            );
+                          })()}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1327,7 +1436,7 @@ function Radar() {
               <span style={{fontSize:11,color:C.txt3}}>
                 {filtered.filter(l=>l.temp==="quente").length} quentes ·{" "}
                 {isToday
-                  ? `${filtered.filter(l=>l.sla_min>25).length} SLA crítico`
+                  ? `${filtered.filter(l=>l.farol==="VERMELHO").length} farol vermelho · ${filtered.filter(l=>l.farol==="AMARELO").length} amarelo`
                   : `${filtered.filter(l=>l.status==="Qualificado").length} qualificados`}
               </span>
             </div>
