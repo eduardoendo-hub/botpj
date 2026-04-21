@@ -586,7 +586,7 @@ async def radar_company_intel(request: Request, phone: str):
         return JSONResponse({"intel": "", "company": company})
 
     intel = await get_company_intel(company)
-    return JSONResponse({"intel": intel, "company": company})
+    return JSONResponse({"company": company, **intel})
 
 
 @router.get("/rd-crm/callback", response_class=HTMLResponse)

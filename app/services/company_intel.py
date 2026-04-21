@@ -2,15 +2,21 @@
 Inteligência de empresa — pesquisa na web via Claude com web_search tool.
 
 Dado o nome de uma empresa, busca informações relevantes para o contexto
-comercial de treinamentos corporativos (setor, porte, localização, etc.)
-e retorna um parágrafo descritivo pronto para exibição no Radar.
+comercial de treinamentos corporativos e retorna dados estruturados:
+  - descricao: parágrafo descritivo
+  - funcionarios: estimativa de nº de funcionários (string)
+  - setor: segmento / setor de atuação
+  - cidade: cidade e estado sede
+  - porte: micro / pequena / média / grande / enterprise
 
 Cache em memória: TTL de 24h por nome de empresa.
 """
 
+import json
 import logging
+import re
 import time
-from typing import Optional, Tuple, Dict
+from typing import Dict, Optional, Tuple
 
 from anthropic import AsyncAnthropic
 
@@ -21,8 +27,7 @@ logger = logging.getLogger(__name__)
 client = AsyncAnthropic(api_key=settings.anthropic_api_key)
 
 # ── Cache em memória ────────────────────────────────────────────────────────────
-# { nome_normalizado: (resultado, timestamp) }
-_CACHE: Dict[str, Tuple[str, float]] = {}
+_CACHE: Dict[str, Tuple[dict, float]] = {}
 _CACHE_TTL = 86_400  # 24 horas
 
 
@@ -30,7 +35,7 @@ def _normalize_name(name: str) -> str:
     return name.strip().lower()
 
 
-def _cache_get(name: str) -> Optional[str]:
+def _cache_get(name: str) -> Optional[dict]:
     key = _normalize_name(name)
     entry = _CACHE.get(key)
     if entry and (time.time() - entry[1]) < _CACHE_TTL:
@@ -40,20 +45,67 @@ def _cache_get(name: str) -> Optional[str]:
     return None
 
 
-def _cache_set(name: str, value: str):
+def _cache_set(name: str, value: dict):
     _CACHE[_normalize_name(name)] = (value, time.time())
+
+
+_EMPTY = {"descricao": "", "funcionarios": "", "setor": "", "cidade": "", "porte": ""}
+
+_SCHEMA = """{
+  "descricao":    "parágrafo de 2-3 linhas descrevendo a empresa",
+  "funcionarios": "estimativa do número de funcionários (ex: ~500, 1.000-5.000, mais de 10.000)",
+  "setor":        "segmento/setor principal de atuação",
+  "cidade":       "cidade e estado sede (ex: São Paulo, SP)",
+  "porte":        "micro | pequena | média | grande | enterprise"
+}"""
+
+
+def _build_prompt(company_name: str) -> str:
+    return (
+        f"Pesquise informações sobre a empresa brasileira \"{company_name}\".\n\n"
+        "IMPORTANTE: tente encontrar o número de funcionários usando fontes como LinkedIn, "
+        "Glassdoor, Gupy, Indeed, RAIS, Exame, Valor Econômico, ou o próprio site da empresa.\n\n"
+        "Retorne SOMENTE um JSON válido com os campos abaixo:\n"
+        f"{_SCHEMA}\n\n"
+        "Regras:\n"
+        "- Para 'funcionarios': se não encontrar o número exato, use uma faixa estimada "
+        "(ex: '100-500', 'mais de 1.000', '~200'). Se realmente não souber, use 'Não identificado'.\n"
+        "- Para 'descricao': texto corrido em português, sem bullets nem markdown.\n"
+        "- Se a empresa não for encontrada, preencha descricao com "
+        "'Não foram encontradas informações públicas suficientes sobre esta empresa.' "
+        "e deixe os demais campos vazios.\n"
+        "Retorne APENAS o JSON, sem explicações."
+    )
+
+
+def _parse_json(text: str) -> dict:
+    """Extrai JSON da resposta (pode ter texto ao redor)."""
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    if not match:
+        return {}
+    try:
+        data = json.loads(match.group())
+        return {
+            "descricao":    str(data.get("descricao", "") or ""),
+            "funcionarios": str(data.get("funcionarios", "") or ""),
+            "setor":        str(data.get("setor", "") or ""),
+            "cidade":       str(data.get("cidade", "") or ""),
+            "porte":        str(data.get("porte", "") or ""),
+        }
+    except (json.JSONDecodeError, TypeError):
+        return {}
 
 
 # ── Pesquisa principal ──────────────────────────────────────────────────────────
 
-async def get_company_intel(company_name: str) -> str:
+async def get_company_intel(company_name: str) -> dict:
     """
-    Retorna um parágrafo descritivo sobre a empresa para exibição no Radar.
-    Usa Claude com web_search para buscar informações atualizadas.
+    Retorna dict estruturado com informações da empresa.
+    Usa Claude Sonnet + web_search para dados atualizados.
     Resultado em cache por 24h.
     """
     if not company_name or company_name in ("—", ""):
-        return ""
+        return _EMPTY.copy()
 
     cached = _cache_get(company_name)
     if cached is not None:
@@ -61,53 +113,52 @@ async def get_company_intel(company_name: str) -> str:
         return cached
 
     logger.info(f"[CompanyIntel] Pesquisando: {company_name}")
-
-    prompt = (
-        f"Pesquise informações sobre a empresa \"{company_name}\" e escreva um parágrafo "
-        "descritivo de 2 a 4 linhas em português, focando nos seguintes aspectos:\n"
-        "- Segmento / setor de atuação\n"
-        "- Localização (cidade/estado sede)\n"
-        "- Porte aproximado (número de funcionários ou faturamento se disponível)\n"
-        "- Diferenciais ou destaques relevantes\n\n"
-        "Escreva apenas o parágrafo, sem títulos, listas ou explicações extras. "
-        "Se não encontrar informações confiáveis, escreva apenas: "
-        "\"Não foram encontradas informações públicas suficientes sobre esta empresa.\""
-    )
+    prompt = _build_prompt(company_name)
 
     try:
         response = await client.messages.create(
             model="claude-sonnet-4-20250514",
-            max_tokens=400,
+            max_tokens=500,
             tools=[{"type": "web_search_20250305", "name": "web_search"}],
             messages=[{"role": "user", "content": prompt}],
         )
 
-        # Extrai o texto da resposta (pode ter tool_use blocks intermediários)
+        # Extrai texto final (ignora tool_use blocks)
         text_parts = [
             block.text for block in response.content
             if hasattr(block, "text") and block.text
         ]
-        result = " ".join(text_parts).strip()
+        raw = " ".join(text_parts).strip()
+        result = _parse_json(raw)
 
         if not result:
-            result = "Não foram encontradas informações públicas suficientes sobre esta empresa."
+            result = _EMPTY.copy()
+            result["descricao"] = raw or "Não foram encontradas informações públicas suficientes."
 
         _cache_set(company_name, result)
-        logger.info(f"[CompanyIntel] ✅ {company_name} — {len(result)} chars")
+        logger.info(
+            f"[CompanyIntel] ✅ {company_name} — "
+            f"func={result.get('funcionarios')} porte={result.get('porte')}"
+        )
         return result
 
     except Exception as e:
-        logger.warning(f"[CompanyIntel] Falha na pesquisa de '{company_name}': {e}")
-        # Fallback: tenta sem web_search (apenas conhecimento do modelo)
+        logger.warning(f"[CompanyIntel] Falha com web_search para '{company_name}': {e}")
+
+        # Fallback: Haiku sem web search (conhecimento do modelo)
         try:
             fallback = await client.messages.create(
                 model="claude-haiku-4-5-20251001",
-                max_tokens=300,
+                max_tokens=400,
                 messages=[{"role": "user", "content": prompt}],
             )
-            result = fallback.content[0].text.strip()
+            raw = fallback.content[0].text.strip()
+            result = _parse_json(raw)
+            if not result:
+                result = _EMPTY.copy()
+                result["descricao"] = raw or ""
             _cache_set(company_name, result)
             return result
         except Exception as e2:
             logger.error(f"[CompanyIntel] Fallback também falhou: {e2}")
-            return ""
+            return _EMPTY.copy()

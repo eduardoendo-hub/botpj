@@ -80,6 +80,7 @@ const ICON_PATHS = {
   "flame":          `<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>`,
   "help-circle":    `<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>`,
   "log-out":        `<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>`,
+  "map-pin":        `<path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/>`,
   "message-square": `<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>`,
   "messages":       `<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>`,
   "phone-call":     `<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.57 3.28 2 2 0 0 1 3.55 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>`,
@@ -484,13 +485,13 @@ const Drawer = ({ lead, onClose, basePath }) => {
 
   const loadCompanyIntel = useCallback(async () => {
     if (companyIntel !== null || loadingCI) return;
-    if (!lead.empresa || lead.empresa === "—") { setCI(""); return; }
+    if (!lead.empresa || lead.empresa === "—") { setCI({}); return; }
     setLCI(true);
     try {
       const res  = await fetch(`${basePath}/company-intel/${encodeURIComponent(lead.telefone)}`);
-      const json = await res.json();
-      setCI(json.intel || "");
-    } catch(e) { setCI(""); }
+      const data = await res.json();
+      setCI(data);
+    } catch(e) { setCI({}); }
     finally    { setLCI(false); }
   }, [companyIntel, loadingCI, lead, basePath]);
 
@@ -679,10 +680,9 @@ const Drawer = ({ lead, onClose, basePath }) => {
                     borderLeft:"3px solid rgba(20,184,166,.6)",
                     borderRadius:"0 10px 10px 0",
                     padding:"14px 16px",
-                    position:"relative",
                   }}>
                     {/* Cabeçalho com nome da empresa */}
-                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,flexWrap:"wrap"}}>
                       <div style={{
                         background:"rgba(20,184,166,.15)",
                         border:"1px solid rgba(20,184,166,.3)",
@@ -697,28 +697,90 @@ const Drawer = ({ lead, onClose, basePath }) => {
                       <span style={{fontSize:10,color:C.txt3}}>· Pesquisa via IA</span>
                     </div>
 
-                    {/* Conteúdo */}
-                    {loadingCI && (
+                    {/* Loading */}
+                    {(loadingCI || companyIntel === null) && (
                       <div style={{display:"flex",alignItems:"center",gap:8,color:C.txt3,fontSize:12}}>
                         <div className="pulse" style={{width:8,height:8,borderRadius:"50%",background:"#2dd4bf"}} />
                         Pesquisando informações da empresa…
                       </div>
                     )}
-                    {!loadingCI && companyIntel === "" && (
+
+                    {/* Resultado estruturado */}
+                    {!loadingCI && companyIntel && typeof companyIntel === "object" && (() => {
+                      const ci = companyIntel;
+                      const hasData = ci.descricao || ci.funcionarios || ci.setor || ci.cidade;
+                      if (!hasData) return (
+                        <p style={{margin:0,fontSize:12,color:C.txt3,fontStyle:"italic"}}>
+                          Nenhuma informação encontrada para esta empresa.
+                        </p>
+                      );
+                      return (
+                        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                          {/* Badges de métricas */}
+                          {(ci.funcionarios || ci.setor || ci.cidade || ci.porte) && (
+                            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                              {ci.funcionarios && ci.funcionarios !== "Não identificado" && (
+                                <div style={{
+                                  display:"inline-flex",alignItems:"center",gap:5,
+                                  background:"rgba(99,102,241,.18)",
+                                  border:"1px solid rgba(99,102,241,.3)",
+                                  borderRadius:8, padding:"4px 10px",
+                                }}>
+                                  <Icon name="users" size={11} style={{color:"#818cf8"}} />
+                                  <span style={{fontSize:12,fontWeight:700,color:"#818cf8"}}>{ci.funcionarios}</span>
+                                  <span style={{fontSize:10,color:C.txt3}}>funcionários</span>
+                                </div>
+                              )}
+                              {ci.funcionarios === "Não identificado" && (
+                                <div style={{
+                                  display:"inline-flex",alignItems:"center",gap:5,
+                                  background:"rgba(100,116,139,.12)",
+                                  border:"1px solid rgba(100,116,139,.2)",
+                                  borderRadius:8, padding:"4px 10px",
+                                }}>
+                                  <Icon name="users" size={11} style={{color:C.txt3}} />
+                                  <span style={{fontSize:11,color:C.txt3}}>Funcionários não identificados</span>
+                                </div>
+                              )}
+                              {ci.setor && (
+                                <div style={{
+                                  display:"inline-flex",alignItems:"center",gap:5,
+                                  background:"rgba(245,158,11,.12)",
+                                  border:"1px solid rgba(245,158,11,.25)",
+                                  borderRadius:8, padding:"4px 10px",
+                                }}>
+                                  <Icon name="zap" size={11} style={{color:"#fbbf24"}} />
+                                  <span style={{fontSize:11,fontWeight:600,color:"#fbbf24"}}>{ci.setor}</span>
+                                </div>
+                              )}
+                              {ci.cidade && (
+                                <div style={{
+                                  display:"inline-flex",alignItems:"center",gap:5,
+                                  background:"rgba(59,130,246,.12)",
+                                  border:"1px solid rgba(59,130,246,.25)",
+                                  borderRadius:8, padding:"4px 10px",
+                                }}>
+                                  <Icon name="map-pin" size={11} style={{color:"#60a5fa"}} />
+                                  <span style={{fontSize:11,fontWeight:600,color:"#60a5fa"}}>{ci.cidade}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {/* Descrição */}
+                          {ci.descricao && (
+                            <p style={{margin:0,fontSize:13,color:C.txt2,lineHeight:1.65}}>
+                              {ci.descricao}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Estado vazio */}
+                    {!loadingCI && companyIntel && typeof companyIntel === "object" && !companyIntel.descricao && !companyIntel.funcionarios && !companyIntel.setor && (
                       <p style={{margin:0,fontSize:12,color:C.txt3,fontStyle:"italic"}}>
                         Nenhuma informação encontrada para esta empresa.
                       </p>
-                    )}
-                    {!loadingCI && companyIntel && (
-                      <p style={{margin:0,fontSize:13,color:C.txt2,lineHeight:1.65}}>
-                        {companyIntel}
-                      </p>
-                    )}
-                    {!loadingCI && companyIntel === null && (
-                      <div style={{display:"flex",alignItems:"center",gap:8,color:C.txt3,fontSize:12}}>
-                        <div className="pulse" style={{width:8,height:8,borderRadius:"50%",background:"#2dd4bf"}} />
-                        Carregando…
-                      </div>
                     )}
                   </div>
                 </div>
