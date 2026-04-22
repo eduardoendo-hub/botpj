@@ -64,6 +64,13 @@ async def get_deal_info(phone: str) -> Dict:
             stage = deal.get("deal_stage", {})
             etapa = stage.get("name", "—") if isinstance(stage, dict) else str(stage or "—")
 
+            # Se deal_lost_reason estiver preenchido e win=False → negociação foi perdida
+            # independente da etapa física no funil
+            lost_reason = deal.get("deal_lost_reason")
+            if lost_reason and not deal.get("win"):
+                reason_name = lost_reason.get("name", "") if isinstance(lost_reason, dict) else str(lost_reason)
+                etapa = f"Perdido — {reason_name}" if reason_name else "Perdido"
+
             user = deal.get("user", {}) or {}
             consultor = user.get("name", "") if isinstance(user, dict) else ""
 
@@ -138,6 +145,12 @@ async def get_deal_full_info(phone: str) -> Dict:
             # Etapa atual
             stage = deal.get("deal_stage", {})
             etapa = stage.get("name", "—") if isinstance(stage, dict) else str(stage or "—")
+
+            # Se deal_lost_reason estiver preenchido e win=False → perdido
+            lost_reason = deal.get("deal_lost_reason")
+            if lost_reason and not deal.get("win"):
+                reason_name = lost_reason.get("name", "") if isinstance(lost_reason, dict) else str(lost_reason)
+                etapa = f"Perdido — {reason_name}" if reason_name else "Perdido"
 
             # Pipeline
             pipeline_obj = deal.get("deal_pipeline", {}) or {}

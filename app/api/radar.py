@@ -199,7 +199,7 @@ def _normalize_lead(lead: dict, session: dict | None) -> dict:
         "crm_consultor":    lead.get("_crm_consultor") or "",
         "crm_valor":        lead.get("_crm_valor") or 0.0,
         "score":            int(lead.get("score") or 0),
-        "status":           _map_status(lead.get("stage") or "novo", lead.get("status_conversa")),
+        "status":           _map_status(lead.get("stage") or "novo", lead.get("status_conversa"), lead.get("_crm_etapa")),
         "proximo_passo":    lead.get("proximo_passo") or "—",
         "quem":             quem,
         "sla_min":          sla_min,
@@ -229,9 +229,16 @@ def _normalize_lead(lead: dict, session: dict | None) -> dict:
     }
 
 
-def _map_status(stage: str, status_conversa: str | None) -> str:
+def _map_status(stage: str, status_conversa: str | None, crm_etapa: str | None = None) -> str:
+    # Etapas do CRM que devem ter prioridade sobre o status local
+    _CRM_OVERRIDE = {"Ganho", "Perdido", "Fechamento", "Em negociação", "Proposta enviada"}
+
+    if crm_etapa and crm_etapa in _CRM_OVERRIDE:
+        return crm_etapa
+
     if status_conversa:
         return status_conversa
+
     return {
         "novo":        "Novo",
         "qualificado": "Qualificado",
