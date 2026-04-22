@@ -148,6 +148,16 @@ def _classify_complexity(message: str) -> str:
         "explique", "explica", "detalhe", "diferença", "comparar",
         "qual melhor", "customizar", "personalizar", "in company",
         "turma fechada", "exclusivo", "quantas pessoas",
+        # B2B / corporativo
+        "equipe", "funcionários", "colaboradores", "empresa", "corporativo",
+        "treinamento para", "curso para", "programa de", "proposta",
+        "in-company", "fechado", "exclusiva", "exclusivo",
+        # Locação
+        "locação", "alugar", "aluguel", "sala para", "auditório", "laboratório",
+        "estúdio", "espaço para", "evento",
+        # Consultoria
+        "não sei", "não tenho certeza", "qual seria", "o que recomendam",
+        "me ajudem a entender", "diagnóstico",
     ]):
         return "complex"
 
@@ -307,32 +317,71 @@ def _clean_whatsapp(text: str) -> str:
 def _detect_escalation_needed(text: str) -> bool:
     text_lower = text.lower()
 
-    signals_a = [
-        "não tenho essa informação",
-        "não possuo essa informação",
-        "precisaria verificar",
+    # Sinais de redirecionamento explícito para humano
+    signals_redirect = [
         "melhor falar com um consultor",
         "vou encaminhar para",
+        "encaminharei para",
+        "encaminhar seus dados",
+        "vou passar seus dados",
+        "vou passar suas informações",
         "um especialista irá",
+        "um especialista vai",
         "nossa equipe irá",
+        "nossa equipe vai",
+        "nosso time vai",
+        "nosso time irá",
+        "nosso consultor vai",
+        "alguém da nossa equipe",
+        "alguém do nosso time",
+        "transferindo para",
+        "transferir para",
+        "transferido para",
     ]
 
-    signals_b = [
+    # Sinais de encerramento com registro — coletou os dados e vai acionar humano
+    signals_closing = [
         "anotei todos os seus dados",
         "já tenho todos os seus dados",
         "registrei todos os seus dados",
+        "registrei sua solicitação",
+        "registrei suas informações",
+        "recebi todos os dados",
         "tenho todas as informações",
+        "tenho os dados necessários",
         "em breve um consultor entrará em contato",
         "em breve nossa equipe entrará em contato",
+        "em breve alguém entrará em contato",
         "nosso consultor entrará em contato",
+        "nossa equipe entrará em contato",
+        "nosso time entrará em contato",
+        "entrar em contato com você",
+        "retornar com você em breve",
+        "retornaremos em breve",
+        "receberá um contato",
+        "enviarei uma proposta",
+        "enviaremos uma proposta",
+        "preparar uma proposta",
+        "elaborar uma proposta",
+        "nosso consultor vai montar",
+        "nossa equipe comercial",
     ]
 
-    for signal in signals_a:
-        if signal in text_lower:
-            return True
+    # Sinais de limitação — bot não tem a info e deve escalar
+    signals_limit = [
+        "não tenho essa informação",
+        "não possuo essa informação",
+        "não tenho acesso a essa",
+        "precisaria verificar",
+        "não consigo confirmar",
+        "não posso confirmar",
+    ]
 
-    # Qualquer signal_b é suficiente — são frases específicas de encerramento
-    if any(s in text_lower for s in signals_b):
+    if any(s in text_lower for s in signals_redirect):
+        return True
+    if any(s in text_lower for s in signals_closing):
+        return True
+    if any(s in text_lower for s in signals_limit):
         return True
 
     return False
@@ -594,6 +643,11 @@ def _build_system_prompt(
         "se o lead mencionar espaço/evento/sala → trilha de locação | "
         "se for para equipe/empresa/turma fechada → qualificação B2B completa | "
         "faça uma pergunta por vez | nunca termine sem indicar próximo passo."
+        "\n\nREGRAS DE ESCALAÇÃO — use EXATAMENTE uma dessas frases quando for transferir:"
+        "\n• Para trilhas B (corporativo), C (consultoria) e D (locação): após coletar nome, empresa e necessidade principal, encerre com 'em breve um consultor entrará em contato' ou 'nossa equipe comercial entrará em contato'."
+        "\n• Se o lead pedir proposta, orçamento ou reunião: use 'vou encaminhar para um consultor especializado'."
+        "\n• Se não souber a resposta: use 'não tenho essa informação, mas nosso consultor poderá te ajudar'."
+        "\n• Para trilha A (turma aberta individual): NÃO escale — forneça as informações disponíveis e indique o link/forma de inscrição."
     )
 
     if history_summary:
