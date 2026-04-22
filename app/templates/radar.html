@@ -35,6 +35,9 @@
   .tr-hover:hover { background: rgba(99,102,241,.1) !important; }
   .tr-sel         { background: rgba(99,102,241,.2) !important; }
   .tr-sla         { background: rgba(239,68,68,.09); }
+  .tr-perdido     { background: rgba(100,116,139,.10) !important; opacity: 0.55; }
+  .tr-perdido td  { text-decoration: line-through; text-decoration-color: rgba(148,163,184,.4); }
+  .tr-perdido:hover { opacity: 0.75 !important; }
 </style>
 </head>
 <body>
@@ -1070,6 +1073,7 @@ function Radar() {
   const [sortCol, setSortCol]               = useState("hora");
   const [sortDir, setSortDir]               = useState("desc");
   const [filters, setFilters]               = useState({ temp:"", quem:"", score:"" });
+  const [hidePerdido, setHidePerdido]       = useState(false);
   const [lastUpd, setLastUpd]               = useState(null);
   const [dateFilter, setDateFilter]         = useState(() => todayBRT());
   const [availableDates, setAvailableDates] = useState([]);
@@ -1136,6 +1140,7 @@ function Radar() {
     if (filters.quem)               data = data.filter(l => l.quem===filters.quem);
     if (filters.score==="alto")     data = data.filter(l => l.score>=70);
     if (filters.score==="baixo")    data = data.filter(l => l.score<50);
+    if (hidePerdido)                data = data.filter(l => !(l.status||"").startsWith("Perdido"));
     return [...data].sort((a,b) => {
       let av = a[sortCol]??"", bv = b[sortCol]??"";
       if (typeof av==="string") { av=av.toLowerCase(); bv=bv.toLowerCase(); }
@@ -1143,10 +1148,11 @@ function Radar() {
       if (av>bv) return sortDir==="asc"?1:-1;
       return 0;
     });
-  }, [leads, search, filters, sortCol, sortDir]);
+  }, [leads, search, filters, hidePerdido, sortCol, sortDir]);
 
-  const activeFilters = Object.values(filters).filter(Boolean).length;
-  const isToday       = dateFilter === todayBRT();
+  const activeFilters  = Object.values(filters).filter(Boolean).length;
+  const isToday        = dateFilter === todayBRT();
+  const perdidoCount   = useMemo(() => leads.filter(l => (l.status||"").startsWith("Perdido")).length, [leads]);
 
   // ── Estilos reutilizáveis ──
   const card = { background:C.cardBg, border:`1px solid ${C.border}`, borderRadius:12 };
@@ -1295,7 +1301,35 @@ function Radar() {
               {loading ? "Carregando…" : `${filtered.length} lead${filtered.length!==1?"s":""}`}
               {!loading && activeFilters>0 && <span style={{color:C.txt3,fontWeight:400}}> filtrados</span>}
             </span>
-            <span style={{fontSize:11,color:C.txt3}}>Clique para ver detalhes e conversa</span>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              {perdidoCount > 0 && (
+                <button
+                  onClick={() => setHidePerdido(h => !h)}
+                  style={{
+                    display:"flex", alignItems:"center", gap:5,
+                    fontSize:11, fontWeight:600, cursor:"pointer",
+                    padding:"3px 10px", borderRadius:6,
+                    border: hidePerdido
+                      ? "1px solid rgba(148,163,184,.5)"
+                      : "1px solid rgba(239,68,68,.35)",
+                    background: hidePerdido
+                      ? "rgba(100,116,139,.15)"
+                      : "rgba(239,68,68,.08)",
+                    color: hidePerdido ? C.txt3 : "#f87171",
+                    transition:"all .15s",
+                  }}>
+                  <span style={{
+                    width:7, height:7, borderRadius:"50%",
+                    background: hidePerdido ? "#64748b" : "#f87171",
+                    flexShrink:0,
+                  }}/>
+                  {hidePerdido
+                    ? `Mostrar perdidos (${perdidoCount})`
+                    : `Ocultar perdidos (${perdidoCount})`}
+                </button>
+              )}
+              <span style={{fontSize:11,color:C.txt3}}>Clique para ver detalhes e conversa</span>
+            </div>
           </div>
 
           <div style={{overflowX:"auto"}}>
@@ -1325,13 +1359,14 @@ function Radar() {
                     <p style={{color:C.txt3,margin:0,fontSize:13}}>Nenhum lead em {formatDateLabel(dateFilter).toLowerCase()}.</p>
                   </td></tr>
                 ) : filtered.map((lead, idx) => {
-                  const temp  = getTempConfig(lead.temp);
-                  const frl   = farolConfig(lead.farol);
-                  const sSt   = getStatusStyle(lead.status);
-                  const isSel = selected?.id === lead.id;
+                  const temp      = getTempConfig(lead.temp);
+                  const frl       = farolConfig(lead.farol);
+                  const sSt       = getStatusStyle(lead.status);
+                  const isSel     = selected?.id === lead.id;
+                  const isPerdido = (lead.status||"").startsWith("Perdido");
                   return (
                     <tr key={lead.id}
-                      className={`tr-hover ${isSel?"tr-sel":""} ${isToday&&lead.farol==="VERMELHO"?"tr-sla":""}`}
+                      className={`tr-hover ${isSel?"tr-sel":""} ${isToday&&lead.farol==="VERMELHO"&&!isPerdido?"tr-sla":""} ${isPerdido?"tr-perdido":""}`}
                       onClick={() => setSelected(isSel ? null : lead)}
                       style={{cursor:"pointer",borderBottom:`1px solid ${C.borderSm}`,transition:"background .12s"}}>
                       <td style={tdStyle}>
