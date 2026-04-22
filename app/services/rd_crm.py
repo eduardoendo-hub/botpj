@@ -64,12 +64,14 @@ async def get_deal_info(phone: str) -> Dict:
             stage = deal.get("deal_stage", {})
             etapa = stage.get("name", "—") if isinstance(stage, dict) else str(stage or "—")
 
-            # Se deal_lost_reason estiver preenchido e win=False → negociação foi perdida
-            # independente da etapa física no funil
+            # etapa_status: status derivado para exibição na coluna Status do Radar.
+            # Quando deal_lost_reason estiver preenchido e win=False → "Perdido — motivo".
+            # etapa permanece com o nome real da fase do pipeline (ex: "Fechamento").
+            etapa_status = etapa
             lost_reason = deal.get("deal_lost_reason")
             if lost_reason and not deal.get("win"):
                 reason_name = lost_reason.get("name", "") if isinstance(lost_reason, dict) else str(lost_reason)
-                etapa = f"Perdido — {reason_name}" if reason_name else "Perdido"
+                etapa_status = f"Perdido — {reason_name}" if reason_name else "Perdido"
 
             user = deal.get("user", {}) or {}
             consultor = user.get("name", "") if isinstance(user, dict) else ""
@@ -82,9 +84,10 @@ async def get_deal_info(phone: str) -> Dict:
             deal_name     = deal.get("name") or ""
             deal_products = deal.get("deal_products") or []
             deal_id = deal.get("_id") or deal.get("id") or ""
-            logger.info(f"[RD CRM] {phone_clean} → {etapa} | {consultor} | R${valor:.2f} | {deal_name} | id={deal_id}")
+            logger.info(f"[RD CRM] {phone_clean} → funil={etapa} | status={etapa_status} | {consultor} | R${valor:.2f} | id={deal_id}")
             return {
-                "etapa":         etapa,
+                "etapa":         etapa,         # fase real do pipeline (para coluna Funil)
+                "etapa_status":  etapa_status,  # status derivado (para coluna Status)
                 "consultor":     consultor,
                 "valor":         valor,
                 "pipeline":      pipeline,

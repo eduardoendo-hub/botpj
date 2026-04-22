@@ -199,7 +199,7 @@ def _normalize_lead(lead: dict, session: dict | None) -> dict:
         "crm_consultor":    lead.get("_crm_consultor") or "",
         "crm_valor":        lead.get("_crm_valor") or 0.0,
         "score":            int(lead.get("score") or 0),
-        "status":           _map_status(lead.get("stage") or "novo", lead.get("status_conversa"), lead.get("_crm_etapa")),
+        "status":           _map_status(lead.get("stage") or "novo", lead.get("status_conversa"), lead.get("_crm_etapa_status") or lead.get("_crm_etapa")),
         "proximo_passo":    lead.get("proximo_passo") or "—",
         "quem":             quem,
         "sla_min":          sla_min,
@@ -230,11 +230,13 @@ def _normalize_lead(lead: dict, session: dict | None) -> dict:
 
 
 def _map_status(stage: str, status_conversa: str | None, crm_etapa: str | None = None) -> str:
-    # Etapas do CRM que devem ter prioridade sobre o status local
+    # Etapas/status do CRM que têm prioridade sobre o status local da conversa
     _CRM_OVERRIDE = {"Ganho", "Perdido", "Fechamento", "Em negociação", "Proposta enviada"}
 
-    if crm_etapa and crm_etapa in _CRM_OVERRIDE:
-        return crm_etapa
+    if crm_etapa:
+        # Match exato OU strings que começam com "Perdido —" (com motivo)
+        if crm_etapa in _CRM_OVERRIDE or crm_etapa.startswith("Perdido"):
+            return crm_etapa
 
     if status_conversa:
         return status_conversa
@@ -408,7 +410,8 @@ async def radar_data(
 
     # Enriquece leads com dados do CRM antes de classificar o produto
     for lead, session, crm in zip(leads_do_dia, sessions_list, crm_list):
-        lead["_crm_etapa"]         = crm.get("etapa", "—")
+        lead["_crm_etapa"]         = crm.get("etapa", "—")          # fase real do pipeline
+        lead["_crm_etapa_status"]  = crm.get("etapa_status", crm.get("etapa", "—"))  # status derivado (inclui Perdido)
         lead["_crm_consultor"]     = crm.get("consultor", "")
         lead["_crm_valor"]         = crm.get("valor", 0.0)
         lead["_crm_pipeline"]      = crm.get("pipeline", "")
