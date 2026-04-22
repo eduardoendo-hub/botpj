@@ -378,6 +378,42 @@ async def get_deals_by_date(date_iso: str, pipeline_id: str) -> List[Dict]:
         return []
 
 
+async def get_deals_updated_by_date(date_iso: str, pipeline_id: str) -> List[Dict]:
+    """
+    Retorna deals de um pipeline atualizados em date_iso (YYYY-MM-DD).
+    Usa a API v1 sem created_at_period, que filtra por updated_at.
+    Usado para detectar leads antigos que tiveram movimentação no CRM hoje.
+    """
+    if not settings.rd_crm_token:
+        return []
+
+    start = f"{date_iso}T00:00:00"
+    end   = f"{date_iso}T23:59:59"
+
+    query = {
+        "token":            settings.rd_crm_token,
+        "start_date":       start,
+        "end_date":         end,
+        "deal_pipeline_id": pipeline_id,
+        "limit":            200,
+        "page":             1,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.get(f"{_BASE}/deals", params=query)
+            if resp.status_code != 200:
+                logger.warning(f"[RD CRM sync updated] GET /deals retornou {resp.status_code}")
+                return []
+            data = resp.json()
+            deals = data if isinstance(data, list) else data.get("deals", [])
+            logger.info(f"[RD CRM sync updated] {len(deals)} deal(s) atualizados em {date_iso}")
+            return deals
+    except Exception as e:
+        logger.error(f"[RD CRM sync updated] Erro ao buscar deals: {e}")
+        return []
+
+
 async def _get_contact_phone_from_deal(client: httpx.AsyncClient, deal: Dict) -> tuple[str, str]:
     """
     Extrai (phone, contact_id) do deal.
@@ -496,27 +532,42 @@ async def _backfill_webhook_messages(phone: str, days: int = 3) -> None:
 
 async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
     """
-    Sincroniza oportunidades do funil pipeline_id criadas em date_iso
+    Sincroniza oportunidades do funil pipeline_id criadas OU atualizadas em date_iso
     com a tabela de leads interna.
 
     Para cada deal do CRM:
       - Extrai o telefone do contato associado
-      - Se o lead já existe na tabela → ignora (ou atualiza deal_id se faltando)
+      - Se o lead já existe na tabela → garante deal_id salvo e atualiza updated_at
+        se o deal foi movimentado hoje (para o lead aparecer no Radar de hoje)
       - Se não existe → cria o lead com source_channel='tallos_crm_sync'
       - Faz backfill das mensagens dos últimos 3 dias do webhook_logs
 
     Retorna o número de leads novos importados.
     """
-    from app.core.database import get_lead_by_phone, upsert_lead, upsert_bot_session
+    from app.core.database import get_lead_by_phone, upsert_lead, upsert_bot_session, get_db as _get_db
+    from datetime import datetime, timezone as _tz
 
     if not settings.rd_crm_token:
         return 0
 
-    deals = await get_deals_by_date(date_iso, pipeline_id)
+    # Busca deals criados E deals atualizados em date_iso
+    deals_created = await get_deals_by_date(date_iso, pipeline_id)
+    deals_updated = await get_deals_updated_by_date(date_iso, pipeline_id)
+
+    # Mescla, priorizando deals criados (sem duplicar pelo _id)
+    seen_ids: set = set()
+    deals: list = []
+    for d in deals_created + deals_updated:
+        did = d.get("_id") or d.get("id") or ""
+        if did not in seen_ids:
+            seen_ids.add(did)
+            deals.append(d)
+
     if not deals:
         return 0
 
     imported = 0
+    today_utc_prefix = date_iso  # "YYYY-MM-DD" para comparar com updated_at do CRM
 
     try:
         async with httpx.AsyncClient(timeout=15) as client:
@@ -538,10 +589,40 @@ async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
                 existing = await get_lead_by_phone(phone)
 
                 if existing:
-                    # Lead já existe — apenas garante que o deal_id está salvo
+                    # Lead já existe — garante deal_id e toca updated_at para hoje
+                    # se o deal foi movimentado hoje (para aparecer no Radar do dia correto)
+                    updates: dict = {}
                     if not existing.get("rd_crm_deal_id") and deal_id:
-                        await upsert_lead(phone, rd_crm_deal_id=deal_id)
-                        logger.debug(f"[RD CRM sync] deal_id atualizado para {phone}")
+                        updates["rd_crm_deal_id"] = deal_id
+
+                    # Verifica se o deal foi atualizado hoje no CRM
+                    deal_updated_at = deal.get("updated_at") or ""
+                    deal_updated_date = ""
+                    if deal_updated_at:
+                        try:
+                            from datetime import timedelta as _td
+                            dt = datetime.fromisoformat(deal_updated_at.replace("Z", "+00:00"))
+                            brt = _tz(offset=_td(hours=-3))
+                            deal_updated_date = dt.astimezone(brt).date().isoformat()
+                        except Exception:
+                            pass
+
+                    if deal_updated_date == date_iso:
+                        # Deal movido hoje no CRM → atualiza updated_at local para hoje
+                        now_utc = datetime.now(_tz.utc).strftime("%Y-%m-%d %H:%M:%S")
+                        _db = await _get_db()
+                        try:
+                            await _db.execute(
+                                "UPDATE leads SET updated_at=? WHERE phone_number=?",
+                                (now_utc, phone)
+                            )
+                            await _db.commit()
+                            logger.info(f"[RD CRM sync] updated_at tocado para {phone} (deal movido em {date_iso})")
+                        finally:
+                            await _db.close()
+
+                    if updates:
+                        await upsert_lead(phone, **updates)
                     continue
 
                 # Lead novo — importa do CRM

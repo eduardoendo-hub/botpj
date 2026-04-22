@@ -330,15 +330,15 @@ def _lead_updated_date_brt(lead: dict) -> str:
 def _lead_reference_date(lead: dict) -> str:
     """
     Data de referência do lead para exibição no Radar.
-    Regra: se o lead tem raw_form_data (veio de formulário), usa updated_at.
-           Caso contrário, usa created_at.
-    Isso garante que o lead apareça em um único dia, sempre o mais relevante.
+    Regra: usa updated_at se for mais recente que created_at (movimentação de CRM,
+           novo formulário, ou interação do bot). Caso contrário, usa created_at.
+    Isso garante que leads com atividade hoje apareçam no Radar de hoje.
     """
-    if lead.get("raw_form_data"):
-        d = _lead_updated_date_brt(lead)
-        if d:
-            return d
-    return _lead_date_brt(lead)
+    created = _lead_date_brt(lead)
+    updated = _lead_updated_date_brt(lead)
+    if updated and updated > created:
+        return updated
+    return created
 
 
 def _lead_matches_date(lead: dict, target_date_iso: str) -> bool:
