@@ -550,18 +550,10 @@ async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
     if not settings.rd_crm_token:
         return 0
 
-    # Busca deals criados E deals atualizados em date_iso
-    deals_created = await get_deals_by_date(date_iso, pipeline_id)
-    deals_updated = await get_deals_updated_by_date(date_iso, pipeline_id)
-
-    # Mescla, priorizando deals criados (sem duplicar pelo _id)
-    seen_ids: set = set()
-    deals: list = []
-    for d in deals_created + deals_updated:
-        did = d.get("_id") or d.get("id") or ""
-        if did not in seen_ids:
-            seen_ids.add(did)
-            deals.append(d)
+    # Busca apenas deals criados em date_iso
+    # (get_deals_updated_by_date foi removido pois a API v1 sem created_at_period
+    #  retorna todos os deals do pipeline, causando loop de emails)
+    deals = await get_deals_by_date(date_iso, pipeline_id)
 
     if not deals:
         return 0
