@@ -1227,7 +1227,7 @@ function Radar() {
             </div>
 
             {isToday && (
-              <button onClick={() => fetchData(dateFilter)} style={{
+              <button onClick={() => fetchData(dateFilter, true)} style={{
                 display:"flex", alignItems:"center", gap:5,
                 fontSize:11, fontWeight:700, color:"#818cf8",
                 background:"rgba(99,102,241,.15)", border:"1px solid rgba(99,102,241,.3)",
@@ -1267,50 +1267,6 @@ function Radar() {
           <KpiCard iconName="alert-circle"   label="Farol Vermelho" value={kpis.vermelho}    urgent={isToday && kpis.vermelho>0} />
           <KpiCard iconName="check-circle"   label="Qualificados"  value={kpis.qualificado} color="#34d399" />
           <KpiCard iconName="building-2"     label="Locação"       value={kpis.locacao}     color="#2dd4bf" />
-        </div>
-
-        {/* ── Filtros ── */}
-        <div style={{...card, padding:"10px 16px"}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-            <span style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:C.txt3,fontWeight:600}}>
-              <Icon name="filter" size={12} /> Filtros
-              {activeFilters > 0 && (
-                <span style={{background:"#6366f1",color:"#fff",borderRadius:"50%",
-                  width:16,height:16,display:"inline-flex",alignItems:"center",
-                  justifyContent:"center",fontSize:10,fontWeight:700}}>{activeFilters}</span>
-              )}
-            </span>
-            <div style={{width:1,height:16,background:C.border}} />
-
-            {["quente","morno","frio"].map(t => {
-              const cfg = getTempConfig(t);
-              return (
-                <FilterBtn key={t} active={filters.temp===t} onClick={()=>setFilter("temp",t)}>
-                  <Icon name={cfg.icon} size={10} style={{color:filters.temp===t?cfg.color:"inherit"}} />
-                  {cfg.label}
-                </FilterBtn>
-              );
-            })}
-
-            <div style={{width:1,height:16,background:C.border}} />
-            {[["bot","Bot"],["transferido","Transferido"],["consultor","Consultor"]].map(([v,l]) => (
-              <FilterBtn key={v} active={filters.quem===v} onClick={()=>setFilter("quem",v)}>{l}</FilterBtn>
-            ))}
-
-            <div style={{width:1,height:16,background:C.border}} />
-            {[["alto","Score 70+"],["baixo","Score <50"]].map(([v,l]) => (
-              <FilterBtn key={v} active={filters.score===v} onClick={()=>setFilter("score",v)}>{l}</FilterBtn>
-            ))}
-
-            {activeFilters > 0 && (
-              <button onClick={()=>setFilters({temp:"",quem:"",score:""})} style={{
-                marginLeft:"auto", display:"flex", alignItems:"center", gap:4,
-                fontSize:11, color:C.txt3, background:"transparent", border:"none", cursor:"pointer",
-              }}>
-                <Icon name="x" size={11} /> Limpar
-              </button>
-            )}
-          </div>
         </div>
 
         {/* ── Tabela ── */}
