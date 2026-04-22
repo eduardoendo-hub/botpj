@@ -74,7 +74,8 @@ async def get_deal_info(phone: str) -> Dict:
 
             deal_name     = deal.get("name") or ""
             deal_products = deal.get("deal_products") or []
-            logger.info(f"[RD CRM] {phone_clean} → {etapa} | {consultor} | R${valor:.2f} | {deal_name}")
+            deal_id = deal.get("_id") or deal.get("id") or ""
+            logger.info(f"[RD CRM] {phone_clean} → {etapa} | {consultor} | R${valor:.2f} | {deal_name} | id={deal_id}")
             return {
                 "etapa":         etapa,
                 "consultor":     consultor,
@@ -82,6 +83,7 @@ async def get_deal_info(phone: str) -> Dict:
                 "pipeline":      pipeline,
                 "deal_name":     deal_name,
                 "deal_products": deal_products,
+                "deal_id":       deal_id,
             }
 
     except httpx.TimeoutException:

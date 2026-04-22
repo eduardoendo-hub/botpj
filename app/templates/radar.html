@@ -548,14 +548,33 @@ const Drawer = ({ lead, onClose, basePath }) => {
                 <Icon name="building-2" size={11} />{lead.empresa}
               </div>
             </div>
-            <button onClick={onClose} style={{
-              color:C.txt3, border:"none", background:"transparent",
-              cursor:"pointer", padding:"4px 6px", borderRadius:6,
-            }}
-            onMouseEnter={e=>e.currentTarget.style.background="rgba(148,163,184,.1)"}
-            onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-              <Icon name="x" size={17} />
-            </button>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              {lead.rd_deal_id && (
+                <a href={`https://crm.rdstation.com/app/deals/${lead.rd_deal_id}`}
+                  target="_blank" rel="noopener noreferrer"
+                  title="Ver deal no RD CRM"
+                  style={{
+                    display:"flex", alignItems:"center", gap:4,
+                    fontSize:11, fontWeight:700, color:"#818cf8",
+                    background:"rgba(99,102,241,.15)", border:"1px solid rgba(99,102,241,.3)",
+                    padding:"5px 10px", borderRadius:7, textDecoration:"none",
+                    whiteSpace:"nowrap",
+                  }}
+                  onMouseEnter={e=>e.currentTarget.style.background="rgba(99,102,241,.3)"}
+                  onMouseLeave={e=>e.currentTarget.style.background="rgba(99,102,241,.15)"}
+                >
+                  <Icon name="arrow-up-right" size={12} /> RD CRM
+                </a>
+              )}
+              <button onClick={onClose} style={{
+                color:C.txt3, border:"none", background:"transparent",
+                cursor:"pointer", padding:"4px 6px", borderRadius:6,
+              }}
+              onMouseEnter={e=>e.currentTarget.style.background="rgba(148,163,184,.1)"}
+              onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                <Icon name="x" size={17} />
+              </button>
+            </div>
           </div>
 
           {/* Abas */}

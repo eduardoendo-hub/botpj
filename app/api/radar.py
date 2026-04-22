@@ -225,6 +225,7 @@ def _normalize_lead(lead: dict, session: dict | None) -> dict:
         "farol_acao":       lead.get("_farol_acao") or "",
         "farol_intervencao": lead.get("_farol_intervencao") or "",
         "farol_resumo":     lead.get("_farol_resumo") or "",
+        "rd_deal_id":       lead.get("_crm_deal_id") or "",
     }
 
 
@@ -406,6 +407,7 @@ async def radar_data(
         lead["_crm_pipeline"]      = crm.get("pipeline", "")
         lead["_crm_deal_name"]     = crm.get("deal_name", "")
         lead["_crm_deal_products"] = crm.get("deal_products", [])
+        lead["_crm_deal_id"]       = crm.get("deal_id", "")
         lead["_session"]           = dict(session) if session else None
 
     # Busca últimas mensagens de cada lead para alimentar o classificador.

@@ -11,6 +11,7 @@ import {
 const LEADS = [
   {
     id: 1, hora: "08:14", nome: "Fernanda Lima", empresa: "Bradesco Seguros",
+    rd_deal_id: "69e8c8266e1b130013565a1a",
     empresa_tier: "estrategica", telefone: "11 98765-4321",
     tema: "Liderança e Gestão", tipo: "In Company", formato: "Presencial",
     temp: "quente", score: 92, status: "Em atendimento humano",
@@ -333,9 +334,22 @@ const LeadDetailDrawer = ({ lead, onClose }) => {
               <Building2 size={12} />{lead.empresa}
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
-            <X size={17} />
-          </button>
+          <div className="flex items-center gap-1">
+            {lead.rd_deal_id && (
+              <a
+                href={`https://crm.rdstation.com/app/deals/${lead.rd_deal_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Ver deal no RD CRM"
+                className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 px-2.5 py-1.5 rounded-lg transition-colors"
+              >
+                <ArrowUpRight size={13} /> RD CRM
+              </a>
+            )}
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors ml-1">
+              <X size={17} />
+            </button>
+          </div>
         </div>
 
         <div className="p-5 space-y-5">
