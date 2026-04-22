@@ -3,18 +3,20 @@
 Script de testes automatizados — Bot SDR PJ
 Executa cenários nas 4 trilhas e gera relatório HTML.
 
-Uso no servidor:
+Uso no servidor (sempre com o venv do projeto):
     cd /opt/bot-sdr-pj
-    python3 tests/run_scenarios.py
+    venv/bin/python3 tests/run_scenarios.py
 
-Uso local (apontando para o servidor):
-    python3 tests/run_scenarios.py --base-url https://seudominio.com/pj
+Rodar apenas um cenário específico:
+    venv/bin/python3 tests/run_scenarios.py --cenario B1
+
+Apontando para outro servidor:
+    venv/bin/python3 tests/run_scenarios.py --base-url https://dominio.com/pj
 """
 
 import asyncio
 import argparse
 import json
-import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -22,10 +24,9 @@ from pathlib import Path
 try:
     import httpx
 except ImportError:
-    print("Instalando httpx...")
-    import subprocess
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "httpx", "--break-system-packages", "-q"])
-    import httpx
+    print("❌ httpx não encontrado. Execute com o venv do projeto:")
+    print("   venv/bin/python3 tests/run_scenarios.py")
+    sys.exit(1)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CENÁRIOS DE TESTE
@@ -400,17 +401,32 @@ class BotTester:
         self.results: list[dict] = []
 
     async def clear(self, phone: str) -> None:
-        async with httpx.AsyncClient(timeout=15) as client:
-            await client.post(f"{self.base_url}/test/clear", params={"phone": phone})
-            await client.post(f"{self.base_url}/test/reactivate", params={"phone": phone})
+        async with httpx.AsyncClient(timeout=20) as client:
+            try:
+                await client.post(f"{self.base_url}/test/clear", params={"phone": phone})
+                await client.post(f"{self.base_url}/test/reactivate", params={"phone": phone})
+            except Exception as e:
+                print(f"         ⚠️  Aviso ao limpar histórico: {e}")
 
     async def send(self, phone: str, name: str, message: str) -> dict:
-        async with httpx.AsyncClient(timeout=60) as client:
-            res = await client.post(
-                f"{self.base_url}/test/send",
-                json={"message": message, "phone": phone, "name": name},
-            )
-            return res.json()
+        """Envia mensagem com retry automático (até 3 tentativas)."""
+        for tentativa in range(1, 4):
+            try:
+                async with httpx.AsyncClient(timeout=120) as client:
+                    res = await client.post(
+                        f"{self.base_url}/test/send",
+                        json={"message": message, "phone": phone, "name": name},
+                    )
+                    res.raise_for_status()
+                    return res.json()
+            except httpx.TimeoutException:
+                if tentativa < 3:
+                    print(f"         ⏳ Timeout — tentativa {tentativa}/3, aguardando 5s...")
+                    await asyncio.sleep(5)
+                else:
+                    raise
+            except httpx.HTTPStatusError as e:
+                raise RuntimeError(f"HTTP {e.response.status_code}: {e.response.text[:200]}")
 
     def _check_keywords(self, response: str, keywords: list[str]) -> list[str]:
         found = []
@@ -464,7 +480,7 @@ class BotTester:
                 if esc:
                     escalated = True
 
-                await asyncio.sleep(1.5)  # pausa entre mensagens
+                await asyncio.sleep(2.5)  # pausa entre mensagens (IA pode demorar)
 
             except Exception as e:
                 error = str(e)
@@ -517,11 +533,31 @@ class BotTester:
         self.results.append(record)
         return record
 
+    async def check_connection(self) -> bool:
+        """Verifica se o bot está acessível antes de rodar os testes."""
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                res = await client.get(f"{self.base_url}/test/status")
+                data = res.json()
+                return data.get("ok", False)
+        except Exception as e:
+            print(f"❌ Não foi possível conectar ao bot em {self.base_url}")
+            print(f"   Erro: {e}")
+            print(f"   Verifique se o serviço está rodando: systemctl status bot-sdr-pj")
+            return False
+
     async def run_all(self) -> list[dict]:
         print(f"\n🤖 Bot SDR PJ — Testes Automatizados")
         print(f"   Base URL: {self.base_url}")
         print(f"   Cenários: {len(SCENARIOS)}")
         print(f"   Início: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n")
+
+        print("   Verificando conexão com o bot...")
+        ok = await self.check_connection()
+        if not ok:
+            print("   ❌ Bot inacessível — abortando testes.")
+            sys.exit(1)
+        print("   ✅ Bot online\n")
 
         for scenario in SCENARIOS:
             await self.run_scenario(scenario)
