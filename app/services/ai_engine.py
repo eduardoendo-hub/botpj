@@ -58,6 +58,12 @@ async def _get_system_prompt_cached() -> str:
     return prompt
 
 
+def invalidate_system_prompt_cache() -> None:
+    """Força reload do system prompt no próximo request (chamar após edição via admin)."""
+    global _SYSPROMPT_CACHE
+    _SYSPROMPT_CACHE = None
+
+
 def clear_cache():
     global _CACHE
     _CACHE = {}
@@ -365,13 +371,27 @@ def _detect_escalation_needed(text: str) -> bool:
         "elaborar uma proposta",
         "nosso consultor vai montar",
         "nossa equipe comercial",
+        # variações naturais que o bot usa
+        "nosso consultor poderá",
+        "nosso consultor pode te ajudar",
+        "nosso consultor pode ajudar",
+        "nossos consultores podem",
+        "nossos consultores vão",
+        "nossos consultores estão",
+        "um consultor especializado",
+        "consultor especializado poderá",
+        "equipe de locação",
+        "equipe especializada entrará",
+        "equipe especializada vai",
     ]
 
     # Sinais de limitação — bot não tem a info e deve escalar
     signals_limit = [
         "não tenho essa informação",
         "não possuo essa informação",
-        "não tenho acesso a essa",
+        "não tenho acesso",          # ampliado: pega "não tenho acesso às disponibilidades"
+        "não tenho os valores",
+        "não tenho as datas",
         "precisaria verificar",
         "não consigo confirmar",
         "não posso confirmar",
@@ -643,11 +663,12 @@ def _build_system_prompt(
         "se o lead mencionar espaço/evento/sala → trilha de locação | "
         "se for para equipe/empresa/turma fechada → qualificação B2B completa | "
         "faça uma pergunta por vez | nunca termine sem indicar próximo passo."
-        "\n\nREGRAS DE ESCALAÇÃO — use EXATAMENTE uma dessas frases quando for transferir:"
-        "\n• Para trilhas B (corporativo), C (consultoria) e D (locação): após coletar nome, empresa e necessidade principal, encerre com 'em breve um consultor entrará em contato' ou 'nossa equipe comercial entrará em contato'."
-        "\n• Se o lead pedir proposta, orçamento ou reunião: use 'vou encaminhar para um consultor especializado'."
-        "\n• Se não souber a resposta: use 'não tenho essa informação, mas nosso consultor poderá te ajudar'."
-        "\n• Para trilha A (turma aberta individual): NÃO escale — forneça as informações disponíveis e indique o link/forma de inscrição."
+        "\n\nREGRAS DE ESCALAÇÃO — siga rigorosamente:"
+        "\n• TRILHA A (turma aberta, 1-3 pessoas): NUNCA transfira para consultor. Responda com as informações da base de conhecimento, informe como se inscrever e indique o site. Mesmo sem saber preço ou data exata, diga que as informações estão disponíveis no site e convide para se inscrever — não mencione consultor."
+        "\n• TRILHA B (equipe/empresa/in company): colete nome, empresa e quantidade de pessoas. Após isso, use EXATAMENTE: 'em breve um consultor entrará em contato para montar a proposta'."
+        "\n• TRILHA C (consultoria/dúvida): após entender o problema, use EXATAMENTE: 'vou encaminhar para um consultor especializado que poderá fazer um diagnóstico'."
+        "\n• TRILHA D (locação): após confirmar que temos o espaço desejado, use EXATAMENTE: 'nosso consultor poderá confirmar disponibilidade e valores — em breve entrará em contato'."
+        "\n• Se não souber a resposta: use 'não tenho acesso a essa informação, mas nosso consultor poderá te ajudar'."
     )
 
     if history_summary:
