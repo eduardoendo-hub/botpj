@@ -464,13 +464,25 @@ async def _get_contact_phone_from_deal(client: httpx.AsyncClient, deal: Dict) ->
     # Empresa pode estar direto no deal (organização associada ao negócio)
     deal_empresa = _deal_org_name(deal)
 
+    # Se a empresa ainda não veio no deal resumido (listagem), busca o deal completo
+    # O endpoint GET /deals/{id} retorna o objeto organization aninhado com o nome
+    if not deal_empresa and deal_id:
+        try:
+            r_full = await client.get(f"{_BASE}/deals/{deal_id}", params={"token": settings.rd_crm_token})
+            if r_full.status_code == 200:
+                full_deal = r_full.json()
+                deal_empresa = _deal_org_name(full_deal)
+                logger.debug(f"[RD CRM] deal_empresa do deal completo: {deal_empresa!r}")
+        except Exception:
+            pass
+
     # 1. Tenta campo contacts embutido no deal
     contacts_raw = deal.get("contacts") or []
     if isinstance(contacts_raw, list) and contacts_raw:
         for c in contacts_raw:
             if isinstance(c, dict):
                 nome, empresa, cid = _extract_contact_info(c)
-                empresa = empresa or deal_empresa   # fallback: empresa do deal
+                empresa = empresa or deal_empresa
                 for ph in (c.get("phones") or []):
                     raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
                     normalized = _normalize_phone(raw)
@@ -483,7 +495,7 @@ async def _get_contact_phone_from_deal(client: httpx.AsyncClient, deal: Dict) ->
                     if r.status_code == 200:
                         contact = r.json()
                         nome, empresa, cid = _extract_contact_info(contact)
-                        empresa = empresa or deal_empresa   # fallback: empresa do deal
+                        empresa = empresa or deal_empresa
                         for ph in (contact.get("phones") or []):
                             raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
                             normalized = _normalize_phone(raw)
@@ -492,7 +504,7 @@ async def _get_contact_phone_from_deal(client: httpx.AsyncClient, deal: Dict) ->
                 except Exception:
                     pass
 
-    # 2. Fallback: GET /contacts?deal_id=
+    # 2. Fallback: GET /contacts?deal_id= (busca contato pelo telefone para garantir empresa)
     if deal_id:
         try:
             r = await client.get(
@@ -502,15 +514,40 @@ async def _get_contact_phone_from_deal(client: httpx.AsyncClient, deal: Dict) ->
             if r.status_code == 200:
                 data = r.json()
                 contacts = data.get("contacts", data) if isinstance(data, dict) else data
-                if isinstance(contacts, list) and contacts:
-                    c = contacts[0]
-                    nome, empresa, cid = _extract_contact_info(c)
-                    empresa = empresa or deal_empresa   # fallback: empresa do deal
-                    for ph in (c.get("phones") or []):
-                        raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
-                        normalized = _normalize_phone(raw)
-                        if normalized:
-                            return normalized, cid, nome, empresa
+                if isinstance(contacts, list):
+                    for c in contacts:
+                        nome, empresa, cid = _extract_contact_info(c)
+                        empresa = empresa or deal_empresa
+                        for ph in (c.get("phones") or []):
+                            raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
+                            normalized = _normalize_phone(raw)
+                            if normalized:
+                                return normalized, cid, nome, empresa
+        except Exception:
+            pass
+
+    # 3. Último recurso: busca contato diretamente pelo ID do deal se tiver deal_id
+    # O contato pode estar no campo user/contact_id do deal
+    if deal_id:
+        try:
+            # Tenta buscar contatos pelo contact_ids do deal completo
+            r_full = await client.get(f"{_BASE}/deals/{deal_id}", params={"token": settings.rd_crm_token})
+            if r_full.status_code == 200:
+                full_deal = r_full.json()
+                for cid_raw in (full_deal.get("contact_ids") or []):
+                    try:
+                        r_c = await client.get(f"{_BASE}/contacts/{cid_raw}", params={"token": settings.rd_crm_token})
+                        if r_c.status_code == 200:
+                            contact = r_c.json()
+                            nome, empresa, cid = _extract_contact_info(contact)
+                            empresa = empresa or _deal_org_name(full_deal)
+                            for ph in (contact.get("phones") or []):
+                                raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
+                                normalized = _normalize_phone(raw)
+                                if normalized:
+                                    return normalized, cid, nome, empresa
+                    except Exception:
+                        pass
         except Exception:
             pass
 
@@ -974,17 +1011,36 @@ async def _enrich_stale_leads(max_leads: int = 5) -> None:
         for row in rows:
             phone   = row["phone_number"]
             deal_id = row["rd_crm_deal_id"]
+            row_dict = dict(row)
             try:
-                combined = await _build_combined_transcript(client, deal_id, phone)
-                if not combined:
-                    continue
-                enriched = await enrich_lead_from_activity(phone, combined)
-                fields   = map_enriched_to_lead_fields(enriched)
-                insights = fields.pop("_insights", None)
-                row_dict = dict(row)
-                updates  = {k: v for k, v in fields.items() if v and not row_dict.get(k)}
-                if insights and not row_dict.get("crm_insights"):
-                    updates["crm_insights"] = insights
+                updates: dict = {}
+
+                # Passo 1: tenta pegar empresa direto do deal no CRM (mais confiável que o LLM)
+                if not row_dict.get("company") and deal_id:
+                    try:
+                        r = await client.get(f"{_BASE}/deals/{deal_id}", params={"token": settings.rd_crm_token})
+                        if r.status_code == 200:
+                            full_deal = r.json()
+                            empresa_crm = _deal_org_name(full_deal)
+                            if empresa_crm:
+                                updates["company"] = empresa_crm
+                                logger.info(f"[RD CRM backfill] {phone} empresa do deal: {empresa_crm!r}")
+                    except Exception:
+                        pass
+
+                # Passo 2: LLM para campos restantes (email, insights, trail, etc.)
+                if not row_dict.get("crm_insights") or not row_dict.get("email"):
+                    combined = await _build_combined_transcript(client, deal_id, phone)
+                    if combined:
+                        enriched = await enrich_lead_from_activity(phone, combined)
+                        fields   = map_enriched_to_lead_fields(enriched)
+                        insights = fields.pop("_insights", None)
+                        for k, v in fields.items():
+                            if v and not row_dict.get(k) and k not in updates:
+                                updates[k] = v
+                        if insights and not row_dict.get("crm_insights"):
+                            updates["crm_insights"] = insights
+
                 if updates:
                     await upsert_lead(phone, **updates)
                     logger.info(f"[RD CRM backfill] {phone} enriquecido: {list(updates.keys())}")
