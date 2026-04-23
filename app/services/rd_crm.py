@@ -544,6 +544,65 @@ async def _backfill_webhook_messages(phone: str, days: int = 3) -> None:
         logger.error(f"[RD CRM sync] Erro no backfill de mensagens para {phone}: {e}")
 
 
+def _extract_info_from_activity_text(text: str) -> dict:
+    """
+    Parseia o texto de uma atividade do CRM (transcript da conversa) buscando
+    pares pergunta→resposta para extrair empresa, email e nome.
+
+    Suporta dois formatos:
+      Formato 1: "[22/04/2026 13:28] Cliente: Spartan do Brasil"
+      Formato 2: "Qual é o nome da sua empresa?  Bot - ...  Spartan do Brasil  reply message"
+    """
+    import re as _re
+
+    extracted: dict = {}
+    if not text:
+        return extracted
+
+    _EMAIL_VAL  = _re.compile(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}")
+    _EMPRESA_Q  = _re.compile(r"nome da sua empresa|nome da empresa", _re.I)
+    _EMAIL_Q    = _re.compile(r"melhor e-mail|seu e-mail|seu email", _re.I)
+    _NOME_Q     = _re.compile(r"qual.*?seu nome\??|como.*?chama", _re.I)
+
+    # Formato 1: extrai linhas "Cliente: <resposta>" que seguem perguntas do Bot
+    lines = _re.split(r"\[[\d/]+ [\d:]+\]", text)
+    last_bot_question = ""
+    for segment in lines:
+        segment = segment.strip()
+        if segment.startswith("Bot:") or "Bot -" in segment:
+            last_bot_question = segment
+        elif segment.startswith("Cliente:") or "Cliente -" in segment:
+            answer = _re.sub(r"^(Cliente:|Cliente\s*-[^:]*:?)", "", segment).strip()
+            if not answer:
+                continue
+            if _EMPRESA_Q.search(last_bot_question) and "company" not in extracted:
+                extracted["company"] = answer
+            elif _EMAIL_Q.search(last_bot_question):
+                m = _EMAIL_VAL.search(answer)
+                if m and "email" not in extracted:
+                    extracted["email"] = m.group(0)
+            elif _NOME_Q.search(last_bot_question) and "contact_name" not in extracted:
+                extracted["contact_name"] = answer
+
+    # Formato 2 (texto corrido sem prefixos): busca pergunta→próxima resposta via split
+    if "company" not in extracted:
+        parts = _re.split(r"(?:reply message|Bot\s*-[^|]+)", text)
+        for i, part in enumerate(parts):
+            part = part.strip()
+            if _EMPRESA_Q.search(part) and i + 1 < len(parts):
+                candidate = parts[i + 1].strip().split("\n")[0].strip()
+                if candidate and len(candidate) < 100:
+                    extracted["company"] = candidate
+
+    # Email avulso no texto (independente de pergunta)
+    if "email" not in extracted:
+        m = _EMAIL_VAL.search(text)
+        if m:
+            extracted["email"] = m.group(0)
+
+    return extracted
+
+
 async def _extract_lead_info_from_conversation(phone: str) -> dict:
     """
     Varre as mensagens da conversa do lead buscando pares pergunta→resposta
@@ -655,12 +714,24 @@ async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
                         if contact_empresa_crm:
                             updates["company"] = contact_empresa_crm
                         else:
-                            # Tenta extrair da conversa local
-                            conv_info = await _extract_lead_info_from_conversation(phone)
-                            if conv_info.get("company"):
-                                updates["company"] = conv_info["company"]
-                            if conv_info.get("email") and not existing.get("email"):
-                                updates["email"] = conv_info["email"]
+                            # Tenta extrair das atividades do CRM (transcript da conversa)
+                            activities = await _fetch_deal_activities(client, deal_id)
+                            for act in activities:
+                                act_text = act.get("text") or act.get("description") or ""
+                                info = _extract_info_from_activity_text(act_text)
+                                if info.get("company"):
+                                    updates["company"] = info["company"]
+                                if info.get("email") and not existing.get("email"):
+                                    updates["email"] = info["email"]
+                                if info.get("company"):
+                                    break  # encontrou — para de varrer
+                            # Fallback: conversa local
+                            if "company" not in updates:
+                                conv_info = await _extract_lead_info_from_conversation(phone)
+                                if conv_info.get("company"):
+                                    updates["company"] = conv_info["company"]
+                                if conv_info.get("email") and not existing.get("email"):
+                                    updates["email"] = conv_info["email"]
                     if updates:
                         await upsert_lead(phone, **updates)
                         logger.info(f"[RD CRM sync] campos preenchidos para {phone}: {updates}")
@@ -721,19 +792,31 @@ async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
                 # Backfill das conversas dos últimos 3 dias
                 await _backfill_webhook_messages(phone, days=3)
 
-                # Extrai empresa/email/nome da conversa e preenche campos vazios
-                conv_info = await _extract_lead_info_from_conversation(phone)
+                # Extrai empresa/email/nome das atividades do CRM + conversa local
                 fill: dict = {}
-                if conv_info.get("company") and not contact_empresa_crm:
-                    fill["company"] = conv_info["company"]
-                if conv_info.get("email"):
-                    fill["email"] = conv_info["email"]
-                if conv_info.get("contact_name") and nome == deal_name:
-                    fill["contact_name_override"] = conv_info["contact_name"]
+                if not contact_empresa_crm:
+                    activities = await _fetch_deal_activities(client, deal_id)
+                    for act in activities:
+                        act_text = act.get("text") or act.get("description") or ""
+                        info = _extract_info_from_activity_text(act_text)
+                        if info.get("company") and "company" not in fill:
+                            fill["company"] = info["company"]
+                        if info.get("email") and "email" not in fill:
+                            fill["email"] = info["email"]
+                        if info.get("contact_name") and "contact_name_override" not in fill:
+                            fill["contact_name_override"] = info["contact_name"]
+                        if "company" in fill:
+                            break
+                    if not fill:
+                        conv_info = await _extract_lead_info_from_conversation(phone)
+                        if conv_info.get("company"):
+                            fill["company"] = conv_info["company"]
+                        if conv_info.get("email"):
+                            fill["email"] = conv_info["email"]
                 if fill:
                     _fill_name = fill.pop("contact_name_override", None)
                     await upsert_lead(phone, contact_name=_fill_name or "", **fill)
-                    logger.info(f"[RD CRM sync] Dados extraídos da conversa para {phone}: {fill}")
+                    logger.info(f"[RD CRM sync] Dados extraídos das atividades para {phone}: {fill}")
 
                 # Notificação por email — apenas para leads de HOJE
                 # Importações históricas (datas passadas) não disparam email
