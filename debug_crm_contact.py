@@ -41,27 +41,36 @@ async def main():
         return
 
     async with httpx.AsyncClient(timeout=15) as client:
-        # ── 1. Busca contato pelo telefone ───────────────────────────────────────
+        # ── 1. Busca TODOS os contatos com este telefone ─────────────────────────
         variants = [PHONE, PHONE[2:] if PHONE.startswith("55") else "55" + PHONE]
-        contact = None
+        all_contacts = []
         for phone_var in variants:
-            print(f"\n🔍 Buscando contato pelo telefone: {phone_var}")
+            print(f"\n🔍 Buscando TODOS os contatos pelo telefone: {phone_var}")
             r = await client.get(f"{BASE}/contacts", params=p({"phone": phone_var}))
             print(f"   Status: {r.status_code}")
             data = r.json()
-            contacts = data.get("contacts", data) if isinstance(data, dict) else data
-            if isinstance(contacts, list) and contacts:
-                cid = contacts[0].get("_id") or contacts[0].get("id")
-                print(f"   ✅ Encontrado! ID: {cid}")
-                # Busca contato completo
-                r2 = await client.get(f"{BASE}/contacts/{cid}", params=p())
-                if r2.status_code == 200:
-                    contact = r2.json()
-                else:
-                    contact = contacts[0]
-                break
+            contacts_raw = data.get("contacts", data) if isinstance(data, dict) else data
+            if isinstance(contacts_raw, list) and contacts_raw:
+                print(f"   ✅ {len(contacts_raw)} contato(s) encontrado(s):")
+                for i, c in enumerate(contacts_raw):
+                    cid = c.get("_id") or c.get("id")
+                    name = c.get("name", "?")
+                    deals = c.get("deal_ids", [])
+                    print(f"   [{i}] ID={cid}  nome={name!r}  deals={deals}")
+                    # Busca contato completo
+                    r2 = await client.get(f"{BASE}/contacts/{cid}", params=p())
+                    if r2.status_code == 200:
+                        all_contacts.append(r2.json())
+                    else:
+                        all_contacts.append(c)
             else:
-                print(f"   ⚠️  Nenhum contato encontrado com este telefone")
+                print(f"   ⚠️  Nenhum contato encontrado")
+
+        if not all_contacts:
+            print("\n❌ Nenhum contato encontrado em nenhuma variante")
+            return
+
+        contact = all_contacts[0]  # continua análise com o primeiro
 
         if not contact:
             print("\n❌ Contato não encontrado em nenhuma variante do telefone")
