@@ -546,15 +546,11 @@ async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
 
     Retorna o número de leads novos importados.
     """
-    from app.core.database import get_lead_by_phone, upsert_lead, upsert_bot_session, get_db as _get_db
-    from datetime import datetime, timezone as _tz
+    from app.core.database import get_lead_by_phone, upsert_lead, upsert_bot_session
 
     if not settings.rd_crm_token:
         return 0
 
-    # Busca apenas deals criados em date_iso
-    # (get_deals_updated_by_date foi removido pois a API v1 sem created_at_period
-    #  retorna todos os deals do pipeline, causando loop de emails)
     deals = await get_deals_by_date(date_iso, pipeline_id)
 
     if not deals:
@@ -583,40 +579,10 @@ async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
                 existing = await get_lead_by_phone(phone)
 
                 if existing:
-                    # Lead já existe — garante deal_id e toca updated_at para hoje
-                    # se o deal foi movimentado hoje (para aparecer no Radar do dia correto)
-                    updates: dict = {}
+                    # Lead já existe — apenas garante que o deal_id está salvo
                     if not existing.get("rd_crm_deal_id") and deal_id:
-                        updates["rd_crm_deal_id"] = deal_id
-
-                    # Verifica se o deal foi atualizado hoje no CRM
-                    deal_updated_at = deal.get("updated_at") or ""
-                    deal_updated_date = ""
-                    if deal_updated_at:
-                        try:
-                            from datetime import timedelta as _td
-                            dt = datetime.fromisoformat(deal_updated_at.replace("Z", "+00:00"))
-                            brt = _tz(offset=_td(hours=-3))
-                            deal_updated_date = dt.astimezone(brt).date().isoformat()
-                        except Exception:
-                            pass
-
-                    if deal_updated_date == date_iso:
-                        # Deal movido hoje no CRM → atualiza updated_at local para hoje
-                        now_utc = datetime.now(_tz.utc).strftime("%Y-%m-%d %H:%M:%S")
-                        _db = await _get_db()
-                        try:
-                            await _db.execute(
-                                "UPDATE leads SET updated_at=? WHERE phone_number=?",
-                                (now_utc, phone)
-                            )
-                            await _db.commit()
-                            logger.info(f"[RD CRM sync] updated_at tocado para {phone} (deal movido em {date_iso})")
-                        finally:
-                            await _db.close()
-
-                    if updates:
-                        await upsert_lead(phone, **updates)
+                        await upsert_lead(phone, rd_crm_deal_id=deal_id)
+                        logger.debug(f"[RD CRM sync] deal_id atualizado para {phone}")
                     continue
 
                 # Lead novo — importa do CRM
