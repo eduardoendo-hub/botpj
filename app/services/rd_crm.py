@@ -546,12 +546,15 @@ async def _backfill_webhook_messages(phone: str, days: int = 3) -> None:
 
 def _extract_info_from_activity_text(text: str) -> dict:
     """
-    Parseia o texto de uma atividade do CRM (transcript da conversa) buscando
-    pares pergunta→resposta para extrair empresa, email e nome.
+    Parseia o texto de uma atividade do CRM buscando pares pergunta→resposta.
 
-    Suporta dois formatos:
-      Formato 1: "[22/04/2026 13:28] Cliente: Spartan do Brasil"
-      Formato 2: "Qual é o nome da sua empresa?  Bot - ...  Spartan do Brasil  reply message"
+    Suporta dois formatos reais da API:
+
+    Formato A (limpo, blocos separados por \\n\\n):
+      "Qual é o nome da sua empresa?\\n\\nBot - 22 abril, 2026 13:28\\n\\nSpartan do Brasil\\n\\nreply message"
+
+    Formato B (com timestamps, pode ter encoding UTF-8 quebrado):
+      "[22/04/2026 13:28] Bot: Qual Ã© o nome da sua empresa?\\n[22/04/2026 13:28] Cliente: Spartan do Brasil"
     """
     import re as _re
 
@@ -559,40 +562,52 @@ def _extract_info_from_activity_text(text: str) -> dict:
     if not text:
         return extracted
 
-    _EMAIL_VAL  = _re.compile(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}")
-    _EMPRESA_Q  = _re.compile(r"nome da sua empresa|nome da empresa", _re.I)
-    _EMAIL_Q    = _re.compile(r"melhor e-mail|seu e-mail|seu email", _re.I)
-    _NOME_Q     = _re.compile(r"qual.*?seu nome\??|como.*?chama", _re.I)
+    _EMAIL_VAL = _re.compile(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}")
+    _EMPRESA_Q = _re.compile(r"nome da sua empresa|nome da empresa", _re.I)
+    _EMAIL_Q   = _re.compile(r"melhor e-mail|seu e-mail|seu email", _re.I)
+    _NOME_Q    = _re.compile(r"qual.*?seu nome\??|como.*?chama", _re.I)
 
-    # Formato 1: extrai linhas "Cliente: <resposta>" que seguem perguntas do Bot
-    lines = _re.split(r"\[[\d/]+ [\d:]+\]", text)
-    last_bot_question = ""
-    for segment in lines:
-        segment = segment.strip()
-        if segment.startswith("Bot:") or "Bot -" in segment:
-            last_bot_question = segment
-        elif segment.startswith("Cliente:") or "Cliente -" in segment:
-            answer = _re.sub(r"^(Cliente:|Cliente\s*-[^:]*:?)", "", segment).strip()
-            if not answer:
-                continue
-            if _EMPRESA_Q.search(last_bot_question) and "company" not in extracted:
-                extracted["company"] = answer
-            elif _EMAIL_Q.search(last_bot_question):
-                m = _EMAIL_VAL.search(answer)
-                if m and "email" not in extracted:
-                    extracted["email"] = m.group(0)
-            elif _NOME_Q.search(last_bot_question) and "contact_name" not in extracted:
-                extracted["contact_name"] = answer
+    # ── Formato A: blocos por \n\n ────────────────────────────────────────────
+    # Estrutura: [pergunta]\n\nBot - data\n\n[resposta]\n\nreply message
+    # A pergunta vem logo antes de "Bot - data", a resposta logo depois
+    blocks = [b.strip() for b in text.split("\n\n") if b.strip()]
+    for i, block in enumerate(blocks):
+        if not _re.match(r"Bot\s*-\s*\d", block) and not _re.match(r"Treinamentos\s*-", block):
+            # Este bloco pode ser uma pergunta — próximo bloco "Bot - data" → bloco seguinte = resposta
+            if i + 2 < len(blocks) and _re.match(r"Bot\s*-\s*\d", blocks[i + 1]):
+                resposta = blocks[i + 2] if i + 2 < len(blocks) else ""
+                # Ignora se resposta é atribuição de remetente ou separador
+                if resposta and not _re.match(r"Bot\s*-|Treinamentos\s*-|reply message", resposta, _re.I):
+                    if _EMPRESA_Q.search(block) and "company" not in extracted:
+                        extracted["company"] = resposta
+                    if _EMAIL_Q.search(block) and "email" not in extracted:
+                        m = _EMAIL_VAL.search(resposta)
+                        if m:
+                            extracted["email"] = m.group(0)
+                    if _NOME_Q.search(block) and "contact_name" not in extracted:
+                        if len(resposta) < 60:
+                            extracted["contact_name"] = resposta
 
-    # Formato 2 (texto corrido sem prefixos): busca pergunta→próxima resposta via split
+    # ── Formato B: linhas com [data] Role: msg ────────────────────────────────
     if "company" not in extracted:
-        parts = _re.split(r"(?:reply message|Bot\s*-[^|]+)", text)
-        for i, part in enumerate(parts):
-            part = part.strip()
-            if _EMPRESA_Q.search(part) and i + 1 < len(parts):
-                candidate = parts[i + 1].strip().split("\n")[0].strip()
-                if candidate and len(candidate) < 100:
-                    extracted["company"] = candidate
+        last_bot_q = ""
+        for line in text.split("\n"):
+            line = line.strip()
+            m_bot = _re.match(r"\[\d{2}/\d{2}/\d{4} \d{2}:\d{2}\]\s*Bot:\s*(.+)", line)
+            m_cli = _re.match(r"\[\d{2}/\d{2}/\d{4} \d{2}:\d{2}\]\s*Cliente:\s*(.+)", line)
+            if m_bot:
+                last_bot_q = m_bot.group(1)
+            elif m_cli and last_bot_q:
+                answer = m_cli.group(1).strip()
+                if _EMPRESA_Q.search(last_bot_q) and "company" not in extracted:
+                    extracted["company"] = answer
+                if _EMAIL_Q.search(last_bot_q) and "email" not in extracted:
+                    m = _EMAIL_VAL.search(answer)
+                    if m:
+                        extracted["email"] = m.group(0)
+                if _NOME_Q.search(last_bot_q) and "contact_name" not in extracted:
+                    if len(answer) < 60:
+                        extracted["contact_name"] = answer
 
     # Email avulso no texto (independente de pergunta)
     if "email" not in extracted:
