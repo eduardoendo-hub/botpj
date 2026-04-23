@@ -636,21 +636,25 @@ async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
                 # Backfill das conversas dos últimos 3 dias
                 await _backfill_webhook_messages(phone, days=3)
 
-                # Notificação por email
-                try:
-                    from app.core.database import get_bot_config
-                    from app.services.email_service import send_lead_notification
-                    cfg = await get_bot_config()
-                    lead_payload = {
-                        "contact_name": nome,
-                        "phone_number": phone,
-                        "job_title":    "",
-                        "produto":      deal_name,
-                        "origem":       f"RD CRM — {etapa}" if etapa else "RD CRM",
-                    }
-                    await send_lead_notification(lead_payload, cfg)
-                except Exception as e:
-                    logger.error(f"[RD CRM sync] Erro ao enviar email para {phone}: {e}")
+                # Notificação por email — apenas para leads de HOJE
+                # Importações históricas (datas passadas) não disparam email
+                from datetime import timedelta as _td2
+                _today_brt = datetime.now(timezone(offset=_td2(hours=-3))).date().isoformat()
+                if date_iso == _today_brt:
+                    try:
+                        from app.core.database import get_bot_config
+                        from app.services.email_service import send_lead_notification
+                        cfg = await get_bot_config()
+                        lead_payload = {
+                            "contact_name": nome,
+                            "phone_number": phone,
+                            "job_title":    "",
+                            "produto":      deal_name,
+                            "origem":       f"RD CRM — {etapa}" if etapa else "RD CRM",
+                        }
+                        await send_lead_notification(lead_payload, cfg)
+                    except Exception as e:
+                        logger.error(f"[RD CRM sync] Erro ao enviar email para {phone}: {e}")
 
                 imported += 1
 
