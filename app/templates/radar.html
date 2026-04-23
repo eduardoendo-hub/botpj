@@ -648,6 +648,17 @@ const Drawer = ({ lead, onClose, basePath }) => {
                 </div>
               )}
 
+              {/* ── Insights da Conversa (LLM) ── */}
+              {lead.crm_insights && (
+                <div style={{background:"rgba(99,102,241,.07)",border:"1px solid rgba(99,102,241,.22)",borderLeft:"3px solid rgba(99,102,241,.6)",borderRadius:"0 10px 10px 0",padding:"14px 16px"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,color:"#818cf8",fontSize:11,fontWeight:700,marginBottom:8}}>
+                    <Icon name="brain" size={12} /> Insights da Conversa
+                    <span style={{marginLeft:"auto",fontSize:10,color:"#64748b",fontWeight:400}}>via IA</span>
+                  </div>
+                  <p style={{margin:0,fontSize:13,color:"#c7d2fe",lineHeight:1.65}}>{lead.crm_insights}</p>
+                </div>
+              )}
+
               {/* ── Bloco Farol Operacional ── */}
               {lead.farol && lead.farol !== "?" && (
                 <div style={{

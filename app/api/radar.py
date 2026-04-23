@@ -226,6 +226,7 @@ def _normalize_lead(lead: dict, session: dict | None) -> dict:
         "farol_intervencao": lead.get("_farol_intervencao") or "",
         "farol_resumo":     lead.get("_farol_resumo") or "",
         "rd_deal_id":       lead.get("_crm_deal_id") or "",
+        "crm_insights":     lead.get("crm_insights") or "",
     }
 
 

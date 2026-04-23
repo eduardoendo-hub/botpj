@@ -417,16 +417,41 @@ async def get_deals_updated_by_date(date_iso: str, pipeline_id: str) -> List[Dic
 
 
 def _extract_contact_info(c: dict) -> tuple[str, str, str]:
-    """Extrai (nome, empresa, contact_id) de um dict de contato do CRM."""
-    cid     = c.get("_id") or c.get("id") or ""
-    nome    = c.get("name") or ""
+    """Extrai (nome, empresa, contact_id) de um dict de contato do CRM.
+
+    Nota: evitar ternary inline em cadeia de `or` — o Python aplica o if/else
+    com precedência mais baixa que `or`, o que pode curto-circuitar campos
+    anteriores quando a condição for False.
+    """
+    cid  = c.get("_id") or c.get("id") or ""
+    nome = c.get("name") or ""
+
+    # Tenta cada campo de empresa em ordem de confiabilidade
+    org = c.get("organization") or {}
+    org_name = org.get("name", "") if isinstance(org, dict) else ""
     empresa = (
-        c.get("organization_name")
-        or c.get("company")
-        or (c.get("organization") or {}).get("name", "") if isinstance(c.get("organization"), dict) else ""
+        c.get("organization_name")   # campo direto do contato
+        or c.get("company")          # campo alternativo
+        or org_name                  # objeto organização aninhado
         or ""
     )
     return nome, empresa, cid
+
+
+def _deal_org_name(deal: dict) -> str:
+    """Tenta extrair nome da empresa/organização diretamente do objeto deal."""
+    # Nível direto
+    org_name = deal.get("organization_name") or deal.get("company") or ""
+    if org_name:
+        return org_name
+    # Objeto aninhado deal.organization ou deal.deal_organization
+    for key in ("organization", "deal_organization"):
+        obj = deal.get(key)
+        if isinstance(obj, dict):
+            name = obj.get("name") or obj.get("organization_name") or ""
+            if name:
+                return name
+    return ""
 
 
 async def _get_contact_phone_from_deal(client: httpx.AsyncClient, deal: Dict) -> tuple[str, str, str, str]:
@@ -436,6 +461,8 @@ async def _get_contact_phone_from_deal(client: httpx.AsyncClient, deal: Dict) ->
     Retorna ("", "", "", "") se não encontrar.
     """
     deal_id = deal.get("_id") or deal.get("id") or ""
+    # Empresa pode estar direto no deal (organização associada ao negócio)
+    deal_empresa = _deal_org_name(deal)
 
     # 1. Tenta campo contacts embutido no deal
     contacts_raw = deal.get("contacts") or []
@@ -443,6 +470,7 @@ async def _get_contact_phone_from_deal(client: httpx.AsyncClient, deal: Dict) ->
         for c in contacts_raw:
             if isinstance(c, dict):
                 nome, empresa, cid = _extract_contact_info(c)
+                empresa = empresa or deal_empresa   # fallback: empresa do deal
                 for ph in (c.get("phones") or []):
                     raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
                     normalized = _normalize_phone(raw)
@@ -455,6 +483,7 @@ async def _get_contact_phone_from_deal(client: httpx.AsyncClient, deal: Dict) ->
                     if r.status_code == 200:
                         contact = r.json()
                         nome, empresa, cid = _extract_contact_info(contact)
+                        empresa = empresa or deal_empresa   # fallback: empresa do deal
                         for ph in (contact.get("phones") or []):
                             raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
                             normalized = _normalize_phone(raw)
@@ -476,6 +505,7 @@ async def _get_contact_phone_from_deal(client: httpx.AsyncClient, deal: Dict) ->
                 if isinstance(contacts, list) and contacts:
                     c = contacts[0]
                     nome, empresa, cid = _extract_contact_info(c)
+                    empresa = empresa or deal_empresa   # fallback: empresa do deal
                     for ph in (c.get("phones") or []):
                         raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
                         normalized = _normalize_phone(raw)
@@ -674,6 +704,53 @@ async def _extract_lead_info_from_conversation(phone: str) -> dict:
         return {}
 
 
+async def _build_combined_transcript(
+    client: httpx.AsyncClient,
+    deal_id: str,
+    phone: str,
+) -> str:
+    """
+    Monta um texto combinado com TODAS as fontes de informação disponíveis:
+      1. Atividades do CRM (transcript da conversa no Tallos/RD)
+      2. Mensagens do chat local (tabela conversations)
+
+    Separa cada fonte com '--- [seção] ---' para o LLM ter contexto.
+    Retorna string vazia se não houver nenhuma fonte.
+    """
+    parts: list[str] = []
+
+    # 1. Atividades do CRM
+    if deal_id:
+        activities = await _fetch_deal_activities(client, deal_id)
+        crm_texts = [
+            (a.get("text") or a.get("description") or "").strip()
+            for a in activities
+            if a.get("text") or a.get("description")
+        ]
+        if crm_texts:
+            parts.append("=== TRANSCRIPT CRM (Tallos/RD) ===\n\n" + "\n\n---\n\n".join(crm_texts))
+
+    # 2. Conversa local (webhook_logs / conversations)
+    try:
+        from app.core.database import get_full_conversation
+        msgs = await get_full_conversation(phone)
+        if msgs:
+            lines = []
+            for m in msgs:
+                role = (m.get("role") or "").lower()
+                text = (m.get("message") or "").strip()
+                if not text:
+                    continue
+                label = "Bot" if role in ("assistant", "agent") else "Cliente"
+                lines.append(f"{label}: {text}")
+            if lines:
+                parts.append("=== CONVERSA DO CHAT (Bot/Lead) ===\n\n" + "\n".join(lines))
+    except Exception as e:
+        logger.warning(f"[RD CRM sync] Erro ao obter conversa local de {phone}: {e}")
+
+    return "\n\n".join(parts)
+
+
 async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
     """
     Sincroniza oportunidades do funil pipeline_id criadas OU atualizadas em date_iso
@@ -721,35 +798,31 @@ async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
                 existing = await get_lead_by_phone(phone)
 
                 if existing:
-                    # Lead já existe — garante deal_id e preenche campos vazios
+                    # Lead já existe — garante deal_id e enriquece campos vazios via LLM
                     updates: dict = {}
                     if not existing.get("rd_crm_deal_id") and deal_id:
                         updates["rd_crm_deal_id"] = deal_id
-                    if not existing.get("company"):
-                        if contact_empresa_crm:
-                            updates["company"] = contact_empresa_crm
-                        else:
-                            # Tenta extrair das atividades do CRM (transcript da conversa)
-                            activities = await _fetch_deal_activities(client, deal_id)
-                            for act in activities:
-                                act_text = act.get("text") or act.get("description") or ""
-                                info = _extract_info_from_activity_text(act_text)
-                                if info.get("company"):
-                                    updates["company"] = info["company"]
-                                if info.get("email") and not existing.get("email"):
-                                    updates["email"] = info["email"]
-                                if info.get("company"):
-                                    break  # encontrou — para de varrer
-                            # Fallback: conversa local
-                            if "company" not in updates:
-                                conv_info = await _extract_lead_info_from_conversation(phone)
-                                if conv_info.get("company"):
-                                    updates["company"] = conv_info["company"]
-                                if conv_info.get("email") and not existing.get("email"):
-                                    updates["email"] = conv_info["email"]
+
+                    needs_enrichment = (
+                        not existing.get("company")
+                        or not existing.get("email")
+                        or not existing.get("crm_insights")
+                    )
+                    if needs_enrichment:
+                        combined_text = await _build_combined_transcript(client, deal_id, phone)
+                        if combined_text:
+                            from app.services.lead_enricher import enrich_lead_from_activity, map_enriched_to_lead_fields
+                            enriched = await enrich_lead_from_activity(phone, combined_text)
+                            fields = map_enriched_to_lead_fields(enriched)
+                            insights = fields.pop("_insights", None)
+                            for k, v in fields.items():
+                                if not existing.get(k):
+                                    updates[k] = v
+                            if insights:
+                                updates["crm_insights"] = insights
                     if updates:
                         await upsert_lead(phone, **updates)
-                        logger.info(f"[RD CRM sync] campos preenchidos para {phone}: {updates}")
+                        logger.info(f"[RD CRM sync] enriquecido {phone}: {list(updates.keys())}")
                     continue
 
                 # Lead novo — importa do CRM
@@ -807,31 +880,26 @@ async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
                 # Backfill das conversas dos últimos 3 dias
                 await _backfill_webhook_messages(phone, days=3)
 
-                # Extrai empresa/email/nome das atividades do CRM + conversa local
-                fill: dict = {}
-                if not contact_empresa_crm:
-                    activities = await _fetch_deal_activities(client, deal_id)
-                    for act in activities:
-                        act_text = act.get("text") or act.get("description") or ""
-                        info = _extract_info_from_activity_text(act_text)
-                        if info.get("company") and "company" not in fill:
-                            fill["company"] = info["company"]
-                        if info.get("email") and "email" not in fill:
-                            fill["email"] = info["email"]
-                        if info.get("contact_name") and "contact_name_override" not in fill:
-                            fill["contact_name_override"] = info["contact_name"]
-                        if "company" in fill:
-                            break
-                    if not fill:
-                        conv_info = await _extract_lead_info_from_conversation(phone)
-                        if conv_info.get("company"):
-                            fill["company"] = conv_info["company"]
-                        if conv_info.get("email"):
-                            fill["email"] = conv_info["email"]
-                if fill:
-                    _fill_name = fill.pop("contact_name_override", None)
-                    await upsert_lead(phone, contact_name=_fill_name or "", **fill)
-                    logger.info(f"[RD CRM sync] Dados extraídos das atividades para {phone}: {fill}")
+                # Enriquecimento via LLM — combina atividades do CRM + chat local
+                combined_text = await _build_combined_transcript(client, deal_id, phone)
+                if combined_text:
+                    from app.services.lead_enricher import enrich_lead_from_activity, map_enriched_to_lead_fields
+                    enriched = await enrich_lead_from_activity(phone, combined_text)
+                    fields = map_enriched_to_lead_fields(enriched)
+                    insights = fields.pop("_insights", None)
+                    fill: dict = {}
+                    for k, v in fields.items():
+                        # Não sobrescreve campos já preenchidos vindos do CRM
+                        if k == "contact_name" and nome:
+                            continue
+                        if k == "company" and contact_empresa_crm:
+                            continue
+                        fill[k] = v
+                    if insights:
+                        fill["crm_insights"] = insights
+                    if fill:
+                        await upsert_lead(phone, **fill)
+                        logger.info(f"[RD CRM sync] LLM enrichment novo lead {phone}: {list(fill.keys())}")
 
                 # Notificação por email — apenas para leads de HOJE
                 # Importações históricas (datas passadas) não disparam email
@@ -861,4 +929,64 @@ async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
     if imported:
         logger.info(f"[RD CRM sync] {imported} lead(s) novo(s) importado(s) do CRM para {date_iso}")
 
+    # ── Backfill: enriquece leads antigos com empresa/email/insights vazios ──────
+    # Processa até 5 leads por ciclo para não impactar a latência do Radar.
+    # Leads que já têm empresa E email E crm_insights não são reprocessados.
+    try:
+        await _enrich_stale_leads(max_leads=5)
+    except Exception as e:
+        logger.warning(f"[RD CRM sync] Erro no backfill de leads antigos: {e}")
+
     return imported
+
+
+async def _enrich_stale_leads(max_leads: int = 5) -> None:
+    """
+    Busca leads com rd_crm_deal_id mas com company/email/crm_insights vazios
+    e os enriquece via LLM (combinando atividades CRM + chat local).
+    Limita a max_leads por chamada para não impactar latência.
+    """
+    from app.core.database import get_db, upsert_lead
+
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            """SELECT phone_number, rd_crm_deal_id, company, email, crm_insights
+               FROM leads
+               WHERE rd_crm_deal_id IS NOT NULL AND rd_crm_deal_id != ''
+                 AND (company IS NULL OR company = ''
+                      OR email IS NULL OR email = ''
+                      OR crm_insights IS NULL OR crm_insights = '')
+               ORDER BY created_at DESC
+               LIMIT ?""",
+            (max_leads,)
+        )
+        rows = await cursor.fetchall()
+    finally:
+        await db.close()
+
+    if not rows:
+        return
+
+    from app.services.lead_enricher import enrich_lead_from_activity, map_enriched_to_lead_fields
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        for row in rows:
+            phone   = row["phone_number"]
+            deal_id = row["rd_crm_deal_id"]
+            try:
+                combined = await _build_combined_transcript(client, deal_id, phone)
+                if not combined:
+                    continue
+                enriched = await enrich_lead_from_activity(phone, combined)
+                fields   = map_enriched_to_lead_fields(enriched)
+                insights = fields.pop("_insights", None)
+                row_dict = dict(row)
+                updates  = {k: v for k, v in fields.items() if v and not row_dict.get(k)}
+                if insights and not row_dict.get("crm_insights"):
+                    updates["crm_insights"] = insights
+                if updates:
+                    await upsert_lead(phone, **updates)
+                    logger.info(f"[RD CRM backfill] {phone} enriquecido: {list(updates.keys())}")
+            except Exception as e:
+                logger.warning(f"[RD CRM backfill] Erro para {phone}: {e}")
