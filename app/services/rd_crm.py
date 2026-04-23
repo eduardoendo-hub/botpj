@@ -83,17 +83,19 @@ async def get_deal_info(phone: str) -> Dict:
 
             deal_name     = deal.get("name") or ""
             deal_products = deal.get("deal_products") or []
-            deal_id = deal.get("_id") or deal.get("id") or ""
+            deal_id         = deal.get("_id") or deal.get("id") or ""
+            deal_updated_at = deal.get("updated_at") or ""
             logger.info(f"[RD CRM] {phone_clean} → funil={etapa} | status={etapa_status} | {consultor} | R${valor:.2f} | id={deal_id}")
             return {
-                "etapa":         etapa,         # fase real do pipeline (para coluna Funil)
-                "etapa_status":  etapa_status,  # status derivado (para coluna Status)
-                "consultor":     consultor,
-                "valor":         valor,
-                "pipeline":      pipeline,
-                "deal_name":     deal_name,
-                "deal_products": deal_products,
-                "deal_id":       deal_id,
+                "etapa":           etapa,           # fase real do pipeline (para coluna Funil)
+                "etapa_status":    etapa_status,    # status derivado (para coluna Status)
+                "consultor":       consultor,
+                "valor":           valor,
+                "pipeline":        pipeline,
+                "deal_name":       deal_name,
+                "deal_products":   deal_products,
+                "deal_id":         deal_id,
+                "deal_updated_at": deal_updated_at, # para detectar movimentação recente no CRM
             }
 
     except httpx.TimeoutException:

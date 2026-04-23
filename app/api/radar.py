@@ -348,6 +348,70 @@ def _lead_matches_date(lead: dict, target_date_iso: str) -> bool:
     return _lead_reference_date(lead) == target_date_iso
 
 
+async def _refresh_crm_updated_leads(leads_raw: list, today_iso: str) -> None:
+    """
+    Verifica leads dos últimos 14 dias que NÃO são de hoje e que têm deal no CRM.
+    Para cada um, chama get_deal_info() — que já é leve e cacheada pelo CRM.
+    Se o deal_updated_at for hoje (BRT), toca o updated_at local para que o lead
+    apareça no Radar de hoje via _lead_reference_date.
+    Sem queries extras ao CRM além das já feitas normalmente pelo Radar.
+    """
+    import asyncio
+    from app.core.database import get_db as _get_db
+
+    cutoff = (datetime.now(_BRT).date() - timedelta(days=14)).isoformat()
+
+    # Leads de outros dias (não hoje) dos últimos 14 dias
+    candidates = [
+        dict(lead) for lead in leads_raw
+        if (
+            _lead_reference_date(dict(lead)) != today_iso
+            and _lead_reference_date(dict(lead)) >= cutoff
+        )
+    ]
+
+    if not candidates:
+        return
+
+    phones = [l.get("phone_number", "") for l in candidates if l.get("phone_number")]
+    if not phones:
+        return
+
+    crm_results = await asyncio.gather(*[get_deal_info(p) for p in phones])
+
+    to_update = []
+    for phone, crm in zip(phones, crm_results):
+        deal_updated_at = crm.get("deal_updated_at") or ""
+        if not deal_updated_at:
+            continue
+        try:
+            dt = datetime.fromisoformat(deal_updated_at.replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            deal_date_brt = dt.astimezone(_BRT).date().isoformat()
+        except Exception:
+            continue
+
+        if deal_date_brt == today_iso:
+            to_update.append(phone)
+
+    if not to_update:
+        return
+
+    now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    db = await _get_db()
+    try:
+        for phone in to_update:
+            await db.execute(
+                "UPDATE leads SET updated_at=? WHERE phone_number=?",
+                (now_utc, phone)
+            )
+            logger.info(f"[Radar] Lead {phone} movido no CRM hoje → updated_at atualizado")
+        await db.commit()
+    finally:
+        await db.close()
+
+
 @router.get("/data")
 async def radar_data(
     request: Request,
@@ -384,6 +448,12 @@ async def radar_data(
             leads_raw = await get_all_leads()
     except asyncio.TimeoutError:
         logger.warning("[Radar] Sync CRM demorou mais de 15s — continuando sem esperar")
+
+    # ── Detecta leads de outros dias que tiveram movimentação no CRM hoje ──────
+    # Só roda quando estamos visualizando hoje (não faz sentido para datas passadas)
+    if target_date == today_brt:
+        await _refresh_crm_updated_leads(leads_raw, target_iso)
+        leads_raw = await get_all_leads()
 
     # Datas disponíveis (últimos 30 dias com dados)
     # Usa a mesma regra de _lead_reference_date para consistência
