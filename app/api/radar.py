@@ -487,9 +487,10 @@ async def radar_data(
         lead["_crm_pipeline"]      = crm.get("pipeline", "")
         lead["_crm_deal_name"]     = crm.get("deal_name", "")
         lead["_crm_deal_products"] = crm.get("deal_products", [])
-        # Prioriza o deal_id gravado no banco (veio do sync CRM — é o deal correto).
-        # Só usa o retorno ao vivo quando não há nada salvo (lead veio só pelo bot).
-        lead["_crm_deal_id"]       = lead.get("rd_crm_deal_id") or crm.get("deal_id", "")
+        # O deal_id para o link RD CRM vem SOMENTE do banco (rd_crm_deal_id).
+        # NÃO usamos o deal_id do lookup ao vivo: o mesmo telefone pode estar
+        # cadastrado para pessoas diferentes no CRM, gerando link para o deal errado.
+        lead["_crm_deal_id"]       = lead.get("rd_crm_deal_id") or ""
         lead["_session"]           = dict(session) if session else None
 
     # Persiste atualizações do cache de etapa CRM (em background, sem bloquear)
@@ -543,11 +544,13 @@ async def radar_data(
     msgs_list = await asyncio.gather(*[_get_last_msgs(l) for l in leads_do_dia])
 
     # Classifica produto e farol em paralelo (Claude Haiku, com cache)
+    # return_exceptions=True garante que um erro numa classificação individual
+    # não derruba o endpoint inteiro — o lead aparece com valores padrão ("?", "A definir")
     produtos, farois = await asyncio.gather(
         asyncio.gather(*[
             classify_product(lead, msgs)
             for lead, msgs in zip(leads_do_dia, msgs_list)
-        ]),
+        ], return_exceptions=True),
         asyncio.gather(*[
             classify_farol(lead, msgs, {
                 "etapa":      lead.get("_crm_etapa") or "",
@@ -556,11 +559,18 @@ async def radar_data(
                 "pipeline":   lead.get("_crm_pipeline") or "",
             })
             for lead, msgs in zip(leads_do_dia, msgs_list)
-        ]),
+        ], return_exceptions=True),
     )
 
     result: List[Dict[str, Any]] = []
     for lead, produto, farol in zip(leads_do_dia, produtos, farois):
+        # Se a classificação falhou, usa valores padrão em vez de propagar o erro
+        if isinstance(produto, Exception):
+            logger.warning(f"[Radar] classify_product falhou para {lead.get('phone_number')}: {produto}")
+            produto = "A definir"
+        if isinstance(farol, Exception):
+            logger.warning(f"[Radar] classify_farol falhou para {lead.get('phone_number')}: {farol}")
+            farol = {}
         lead["_produto"]          = produto
         lead["_farol"]            = farol.get("semaforo", "?")
         lead["_farol_score"]      = farol.get("score_risco", 0)
