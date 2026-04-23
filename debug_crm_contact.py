@@ -18,7 +18,7 @@ from app.core.config import settings
 
 BASE = "https://crm.rdstation.com/api/v1"
 TOKEN = settings.rd_crm_token
-PHONE = "5511972554971"
+PHONE = "5511996471803"
 
 
 def p(extra=None):
