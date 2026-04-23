@@ -377,12 +377,18 @@ async def _sync_crm_cache(leads_raw: list, today_iso: str) -> bool:
         return False
 
     phones = [l["phone_number"] for l in candidates if l.get("phone_number")]
-    crm_results = await asyncio.gather(*[get_deal_info(p) for p in phones])
+    crm_results = await asyncio.gather(
+        *[get_deal_info(p) for p in phones],
+        return_exceptions=True,
+    )
 
     db = await get_db()
     updated = False
     try:
         for lead, crm in zip(candidates, crm_results):
+            if isinstance(crm, Exception):
+                logger.warning(f"[Radar CRM cache] get_deal_info falhou para {lead.get('phone_number')}: {crm}")
+                continue
             nova_etapa = crm.get("etapa_status") or crm.get("etapa") or ""
             if not nova_etapa or nova_etapa == "—":
                 continue
@@ -442,14 +448,19 @@ async def radar_data(
             leads_raw = await get_all_leads()
     except asyncio.TimeoutError:
         logger.warning("[Radar] Sync CRM demorou mais de 15s — continuando sem esperar")
+    except Exception as _sync_err:
+        logger.warning(f"[Radar] Sync CRM erro inesperado: {_sync_err}")
 
     # ── Detecta leads de outros dias com etapa CRM mudada hoje ─────────────────
     # Só roda quando visualizando hoje — sem risco de loop pois compara etapa,
     # não toca updated_at, e só dispara se o valor realmente mudou.
     if target_date == today_brt:
-        changed = await _sync_crm_cache(leads_raw, target_iso)
-        if changed:
-            leads_raw = await get_all_leads()
+        try:
+            changed = await _sync_crm_cache(leads_raw, target_iso)
+            if changed:
+                leads_raw = await get_all_leads()
+        except Exception as _cache_err:
+            logger.warning(f"[Radar] _sync_crm_cache erro: {_cache_err}")
 
     # Datas disponíveis (últimos 30 dias com dados)
     available_dates: set = set()
