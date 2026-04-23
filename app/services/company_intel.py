@@ -9,7 +9,10 @@ comercial de treinamentos corporativos e retorna dados estruturados:
   - cidade: cidade e estado sede
   - porte: micro / pequena / média / grande / enterprise
 
-Cache em memória: TTL de 24h por nome de empresa.
+Cache em duas camadas:
+  1. Memória (dict) — acesso instantâneo enquanto o processo está rodando
+  2. SQLite (company_intel_cache) — persistente entre restarts do servidor
+     A pesquisa web só é feita quando NÃO existe entrada no banco.
 """
 
 import json
@@ -26,27 +29,20 @@ logger = logging.getLogger(__name__)
 
 client = AsyncAnthropic(api_key=settings.anthropic_api_key)
 
-# ── Cache em memória ────────────────────────────────────────────────────────────
-_CACHE: Dict[str, Tuple[dict, float]] = {}
-_CACHE_TTL = 86_400  # 24 horas
+# ── Cache em memória (camada 1 — rápida, volátil) ───────────────────────────────
+_CACHE: Dict[str, dict] = {}
 
 
 def _normalize_name(name: str) -> str:
     return name.strip().lower()
 
 
-def _cache_get(name: str) -> Optional[dict]:
-    key = _normalize_name(name)
-    entry = _CACHE.get(key)
-    if entry and (time.time() - entry[1]) < _CACHE_TTL:
-        return entry[0]
-    if entry:
-        del _CACHE[key]
-    return None
+def _mem_get(name: str) -> Optional[dict]:
+    return _CACHE.get(_normalize_name(name))
 
 
-def _cache_set(name: str, value: dict):
-    _CACHE[_normalize_name(name)] = (value, time.time())
+def _mem_set(name: str, value: dict) -> None:
+    _CACHE[_normalize_name(name)] = value
 
 
 _EMPTY = {"descricao": "", "funcionarios": "", "setor": "", "cidade": "", "porte": ""}
@@ -101,18 +97,32 @@ def _parse_json(text: str) -> dict:
 async def get_company_intel(company_name: str) -> dict:
     """
     Retorna dict estruturado com informações da empresa.
-    Usa Claude Sonnet + web_search para dados atualizados.
-    Resultado em cache por 24h.
+
+    Ordem de busca:
+      1. Cache em memória  → resposta imediata (processo em execução)
+      2. Cache no banco     → resposta rápida, persiste entre restarts
+      3. Pesquisa web (Claude Sonnet + web_search) → salva em memória + banco
+         Só executa quando a empresa ainda não foi pesquisada.
     """
     if not company_name or company_name in ("—", ""):
         return _EMPTY.copy()
 
-    cached = _cache_get(company_name)
-    if cached is not None:
-        logger.info(f"[CompanyIntel] Cache HIT: {company_name}")
-        return cached
+    # 1. Memória
+    mem = _mem_get(company_name)
+    if mem is not None:
+        logger.debug(f"[CompanyIntel] Cache MEM HIT: {company_name}")
+        return mem
 
-    logger.info(f"[CompanyIntel] Pesquisando: {company_name}")
+    # 2. Banco de dados (persistente)
+    from app.core.database import get_company_intel_cached, set_company_intel_cached
+    db_cached = await get_company_intel_cached(company_name)
+    if db_cached is not None:
+        logger.info(f"[CompanyIntel] Cache DB HIT: {company_name}")
+        _mem_set(company_name, db_cached)   # promove para memória
+        return db_cached
+
+    # 3. Pesquisa web — empresa ainda não foi pesquisada
+    logger.info(f"[CompanyIntel] Pesquisando na web: {company_name}")
     prompt = _build_prompt(company_name)
 
     try:
@@ -135,10 +145,11 @@ async def get_company_intel(company_name: str) -> dict:
             result = _EMPTY.copy()
             result["descricao"] = raw or "Não foram encontradas informações públicas suficientes."
 
-        _cache_set(company_name, result)
+        _mem_set(company_name, result)
+        await set_company_intel_cached(company_name, result)
         logger.info(
             f"[CompanyIntel] ✅ {company_name} — "
-            f"func={result.get('funcionarios')} porte={result.get('porte')}"
+            f"func={result.get('funcionarios')} porte={result.get('porte')} [salvo no banco]"
         )
         return result
 
@@ -157,7 +168,8 @@ async def get_company_intel(company_name: str) -> dict:
             if not result:
                 result = _EMPTY.copy()
                 result["descricao"] = raw or ""
-            _cache_set(company_name, result)
+            _mem_set(company_name, result)
+            await set_company_intel_cached(company_name, result)
             return result
         except Exception as e2:
             logger.error(f"[CompanyIntel] Fallback também falhou: {e2}")

@@ -259,6 +259,15 @@ async def init_db():
             )
         """)
 
+        # Cache persistente de inteligência de empresa (pesquisa web via IA)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS company_intel_cache (
+                company_name  TEXT PRIMARY KEY,
+                data_json     TEXT NOT NULL,
+                created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         await db.commit()
     finally:
         await db.close()
@@ -894,5 +903,45 @@ async def get_full_conversation(phone_number: str) -> List[Dict]:
         )
         rows = await cursor.fetchall()
         return [dict(row) for row in rows]
+    finally:
+        await db.close()
+
+
+# ==================== Company Intel Cache ====================
+
+async def get_company_intel_cached(company_name: str) -> Optional[Dict]:
+    """Retorna dados de inteligência da empresa do cache persistente (ou None se não existir)."""
+    key = company_name.strip().lower()
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "SELECT data_json FROM company_intel_cache WHERE company_name=?",
+            (key,)
+        )
+        row = await cursor.fetchone()
+        if row:
+            try:
+                return json.loads(row["data_json"])
+            except Exception:
+                return None
+        return None
+    finally:
+        await db.close()
+
+
+async def set_company_intel_cached(company_name: str, data: Dict) -> None:
+    """Salva (ou atualiza) dados de inteligência da empresa no cache persistente."""
+    key = company_name.strip().lower()
+    db = await get_db()
+    try:
+        await db.execute(
+            """INSERT INTO company_intel_cache (company_name, data_json, created_at)
+               VALUES (?, ?, CURRENT_TIMESTAMP)
+               ON CONFLICT(company_name) DO UPDATE SET
+                 data_json  = excluded.data_json,
+                 created_at = CURRENT_TIMESTAMP""",
+            (key, json.dumps(data, ensure_ascii=False))
+        )
+        await db.commit()
     finally:
         await db.close()
