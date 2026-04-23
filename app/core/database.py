@@ -118,6 +118,9 @@ async def init_db():
             ("raw_form_data",     "TEXT DEFAULT ''"),
             # integração RD CRM
             ("rd_crm_deal_id",    "TEXT DEFAULT ''"),
+            # rastreamento de movimentação no CRM
+            ("crm_etapa_cache",   "TEXT DEFAULT ''"),   # última etapa conhecida do CRM
+            ("crm_moved_date",    "TEXT DEFAULT ''"),   # data (YYYY-MM-DD BRT) em que etapa mudou
         ]:
             try:
                 await db.execute(f"ALTER TABLE leads ADD COLUMN {_col} {_type_def}")
@@ -615,7 +618,7 @@ async def upsert_lead(phone_number: str, contact_name: str = "", **kwargs):
             "urgencia", "objetivo_negocio", "lead_temperature", "trail", "score",
             "proximo_passo", "status_conversa", "interest", "stage", "notes",
             "identificador", "qtd_colaboradores", "servico", "raw_form_data",
-            "rd_crm_deal_id",
+            "rd_crm_deal_id", "crm_etapa_cache", "crm_moved_date",
         )
 
         # Hierarquia de source_channel — nunca regride para valor menos específico
@@ -660,8 +663,8 @@ async def upsert_lead(phone_number: str, contact_name: str = "", **kwargs):
                     lead_temperature, trail, score, proximo_passo, status_conversa,
                     interest, stage, notes, source_channel,
                     identificador, qtd_colaboradores, servico, raw_form_data,
-                    rd_crm_deal_id)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    rd_crm_deal_id, crm_etapa_cache, crm_moved_date)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (
                     phone_number, contact_name,
                     kwargs.get("email", ""),             kwargs.get("company", ""),
@@ -678,6 +681,7 @@ async def upsert_lead(phone_number: str, contact_name: str = "", **kwargs):
                     kwargs.get("identificador", ""),      kwargs.get("qtd_colaboradores", ""),
                     kwargs.get("servico", ""),            kwargs.get("raw_form_data", ""),
                     kwargs.get("rd_crm_deal_id", ""),
+                    kwargs.get("crm_etapa_cache", ""),   kwargs.get("crm_moved_date", ""),
                 )
             )
         await db.commit()

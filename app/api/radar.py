@@ -330,14 +330,20 @@ def _lead_updated_date_brt(lead: dict) -> str:
 def _lead_reference_date(lead: dict) -> str:
     """
     Data de referência do lead para exibição no Radar.
-    Regra: se o lead tem raw_form_data (veio de formulário), usa updated_at
-           pois re-submissões devem mover o lead para o novo dia.
-           Caso contrário, usa created_at.
+    Prioridade:
+      1. crm_moved_date — data em que a etapa do CRM mudou (mais confiável)
+      2. updated_at     — para leads de formulário (re-submissão move o lead)
+      3. created_at     — padrão para todos os outros
     """
+    crm_moved = lead.get("crm_moved_date") or ""
+    if crm_moved:
+        return crm_moved
+
     if lead.get("raw_form_data"):
         d = _lead_updated_date_brt(lead)
         if d:
             return d
+
     return _lead_date_brt(lead)
 
 
@@ -346,6 +352,57 @@ def _lead_matches_date(lead: dict, target_date_iso: str) -> bool:
     Um lead aparece em um único dia — o de referência (_lead_reference_date).
     """
     return _lead_reference_date(lead) == target_date_iso
+
+
+async def _sync_crm_cache(leads_raw: list, today_iso: str) -> bool:
+    """
+    Compara a etapa atual do CRM com o cache local (crm_etapa_cache) para leads
+    dos últimos 14 dias que ainda não são de hoje.
+    Se a etapa mudou → grava o novo cache e define crm_moved_date = hoje.
+    Retorna True se algum lead foi atualizado (necessário recarregar leads_raw).
+    """
+    cutoff = (datetime.now(_BRT).date() - timedelta(days=14)).isoformat()
+
+    candidates = [
+        dict(lead) for lead in leads_raw
+        if (
+            _lead_reference_date(dict(lead)) != today_iso
+            and _lead_reference_date(dict(lead)) >= cutoff
+            and (dict(lead).get("rd_crm_deal_id") or "")
+        )
+    ]
+
+    if not candidates:
+        return False
+
+    phones = [l["phone_number"] for l in candidates if l.get("phone_number")]
+    crm_results = await asyncio.gather(*[get_deal_info(p) for p in phones])
+
+    db = await get_db()
+    updated = False
+    try:
+        for lead, crm in zip(candidates, crm_results):
+            nova_etapa = crm.get("etapa_status") or crm.get("etapa") or ""
+            if not nova_etapa or nova_etapa == "—":
+                continue
+            cache_atual = lead.get("crm_etapa_cache") or ""
+            if nova_etapa != cache_atual:
+                # Etapa mudou → registra data e atualiza cache
+                await db.execute(
+                    "UPDATE leads SET crm_etapa_cache=?, crm_moved_date=? WHERE phone_number=?",
+                    (nova_etapa, today_iso, lead["phone_number"])
+                )
+                logger.info(
+                    f"[Radar CRM cache] {lead['phone_number']} etapa: "
+                    f"{cache_atual!r} → {nova_etapa!r} | crm_moved_date={today_iso}"
+                )
+                updated = True
+        if updated:
+            await db.commit()
+    finally:
+        await db.close()
+
+    return updated
 
 
 @router.get("/data")
@@ -385,8 +442,15 @@ async def radar_data(
     except asyncio.TimeoutError:
         logger.warning("[Radar] Sync CRM demorou mais de 15s — continuando sem esperar")
 
+    # ── Detecta leads de outros dias com etapa CRM mudada hoje ─────────────────
+    # Só roda quando visualizando hoje — sem risco de loop pois compara etapa,
+    # não toca updated_at, e só dispara se o valor realmente mudou.
+    if target_date == today_brt:
+        changed = await _sync_crm_cache(leads_raw, target_iso)
+        if changed:
+            leads_raw = await get_all_leads()
+
     # Datas disponíveis (últimos 30 dias com dados)
-    # Usa a mesma regra de _lead_reference_date para consistência
     available_dates: set = set()
     for lead in leads_raw:
         ld = dict(lead)
@@ -394,7 +458,7 @@ async def radar_data(
         if d:
             available_dates.add(d)
 
-    # Filtra leads do dia solicitado (criados no dia OU atualizados com novo form)
+    # Filtra leads do dia solicitado
     leads_do_dia = [
         dict(lead) for lead in leads_raw
         if _lead_matches_date(dict(lead), target_iso)
@@ -408,8 +472,13 @@ async def radar_data(
         asyncio.gather(*[get_deal_info(p) for p in phones]),
     )
 
-    # Enriquece leads com dados do CRM antes de classificar o produto
+    # Enriquece leads com dados do CRM e atualiza cache de etapa (sem recarregar)
+    cache_updates: list[tuple] = []
     for lead, session, crm in zip(leads_do_dia, sessions_list, crm_list):
+        nova_etapa = crm.get("etapa_status") or crm.get("etapa") or ""
+        if nova_etapa and nova_etapa != "—" and nova_etapa != (lead.get("crm_etapa_cache") or ""):
+            cache_updates.append((nova_etapa, lead["phone_number"]))
+
         lead["_crm_etapa"]         = crm.get("etapa", "—")          # fase real do pipeline
         lead["_crm_etapa_status"]  = crm.get("etapa_status", crm.get("etapa", "—"))  # status derivado (inclui Perdido)
         lead["_crm_consultor"]     = crm.get("consultor", "")
@@ -419,6 +488,20 @@ async def radar_data(
         lead["_crm_deal_products"] = crm.get("deal_products", [])
         lead["_crm_deal_id"]       = crm.get("deal_id", "")
         lead["_session"]           = dict(session) if session else None
+
+    # Persiste atualizações do cache de etapa CRM (em background, sem bloquear)
+    if cache_updates:
+        try:
+            _db = await get_db()
+            for nova_etapa, phone in cache_updates:
+                await _db.execute(
+                    "UPDATE leads SET crm_etapa_cache=? WHERE phone_number=?",
+                    (nova_etapa, phone)
+                )
+            await _db.commit()
+            await _db.close()
+        except Exception as _e:
+            logger.warning(f"[Radar] Falha ao atualizar crm_etapa_cache: {_e}")
 
     # Busca últimas mensagens de cada lead para alimentar o classificador.
     # Combina mensagens do bot interno + histórico Tallos (para leads que foram
