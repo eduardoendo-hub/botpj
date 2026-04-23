@@ -416,11 +416,24 @@ async def get_deals_updated_by_date(date_iso: str, pipeline_id: str) -> List[Dic
         return []
 
 
-async def _get_contact_phone_from_deal(client: httpx.AsyncClient, deal: Dict) -> tuple[str, str]:
+def _extract_contact_info(c: dict) -> tuple[str, str, str]:
+    """Extrai (nome, empresa, contact_id) de um dict de contato do CRM."""
+    cid     = c.get("_id") or c.get("id") or ""
+    nome    = c.get("name") or ""
+    empresa = (
+        c.get("organization_name")
+        or c.get("company")
+        or (c.get("organization") or {}).get("name", "") if isinstance(c.get("organization"), dict) else ""
+        or ""
+    )
+    return nome, empresa, cid
+
+
+async def _get_contact_phone_from_deal(client: httpx.AsyncClient, deal: Dict) -> tuple[str, str, str, str]:
     """
-    Extrai (phone, contact_id) do deal.
+    Extrai (phone, contact_id, contact_name, company) do deal.
     Tenta o campo 'contacts' embutido; se não tiver, busca via GET /contacts?deal_id=.
-    Retorna ("", "") se não encontrar.
+    Retorna ("", "", "", "") se não encontrar.
     """
     deal_id = deal.get("_id") or deal.get("id") or ""
 
@@ -429,25 +442,24 @@ async def _get_contact_phone_from_deal(client: httpx.AsyncClient, deal: Dict) ->
     if isinstance(contacts_raw, list) and contacts_raw:
         for c in contacts_raw:
             if isinstance(c, dict):
-                cid = c.get("_id") or c.get("id") or ""
-                phones = c.get("phones") or []
-                for ph in phones:
+                nome, empresa, cid = _extract_contact_info(c)
+                for ph in (c.get("phones") or []):
                     raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
                     normalized = _normalize_phone(raw)
                     if normalized:
-                        return normalized, cid
+                        return normalized, cid, nome, empresa
             elif isinstance(c, str):
-                # c é apenas o ID — busca o contato
+                # c é apenas o ID — busca o contato completo
                 try:
                     r = await client.get(f"{_BASE}/contacts/{c}", params={"token": settings.rd_crm_token})
                     if r.status_code == 200:
                         contact = r.json()
-                        cid = contact.get("_id") or c
+                        nome, empresa, cid = _extract_contact_info(contact)
                         for ph in (contact.get("phones") or []):
                             raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
                             normalized = _normalize_phone(raw)
                             if normalized:
-                                return normalized, cid
+                                return normalized, cid, nome, empresa
                 except Exception:
                     pass
 
@@ -463,16 +475,16 @@ async def _get_contact_phone_from_deal(client: httpx.AsyncClient, deal: Dict) ->
                 contacts = data.get("contacts", data) if isinstance(data, dict) else data
                 if isinstance(contacts, list) and contacts:
                     c = contacts[0]
-                    cid = c.get("_id") or c.get("id") or ""
+                    nome, empresa, cid = _extract_contact_info(c)
                     for ph in (c.get("phones") or []):
                         raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
                         normalized = _normalize_phone(raw)
                         if normalized:
-                            return normalized, cid
+                            return normalized, cid, nome, empresa
         except Exception:
             pass
 
-    return "", ""
+    return "", "", "", ""
 
 
 async def _backfill_webhook_messages(phone: str, days: int = 3) -> None:
@@ -571,7 +583,7 @@ async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
                 user_obj  = deal.get("user", {}) or {}
                 consultor = user_obj.get("name", "") if isinstance(user_obj, dict) else ""
 
-                phone, contact_id = await _get_contact_phone_from_deal(client, deal)
+                phone, contact_id, contact_nome_crm, contact_empresa_crm = await _get_contact_phone_from_deal(client, deal)
                 if not phone:
                     logger.debug(f"[RD CRM sync] Deal {deal_id} ({deal_name}) sem telefone — ignorado")
                     continue
@@ -579,20 +591,28 @@ async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
                 existing = await get_lead_by_phone(phone)
 
                 if existing:
-                    # Lead já existe — apenas garante que o deal_id está salvo
+                    # Lead já existe — garante deal_id e preenche empresa/nome se estiverem vazios
+                    updates: dict = {}
                     if not existing.get("rd_crm_deal_id") and deal_id:
-                        await upsert_lead(phone, rd_crm_deal_id=deal_id)
-                        logger.debug(f"[RD CRM sync] deal_id atualizado para {phone}")
+                        updates["rd_crm_deal_id"] = deal_id
+                    if not existing.get("company") and contact_empresa_crm:
+                        updates["company"] = contact_empresa_crm
+                    if updates:
+                        await upsert_lead(phone, **updates)
+                        logger.debug(f"[RD CRM sync] atualizado para {phone}: {updates}")
                     continue
 
                 # Lead novo — importa do CRM
                 logger.info(
                     f"[RD CRM sync] ✅ Importando lead CRM | phone={phone} | "
-                    f"deal={deal_name!r} | etapa={etapa} | consultor={consultor}"
+                    f"deal={deal_name!r} | etapa={etapa} | empresa={contact_empresa_crm!r}"
                 )
 
-                # Nome: tenta extrair do deal_name (ex: "Fernanda Fonseca - Power Automate")
-                nome = deal_name.split(" - ")[0].strip() if " - " in deal_name else deal_name
+                # Nome: prioriza nome do contato do CRM; fallback para deal_name
+                nome = (
+                    contact_nome_crm
+                    or (deal_name.split(" - ")[0].strip() if " - " in deal_name else deal_name)
+                )
 
                 notes = f"tallos_contact_id:{contact_id}" if contact_id else ""
 
@@ -611,6 +631,7 @@ async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
                 await upsert_lead(
                     phone,
                     contact_name=nome,
+                    company=contact_empresa_crm,
                     training_interest=deal_name,
                     source_channel="tallos_crm_sync",
                     rd_crm_deal_id=deal_id,
