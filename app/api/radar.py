@@ -487,7 +487,9 @@ async def radar_data(
         lead["_crm_pipeline"]      = crm.get("pipeline", "")
         lead["_crm_deal_name"]     = crm.get("deal_name", "")
         lead["_crm_deal_products"] = crm.get("deal_products", [])
-        lead["_crm_deal_id"]       = crm.get("deal_id", "")
+        # Prioriza o deal_id gravado no banco (veio do sync CRM — é o deal correto).
+        # Só usa o retorno ao vivo quando não há nada salvo (lead veio só pelo bot).
+        lead["_crm_deal_id"]       = lead.get("rd_crm_deal_id") or crm.get("deal_id", "")
         lead["_session"]           = dict(session) if session else None
 
     # Persiste atualizações do cache de etapa CRM (em background, sem bloquear)
