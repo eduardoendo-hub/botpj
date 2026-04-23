@@ -544,6 +544,62 @@ async def _backfill_webhook_messages(phone: str, days: int = 3) -> None:
         logger.error(f"[RD CRM sync] Erro no backfill de mensagens para {phone}: {e}")
 
 
+async def _extract_lead_info_from_conversation(phone: str) -> dict:
+    """
+    Varre as mensagens da conversa do lead buscando pares pergunta→resposta
+    para extrair empresa, email e nome quando esses campos estão vazios.
+
+    Detecta padrões como:
+      Bot: "Qual é o nome da sua empresa?"  → próxima msg do user = company
+      Bot: "Qual é o seu melhor e-mail?"    → próxima msg do user = email
+      Bot: "Qual é o seu nome?"             → próxima msg do user = contact_name
+    """
+    import re as _re
+    from app.core.database import get_full_conversation
+
+    try:
+        msgs = await get_full_conversation(phone)
+        if not msgs:
+            return {}
+
+        extracted: dict = {}
+        _EMPRESA_RE = _re.compile(r"nome da sua empresa|nome da empresa", _re.I)
+        _EMAIL_RE   = _re.compile(r"melhor e-mail|seu e-mail|seu email", _re.I)
+        _NOME_RE    = _re.compile(r"qual.*seu nome\??|como.*chama", _re.I)
+        _EMAIL_VAL  = _re.compile(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}")
+
+        msgs_list = list(msgs)
+        for i, msg in enumerate(msgs_list):
+            role    = (msg.get("role") or "").lower()
+            content = (msg.get("message") or "").strip()
+            if role not in ("assistant", "agent") or not content:
+                continue
+
+            # Próxima mensagem do usuário
+            next_user = next(
+                (m.get("message", "").strip()
+                 for m in msgs_list[i+1:]
+                 if (m.get("role") or "").lower() == "user" and m.get("message", "").strip()),
+                None
+            )
+            if not next_user:
+                continue
+
+            if _EMPRESA_RE.search(content) and "company" not in extracted:
+                extracted["company"] = next_user
+            elif _EMAIL_RE.search(content) and "email" not in extracted:
+                m = _EMAIL_VAL.search(next_user)
+                if m:
+                    extracted["email"] = m.group(0)
+            elif _NOME_RE.search(content) and "contact_name" not in extracted:
+                extracted["contact_name"] = next_user
+
+        return extracted
+    except Exception as e:
+        logger.warning(f"[RD CRM sync] Erro ao extrair info da conversa de {phone}: {e}")
+        return {}
+
+
 async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
     """
     Sincroniza oportunidades do funil pipeline_id criadas OU atualizadas em date_iso
@@ -591,15 +647,23 @@ async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
                 existing = await get_lead_by_phone(phone)
 
                 if existing:
-                    # Lead já existe — garante deal_id e preenche empresa/nome se estiverem vazios
+                    # Lead já existe — garante deal_id e preenche campos vazios
                     updates: dict = {}
                     if not existing.get("rd_crm_deal_id") and deal_id:
                         updates["rd_crm_deal_id"] = deal_id
-                    if not existing.get("company") and contact_empresa_crm:
-                        updates["company"] = contact_empresa_crm
+                    if not existing.get("company"):
+                        if contact_empresa_crm:
+                            updates["company"] = contact_empresa_crm
+                        else:
+                            # Tenta extrair da conversa local
+                            conv_info = await _extract_lead_info_from_conversation(phone)
+                            if conv_info.get("company"):
+                                updates["company"] = conv_info["company"]
+                            if conv_info.get("email") and not existing.get("email"):
+                                updates["email"] = conv_info["email"]
                     if updates:
                         await upsert_lead(phone, **updates)
-                        logger.debug(f"[RD CRM sync] atualizado para {phone}: {updates}")
+                        logger.info(f"[RD CRM sync] campos preenchidos para {phone}: {updates}")
                     continue
 
                 # Lead novo — importa do CRM
@@ -656,6 +720,20 @@ async def sync_pipeline_deals_to_leads(date_iso: str, pipeline_id: str) -> int:
 
                 # Backfill das conversas dos últimos 3 dias
                 await _backfill_webhook_messages(phone, days=3)
+
+                # Extrai empresa/email/nome da conversa e preenche campos vazios
+                conv_info = await _extract_lead_info_from_conversation(phone)
+                fill: dict = {}
+                if conv_info.get("company") and not contact_empresa_crm:
+                    fill["company"] = conv_info["company"]
+                if conv_info.get("email"):
+                    fill["email"] = conv_info["email"]
+                if conv_info.get("contact_name") and nome == deal_name:
+                    fill["contact_name_override"] = conv_info["contact_name"]
+                if fill:
+                    _fill_name = fill.pop("contact_name_override", None)
+                    await upsert_lead(phone, contact_name=_fill_name or "", **fill)
+                    logger.info(f"[RD CRM sync] Dados extraídos da conversa para {phone}: {fill}")
 
                 # Notificação por email — apenas para leads de HOJE
                 # Importações históricas (datas passadas) não disparam email
