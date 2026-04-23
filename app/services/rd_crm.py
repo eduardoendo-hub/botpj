@@ -454,93 +454,118 @@ def _deal_org_name(deal: dict) -> str:
     return ""
 
 
+def _contact_matches_deal(contact_name: str, deal_name: str) -> bool:
+    """
+    Verifica se o contato é o titular do deal.
+
+    O nome do deal costuma ter o formato "Nome do Lead - Produto".
+    Extrai o primeiro token do deal e checa se aparece no nome do contato
+    (case-insensitive, ignorando espaços extras).
+
+    Exemplos que passam:
+      contact="Wesley Silva"   deal="Wesley - IA para C-Level"   → True
+      contact="Pablo Oliveira" deal="Pablo Oliveira - Turma PJ"  → True
+
+    Exemplos que reprovam (contato secundário / errado):
+      contact="Adilson Souza"  deal="Wesley - IA para C-Level"   → False
+    """
+    if not contact_name or not deal_name:
+        return False
+    # Parte do nome antes do " - " (ou o nome inteiro se não tiver separador)
+    lead_part = deal_name.split(" - ")[0].strip().lower()
+    contact_lower = contact_name.strip().lower()
+    # Aceita se o primeiro nome do lead aparece no nome do contato
+    first_token = lead_part.split()[0] if lead_part.split() else ""
+    return bool(first_token) and first_token in contact_lower
+
+
 async def _get_contact_phone_from_deal(client: httpx.AsyncClient, deal: Dict) -> tuple[str, str, str, str]:
     """
     Extrai (phone, contact_id, contact_name, company) do deal.
-    Tenta o campo 'contacts' embutido; se não tiver, busca via GET /contacts?deal_id=.
-    Retorna ("", "", "", "") se não encontrar.
-    """
-    deal_id = deal.get("_id") or deal.get("id") or ""
-    # Empresa pode estar direto no deal (organização associada ao negócio)
-    deal_empresa = _deal_org_name(deal)
 
-    # Se a empresa ainda não veio no deal resumido (listagem), busca o deal completo
-    # O endpoint GET /deals/{id} retorna o objeto organization aninhado com o nome
+    Regra de ouro: só retorna um contato se o nome dele bater com o nome
+    do deal (ex: deal "Wesley - IA para C-Level" → aceita Wesley, rejeita Adilson).
+    Isso evita importar o telefone/nome de um contato secundário errado.
+
+    Se o deal não tiver telefone no contato principal → retorna ("", "", "", "")
+    e o deal é ignorado no sync (melhor não importar do que importar errado).
+    """
+    deal_id   = deal.get("_id") or deal.get("id") or ""
+    deal_name = (deal.get("name") or "").strip()
+
+    # Empresa: busca direto no deal (deal resumido pode não ter organization aninhado)
+    deal_empresa = _deal_org_name(deal)
     if not deal_empresa and deal_id:
         try:
             r_full = await client.get(f"{_BASE}/deals/{deal_id}", params={"token": settings.rd_crm_token})
             if r_full.status_code == 200:
-                full_deal = r_full.json()
-                deal_empresa = _deal_org_name(full_deal)
-                logger.debug(f"[RD CRM] deal_empresa do deal completo: {deal_empresa!r}")
+                deal_empresa = _deal_org_name(r_full.json())
         except Exception:
             pass
 
-    # 1. Tenta campo contacts embutido no deal
-    contacts_raw = deal.get("contacts") or []
-    if isinstance(contacts_raw, list) and contacts_raw:
-        for c in contacts_raw:
-            if isinstance(c, dict):
-                nome, empresa, cid = _extract_contact_info(c)
-                empresa = empresa or deal_empresa
-                for ph in (c.get("phones") or []):
-                    raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
-                    normalized = _normalize_phone(raw)
-                    if normalized:
-                        return normalized, cid, nome, empresa
-            elif isinstance(c, str):
-                # c é apenas o ID — busca o contato completo
-                try:
-                    r = await client.get(f"{_BASE}/contacts/{c}", params={"token": settings.rd_crm_token})
-                    if r.status_code == 200:
-                        contact = r.json()
-                        nome, empresa, cid = _extract_contact_info(contact)
-                        empresa = empresa or deal_empresa
-                        for ph in (contact.get("phones") or []):
-                            raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
-                            normalized = _normalize_phone(raw)
-                            if normalized:
-                                return normalized, cid, nome, empresa
-                except Exception:
-                    pass
+    def _try_contact(c: dict) -> tuple[str, str, str, str] | None:
+        """Tenta extrair phone+info de um dict de contato; None se não servir."""
+        nome, empresa, cid = _extract_contact_info(c)
+        empresa = empresa or deal_empresa
+        # Valida que o contato é o titular do deal
+        if not _contact_matches_deal(nome, deal_name):
+            return None
+        for ph in (c.get("phones") or []):
+            raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
+            normalized = _normalize_phone(raw)
+            if normalized:
+                return normalized, cid, nome, empresa
+        return None
 
-    # 2. Fallback: GET /contacts?deal_id= (busca contato pelo telefone para garantir empresa)
+    # ── 1. Contatos embutidos no objeto deal ─────────────────────────────────────
+    for c in (deal.get("contacts") or []):
+        if isinstance(c, dict):
+            result = _try_contact(c)
+            if result:
+                return result
+        elif isinstance(c, str):
+            try:
+                r = await client.get(f"{_BASE}/contacts/{c}", params={"token": settings.rd_crm_token})
+                if r.status_code == 200:
+                    result = _try_contact(r.json())
+                    if result:
+                        return result
+            except Exception:
+                pass
+
+    # ── 2. GET /contacts?deal_id= — aceita só o contato que bate com o deal name ─
     if deal_id:
         try:
-            r = await client.get(
-                f"{_BASE}/contacts",
-                params={"token": settings.rd_crm_token, "deal_id": deal_id}
-            )
+            r = await client.get(f"{_BASE}/contacts",
+                                 params={"token": settings.rd_crm_token, "deal_id": deal_id})
             if r.status_code == 200:
                 data = r.json()
                 contacts = data.get("contacts", data) if isinstance(data, dict) else data
                 if isinstance(contacts, list):
                     for c in contacts:
-                        nome, empresa, cid = _extract_contact_info(c)
-                        empresa = empresa or deal_empresa
-                        for ph in (c.get("phones") or []):
-                            raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
-                            normalized = _normalize_phone(raw)
-                            if normalized:
-                                return normalized, cid, nome, empresa
+                        result = _try_contact(c)
+                        if result:
+                            return result
         except Exception:
             pass
 
-    # 3. Último recurso: busca contato diretamente pelo ID do deal se tiver deal_id
-    # O contato pode estar no campo user/contact_id do deal
+    # ── 3. contact_ids no deal completo — mesmo critério de validação ────────────
     if deal_id:
         try:
-            # Tenta buscar contatos pelo contact_ids do deal completo
             r_full = await client.get(f"{_BASE}/deals/{deal_id}", params={"token": settings.rd_crm_token})
             if r_full.status_code == 200:
                 full_deal = r_full.json()
+                emp = deal_empresa or _deal_org_name(full_deal)
                 for cid_raw in (full_deal.get("contact_ids") or []):
                     try:
-                        r_c = await client.get(f"{_BASE}/contacts/{cid_raw}", params={"token": settings.rd_crm_token})
+                        r_c = await client.get(f"{_BASE}/contacts/{cid_raw}",
+                                               params={"token": settings.rd_crm_token})
                         if r_c.status_code == 200:
                             contact = r_c.json()
                             nome, empresa, cid = _extract_contact_info(contact)
-                            empresa = empresa or _deal_org_name(full_deal)
+                            empresa = empresa or emp
+                            if not _contact_matches_deal(nome, deal_name):
+                                continue
                             for ph in (contact.get("phones") or []):
                                 raw = ph.get("phone", "") if isinstance(ph, dict) else str(ph)
                                 normalized = _normalize_phone(raw)
@@ -551,6 +576,9 @@ async def _get_contact_phone_from_deal(client: httpx.AsyncClient, deal: Dict) ->
         except Exception:
             pass
 
+    # Sem telefone válido no contato principal → ignora este deal
+    if deal_name:
+        logger.info(f"[RD CRM sync] Deal sem telefone no contato principal: {deal_name!r} ({deal_id}) — ignorado")
     return "", "", "", ""
 
 
