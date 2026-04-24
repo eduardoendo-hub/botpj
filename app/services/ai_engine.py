@@ -216,9 +216,9 @@ async def _build_compressed_history(
 # ─────────────────────────────────────────────────────────────
 
 _GREETING_RESPONSES = [
-    "Olá! 👋 Sou o assistente de Treinamentos Corporativos. Como posso te ajudar hoje?",
-    "Oi! 😊 Bem-vindo(a)! Posso ajudar com treinamentos corporativos, turmas fechadas, online ao vivo, gravados e muito mais. O que você precisa?",
-    "Olá! 🎯 Aqui é o atendimento de Treinamentos PJ. Me conta o que você está buscando!",
+    "Seja bem-vindo(a) ao Universo IMPACTA! 🎓 Sou o assistente de Treinamentos Corporativos PJ. Com quem tenho o prazer de falar?",
+    "Seja bem-vindo(a) ao Universo IMPACTA! 😊 Aqui você encontra soluções em treinamentos corporativos, turmas fechadas, online ao vivo e muito mais. Qual é o seu nome?",
+    "Seja bem-vindo(a) ao Universo IMPACTA! 🏢 Sou o SDR de Treinamentos PJ e estou aqui para te ajudar. Me conta o seu nome para começarmos!",
 ]
 
 _greeting_idx = 0
