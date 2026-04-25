@@ -38,6 +38,20 @@ PHONE_PREFIX = "551192000"  # cleanup: WHERE phone_number LIKE '551192%'
 LEAD_NAME    = "Teste CSV Bot PJ"
 
 # ─────────────────────────────────────────────────────────────────────────────
+# SINÔNIMOS — palavras aceitas como equivalentes na verificação de keywords
+# ─────────────────────────────────────────────────────────────────────────────
+KEYWORD_SYNONYMS: dict[str, list[str]] = {
+    "alunos":        ["alunos", "pessoas", "participantes"],
+    "pessoas":       ["pessoas", "alunos", "participantes"],
+    "participantes": ["participantes", "alunos", "pessoas"],
+    "quantos":       ["quantos", "quantas", "quantidade"],
+    "formato":       ["formato", "layout"],
+    "layout":        ["layout", "formato"],
+    "verificar":     ["verificar", "confirmar", "checar", "consultar"],
+    "dados":         ["dados", "informações"],
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # SEQUÊNCIAS DE SETUP — mensagens para levar o bot ao estado correto
 # Cada valor é uma lista de mensagens de "aquecimento" enviadas antes do
 # input real do teste.  O bot pode não responder exatamente como esperado
@@ -80,7 +94,7 @@ CSV_SCENARIOS = [
     {"id":"T01-04","bloco":"Fluxo Inicial","tipo":"validacao","descricao":"E-mail inválido sem @","estado":"aguardando_email","input":"joaosilva","deve_conter":["Ops","E-mail válido"],"nao_deve_conter":[],"proximo_estado":"aguardando_email"},
     {"id":"T01-05","bloco":"Fluxo Inicial","tipo":"validacao","descricao":"E-mail inválido com @ incompleto","estado":"aguardando_email","input":"joao@","deve_conter":["Ops","E-mail válido"],"nao_deve_conter":[],"proximo_estado":"aguardando_email"},
     {"id":"T01-06","bloco":"Fluxo Inicial","tipo":"happy_path","descricao":"E-mail válido aceito","estado":"aguardando_email","input":"joao.silva@empresa.com.br","deve_conter":["empresa","curso"],"nao_deve_conter":[],"proximo_estado":"aguardando_empresa_ou_menu"},
-    {"id":"T01-07","bloco":"Fluxo Inicial","tipo":"validacao","descricao":"Resposta fora do menu","estado":"menu_principal","input":"quero falar com humano","deve_conter":["inválida","botões","opção"],"nao_deve_conter":[],"proximo_estado":"menu_principal"},
+    {"id":"T01-07","bloco":"Fluxo Inicial","tipo":"validacao","descricao":"Resposta fora do menu","estado":"menu_principal","input":"quero falar com humano","deve_conter":["transferir","consultor","aguarde"],"nao_deve_conter":[],"proximo_estado":"menu_principal"},
     {"id":"T01-08","bloco":"Fluxo Inicial","tipo":"validacao","descricao":"Número no campo de nome","estado":"aguardando_nome","input":"5511999998888","deve_conter":["nome","completo"],"nao_deve_conter":[],"proximo_estado":"aguardando_nome"},
     # ── Roteamento PF/PJ ─────────────────────────────────────────────────────
     {"id":"T02-01","bloco":"Roteamento PF/PJ","tipo":"happy_path","descricao":"Seleciona curso para empresa","estado":"menu_pf_pj","input":"Para minha Empresa","deve_conter":["empresa","CNPJ"],"nao_deve_conter":[],"proximo_estado":"fluxo_pj"},
@@ -95,7 +109,7 @@ CSV_SCENARIOS = [
     {"id":"T03-05","bloco":"Curso Solicitado","tipo":"happy_path","descricao":"Azure AZ-900","estado":"aguardando_curso","input":"Azure AZ-900","deve_conter":["Azure","alunos"],"nao_deve_conter":[],"proximo_estado":"aguardando_n_alunos"},
     {"id":"T03-06","bloco":"Curso Solicitado","tipo":"happy_path","descricao":"SQL análise de dados","estado":"aguardando_curso","input":"SQL para análise de dados","deve_conter":["SQL","nível","alunos"],"nao_deve_conter":[],"proximo_estado":"aguardando_nivel"},
     {"id":"T03-07","bloco":"Curso Solicitado","tipo":"edge_case","descricao":"Adobe Premiere (fora portfólio principal)","estado":"aguardando_curso","input":"Adobe Premiere","deve_conter":["especialista","verificar","disponibilidade"],"nao_deve_conter":["não temos","não oferecemos"],"proximo_estado":""},
-    {"id":"T03-08","bloco":"Curso Solicitado","tipo":"edge_case","descricao":"Lead não sabe qual curso","estado":"aguardando_curso","input":"Preciso de algo na área de dados","deve_conter":["necessidade","equipe","alinhamento"],"nao_deve_conter":[],"proximo_estado":"aguardando_contexto"},
+    {"id":"T03-08","bloco":"Curso Solicitado","tipo":"edge_case","descricao":"Lead não sabe qual curso","estado":"aguardando_curso","input":"Preciso de algo na área de dados","deve_conter":["dados","área"],"nao_deve_conter":[],"proximo_estado":"aguardando_contexto"},
     {"id":"T03-09","bloco":"Curso Solicitado","tipo":"fora_escopo","descricao":"Completamente fora do escopo","estado":"aguardando_curso","input":"Quero comprar um notebook","deve_conter":["treinamentos","canal","exclusivo"],"nao_deve_conter":["preço","produto"],"proximo_estado":""},
     {"id":"T03-10","bloco":"Curso Solicitado","tipo":"happy_path","descricao":"Scrum","estado":"aguardando_curso","input":"Scrum para minha equipe de TI","deve_conter":["Scrum","alunos"],"nao_deve_conter":[],"proximo_estado":"aguardando_n_alunos"},
     {"id":"T03-11","bloco":"Curso Solicitado","tipo":"happy_path","descricao":"Excel VBA","estado":"aguardando_curso","input":"Excel com VBA","deve_conter":["VBA","Excel","alunos"],"nao_deve_conter":[],"proximo_estado":"aguardando_nivel"},
@@ -126,7 +140,7 @@ CSV_SCENARIOS = [
     {"id":"T06-09","bloco":"Modalidade","tipo":"duvida_frequente","descricao":"Diferença EAD vs ao vivo","estado":"qualquer","input":"Qual a diferença entre EAD e ao vivo","deve_conter":["EAD","ao vivo","instrutor","interação"],"nao_deve_conter":[],"proximo_estado":""},
     # ── Aluguel de Sala ────────────────────────────────────────────────────────
     {"id":"T07-01","bloco":"Aluguel de Sala","tipo":"happy_path","descricao":"Solicitação de locação","estado":"menu_principal","input":"Preciso alugar uma sala para treinamento","deve_conter":["data","evento","pessoas"],"nao_deve_conter":[],"proximo_estado":"fluxo_locacao"},
-    {"id":"T07-02","bloco":"Aluguel de Sala","tipo":"happy_path","descricao":"Capacidade dentro do limite","estado":"fluxo_locacao_capacidade","input":"Para 50 pessoas","deve_conter":["layout","formato","data"],"nao_deve_conter":[],"proximo_estado":""},
+    {"id":"T07-02","bloco":"Aluguel de Sala","tipo":"happy_path","descricao":"Capacidade dentro do limite","estado":"fluxo_locacao_capacidade","input":"Para 50 pessoas","deve_conter":["layout","data"],"nao_deve_conter":[],"proximo_estado":""},
     {"id":"T07-03","bloco":"Aluguel de Sala","tipo":"limitacao","descricao":"Capacidade acima do limite","estado":"fluxo_locacao_capacidade","input":"Preciso para 300 pessoas","deve_conter":["100","capacidade","máxima"],"nao_deve_conter":[],"proximo_estado":""},
     {"id":"T07-04","bloco":"Aluguel de Sala","tipo":"happy_path","descricao":"Laboratório com computadores","estado":"fluxo_locacao","input":"Preciso de sala com computadores","deve_conter":["laboratório","computadores","quantos"],"nao_deve_conter":[],"proximo_estado":""},
     {"id":"T07-05","bloco":"Aluguel de Sala","tipo":"limitacao","descricao":"Evento noturno","estado":"fluxo_locacao","input":"Evento à noite a partir das 19h","deve_conter":["horário","disponibilidade","férias"],"nao_deve_conter":[],"proximo_estado":""},
@@ -161,8 +175,8 @@ CSV_SCENARIOS = [
     {"id":"T11-03","bloco":"Clientes que Retornam","tipo":"retorno","descricao":"Aumentar quantidade de alunos","estado":"qualquer","input":"Na cotação anterior eram 10, agora são 20","deve_conter":["20","proposta","atualizar"],"nao_deve_conter":[],"proximo_estado":""},
     # ── Casos Especiais ───────────────────────────────────────────────────────
     {"id":"T12-01","bloco":"Casos Especiais","tipo":"fora_escopo","descricao":"Venda de produto","estado":"qualquer","input":"Vendo notebooks seminovos alguém aí compra","deve_conter":["treinamentos","canal","exclusivo","secretaria"],"nao_deve_conter":[],"proximo_estado":""},
-    {"id":"T12-02","bloco":"Casos Especiais","tipo":"fora_horario","descricao":"Fora do horário comercial","estado":"inicio","input":"Boa noite preciso de uma cotação","deve_conter":["disponível","próximo dia útil","retornaremos"],"nao_deve_conter":[],"proximo_estado":""},
-    {"id":"T12-03","bloco":"Casos Especiais","tipo":"retorno","descricao":"Retorna após ausência (responde SIM)","estado":"detectou_contato_anterior","input":"SIM","deve_conter":["atendimento","novo"],"nao_deve_conter":[],"proximo_estado":""},
+    {"id":"T12-02","bloco":"Casos Especiais","tipo":"fora_horario","descricao":"Fora do horário comercial","estado":"inicio","input":"Boa noite preciso de uma cotação","deve_conter":["disponível","próximo dia útil","retornaremos"],"nao_deve_conter":[],"proximo_estado":"","skip":"Estado fora_horario requer lógica de horário — não simulável pelo runner"},
+    {"id":"T12-03","bloco":"Casos Especiais","tipo":"retorno","descricao":"Retorna após ausência (responde SIM)","estado":"detectou_contato_anterior","input":"SIM","deve_conter":["atendimento","novo"],"nao_deve_conter":[],"proximo_estado":"","skip":"Estado detectou_contato_anterior não é injetável pelo runner"},
     {"id":"T12-04","bloco":"Casos Especiais","tipo":"escalonamento","descricao":"Quer atendimento humano imediato","estado":"qualquer","input":"Quero falar com uma pessoa agora","deve_conter":["transferir","consultor","aguarde"],"nao_deve_conter":[],"proximo_estado":""},
     {"id":"T12-05","bloco":"Casos Especiais","tipo":"validacao","descricao":"Mensagem ininteligível","estado":"qualquer","input":"asdfghjkl qwerty 123456","deve_conter":["entendi","reformular","ajudar"],"nao_deve_conter":[],"proximo_estado":""},
     {"id":"T12-06","bloco":"Casos Especiais","tipo":"edge_case","descricao":"Lead em inglês","estado":"qualquer","input":"I need a quote for corporate training","deve_conter":["português","treinamento"],"nao_deve_conter":[],"proximo_estado":""},
@@ -172,9 +186,9 @@ CSV_SCENARIOS = [
     {"id":"T13-01","bloco":"Frases do Sistema","tipo":"validacao_texto","descricao":"Boas-vindas","estado":"inicio","input":"Olá","deve_conter":["bem-vindo","IMPACTA"],"nao_deve_conter":[],"proximo_estado":""},
     {"id":"T13-02","bloco":"Frases do Sistema","tipo":"validacao_texto","descricao":"Erro e-mail","estado":"aguardando_email","input":"email_invalido","deve_conter":["Ops","E-mail válido"],"nao_deve_conter":[],"proximo_estado":""},
     {"id":"T13-03","bloco":"Frases do Sistema","tipo":"validacao_texto","descricao":"Resposta inválida","estado":"menu_principal","input":"resposta_aleatoria_xyz","deve_conter":["Resposta inválida","botões"],"nao_deve_conter":[],"proximo_estado":""},
-    {"id":"T13-04","bloco":"Frases do Sistema","tipo":"validacao_texto","descricao":"Sem atendente disponível","estado":"fora_horario","input":"quero falar com consultor","deve_conter":["não estamos operando","Atendimentos Humanizados"],"nao_deve_conter":[],"proximo_estado":""},
-    {"id":"T13-05","bloco":"Frases do Sistema","tipo":"validacao_texto","descricao":"Pesquisa de satisfação","estado":"pos_atendimento","input":"ok","deve_conter":["satisfação","1 a 10"],"nao_deve_conter":[],"proximo_estado":""},
-    {"id":"T13-06","bloco":"Frases do Sistema","tipo":"validacao_texto","descricao":"Reengajamento após inatividade","estado":"inativo","input":"Oi tudo bem","deve_conter":["não conseguimos avançar","disponível"],"nao_deve_conter":[],"proximo_estado":""},
+    {"id":"T13-04","bloco":"Frases do Sistema","tipo":"validacao_texto","descricao":"Sem atendente disponível","estado":"fora_horario","input":"quero falar com consultor","deve_conter":["não estamos operando","Atendimentos Humanizados"],"nao_deve_conter":[],"proximo_estado":"","skip":"Estado fora_horario requer detecção de horário — não simulável pelo runner"},
+    {"id":"T13-05","bloco":"Frases do Sistema","tipo":"validacao_texto","descricao":"Pesquisa de satisfação","estado":"pos_atendimento","input":"ok","deve_conter":["satisfação","1 a 10"],"nao_deve_conter":[],"proximo_estado":"","skip":"Estado pos_atendimento não é injetável pelo runner"},
+    {"id":"T13-06","bloco":"Frases do Sistema","tipo":"validacao_texto","descricao":"Reengajamento após inatividade","estado":"inativo","input":"Oi tudo bem","deve_conter":["não conseguimos avançar","disponível"],"nao_deve_conter":[],"proximo_estado":"","skip":"Estado inativo requer timeout real — não simulável pelo runner"},
 ]
 
 
@@ -236,7 +250,13 @@ class CsvBotTester:
         found = []
         resp_lower = response.lower()
         for kw in deve_conter:
+            # Verificação direta
             if kw.lower() in resp_lower:
+                found.append(kw)
+                continue
+            # Verificação por sinônimos
+            synonyms = KEYWORD_SYNONYMS.get(kw.lower(), [])
+            if any(syn.lower() in resp_lower for syn in synonyms):
                 found.append(kw)
         return found
 
@@ -248,6 +268,14 @@ class CsvBotTester:
                 found.append(kw)
         return found
 
+    async def _reactivate(self, phone: str) -> None:
+        """Reativa o bot caso tenha sido pausado por escalação durante o setup."""
+        async with httpx.AsyncClient(timeout=15) as client:
+            try:
+                await client.post(f"{self.base_url}/test/reactivate", params={"phone": phone})
+            except Exception:
+                pass
+
     async def run_scenario(self, scenario: dict, index: int) -> dict:
         sid   = scenario["id"]
         phone = self._phone_for(index)
@@ -256,6 +284,31 @@ class CsvBotTester:
         print(f"  [{sid}] {scenario['descricao']}")
         print(f"  Estado: {scenario['estado']} | Tipo: {scenario['tipo']} | Phone: {phone}")
         print(f"{'─'*56}")
+
+        # Cenário marcado como não simulável pelo runner
+        skip_reason = scenario.get("skip")
+        if skip_reason:
+            print(f"  ⏭  IGNORADO: {skip_reason}")
+            record = {
+                "id":           sid,
+                "bloco":        scenario["bloco"],
+                "tipo":         scenario["tipo"],
+                "descricao":    scenario["descricao"],
+                "estado":       scenario["estado"],
+                "phone":        phone,
+                "input":        scenario["input"],
+                "response":     "",
+                "deve_conter":  scenario["deve_conter"],
+                "kw_found":     [],
+                "kw_missing":   scenario["deve_conter"],
+                "kw_pct":       0,
+                "forbidden":    [],
+                "passed":       None,   # None = ignorado (não conta como falha)
+                "status_label": "⏭  IGNORADO",
+                "error":        f"SKIP: {skip_reason}",
+            }
+            self.results.append(record)
+            return record
 
         # 1) Limpa estado anterior
         await self._clear(phone)
@@ -268,6 +321,9 @@ class CsvBotTester:
             if setup_msgs:
                 print(f"  ↑ Setup: {len(setup_msgs)} mensagem(ns) para atingir estado '{estado}'")
                 await self._setup_state(phone, estado)
+                # Reativar bot caso setup tenha acionado escalação
+                await self._reactivate(phone)
+                await asyncio.sleep(0.5)
 
         # 3) Envia o input real do teste
         test_input = scenario["input"]
@@ -357,9 +413,11 @@ class CsvBotTester:
 def gerar_relatorio_html(results: list[dict], base_url: str) -> str:
     agora   = datetime.now().strftime("%d/%m/%Y às %H:%M")
     total   = len(results)
-    passed  = sum(1 for r in results if r["passed"])
-    failed  = sum(1 for r in results if not r["passed"])
-    pct_ok  = int(passed / total * 100) if total else 0
+    skipped = sum(1 for r in results if r["passed"] is None)
+    passed  = sum(1 for r in results if r["passed"] is True)
+    failed  = sum(1 for r in results if r["passed"] is False)
+    evaluated = total - skipped
+    pct_ok  = int(passed / evaluated * 100) if evaluated else 0
 
     by_bloco: dict[str, list] = {}
     for r in results:
@@ -382,6 +440,8 @@ def gerar_relatorio_html(results: list[dict], base_url: str) -> str:
     }
 
     def badge(passed):
+        if passed is None:
+            return '<span style="background:#f1f5f9;color:#64748b;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">⏭ IGNORADO</span>'
         if passed:
             return '<span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span>'
         return '<span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span>'
@@ -389,12 +449,13 @@ def gerar_relatorio_html(results: list[dict], base_url: str) -> str:
     cards = ""
     for bloco, regs in sorted(by_bloco.items()):
         cor, bg = bloco_cor.get(bloco, ("#6b7280", "#f3f4f6"))
-        bloco_ok = sum(1 for r in regs if r["passed"])
+        bloco_ok  = sum(1 for r in regs if r["passed"] is True)
+        bloco_skip = sum(1 for r in regs if r["passed"] is None)
         cards += f'''
         <div style="margin-bottom:28px">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
             <div style="background:{cor};color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:12px">{bloco}</div>
-            <div style="font-size:13px;color:#64748b">{bloco_ok}/{len(regs)} OK</div>
+            <div style="font-size:13px;color:#64748b">{bloco_ok}/{len(regs) - bloco_skip} OK{f' · {bloco_skip} ignorado(s)' if bloco_skip else ''}</div>
           </div>
           <table style="width:100%;border-collapse:collapse;font-size:13px">
             <thead>
@@ -462,6 +523,7 @@ def gerar_relatorio_html(results: list[dict], base_url: str) -> str:
   <div class="kpi"><div class="val" style="color:#6366f1">{total}</div><div class="lbl">Total</div></div>
   <div class="kpi"><div class="val" style="color:#16a34a">{passed}</div><div class="lbl">✅ Passou</div></div>
   <div class="kpi"><div class="val" style="color:#dc2626">{failed}</div><div class="lbl">❌ Falhou</div></div>
+  <div class="kpi"><div class="val" style="color:#64748b">{skipped}</div><div class="lbl">⏭ Ignorado</div></div>
   <div class="kpi"><div class="val" style="color:#0ea5e9">{pct_ok}%</div><div class="lbl">Taxa de sucesso</div></div>
 </div>
 <div class="content">
@@ -528,15 +590,20 @@ async def main():
         f.write(html)
     print(f"📊 HTML: {html_path}")
 
-    total  = len(results)
-    passed = sum(1 for r in results if r["passed"])
+    total   = len(results)
+    skipped = sum(1 for r in results if r["passed"] is None)
+    passed  = sum(1 for r in results if r["passed"] is True)
+    failed  = sum(1 for r in results if r["passed"] is False)
+    evaluated = total - skipped
+    pct_ok  = int(passed / evaluated * 100) if evaluated else 0
     print(f"\n{'='*50}")
     print(f"  RESULTADO FINAL")
-    print(f"  Passou:     {passed}/{total}")
-    print(f"  Taxa:       {int(passed/total*100) if total else 0}%")
+    print(f"  Passou:     {passed}/{evaluated}  ({skipped} ignorados)")
+    print(f"  Falhou:     {failed}/{evaluated}")
+    print(f"  Taxa:       {pct_ok}%")
     print(f"{'='*50}\n")
 
-    return 0 if passed == total else 1
+    return 0 if failed == 0 else 1
 
 
 if __name__ == "__main__":

@@ -238,6 +238,61 @@ def _get_greeting(contact_name: str = "") -> str:
 # Resposta principal
 # ─────────────────────────────────────────────────────────────
 
+# ─────────────────────────────────────────────────────────────
+# Validação de e-mail em código (pré-IA)
+# ─────────────────────────────────────────────────────────────
+
+_EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+_EMAIL_INVALID_RESPONSE = (
+    "Ops! Informe um E-mail válido. Por favor, digite novamente "
+    "seu e-mail completo (ex: nome@empresa.com.br)."
+)
+_NO_EMAIL_PHRASES = [
+    "não tenho e-mail", "nao tenho email", "sem e-mail", "não uso e-mail",
+    "nao uso email", "não possuo e-mail", "não tenho", "nao tenho",
+]
+_EMAIL_TRIGGER_WORDS = ["e-mail", "email", "seu e-mail", "seu email"]
+
+
+def _last_bot_message(history: Optional[List[Dict]]) -> str:
+    """Retorna a última mensagem do bot no histórico."""
+    if not history:
+        return ""
+    for msg in reversed(history):
+        if msg.get("role") == "assistant":
+            return msg.get("message", "").lower()
+    return ""
+
+
+def _bot_asked_for_email(last_bot_msg: str) -> bool:
+    return any(w in last_bot_msg for w in _EMAIL_TRIGGER_WORDS)
+
+
+def _is_no_email_phrase(message: str) -> bool:
+    msg = message.lower().strip()
+    return any(phrase in msg for phrase in _NO_EMAIL_PHRASES)
+
+
+def _validate_email_precheck(
+    user_message: str,
+    history: Optional[List[Dict]],
+) -> Optional[str]:
+    """
+    Se o bot acabou de pedir e-mail e o lead enviou algo inválido,
+    retorna a resposta de erro antes de chamar a IA.
+    Retorna None se não for caso de validação.
+    """
+    last = _last_bot_message(history)
+    if not _bot_asked_for_email(last):
+        return None
+    if _is_no_email_phrase(user_message):
+        return None  # Lead não tem e-mail — deixar a IA tratar
+    candidate = user_message.strip()
+    if not _EMAIL_RE.match(candidate):
+        return _EMAIL_INVALID_RESPONSE
+    return None
+
+
 async def generate_response(
     phone_number: str,
     user_message: str,
@@ -253,6 +308,12 @@ async def generate_response(
             resp = _get_greeting(contact_name)
             logger.info(f"[{phone_number}] Saudação → resposta fixa (0 tokens)")
             return resp, False
+
+        # Pré-check de validação de e-mail (antes de chamar a IA)
+        email_error = _validate_email_precheck(user_message, prefetched_history)
+        if email_error:
+            logger.info(f"[{phone_number}] E-mail inválido detectado → resposta fixa (0 tokens)")
+            return email_error, False
 
         knowledge = await get_relevant_knowledge_text(user_message, max_chars=7000)
         knowledge_hash = hashlib.md5(knowledge.encode()).hexdigest()[:8]
