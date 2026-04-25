@@ -333,20 +333,14 @@ async def run():
         sys.exit(1)
 
     async with aiosqlite.connect(DB_PATH) as db:
-        # ── 3.1 Atualizar bot_config (system prompt) ──────────────────────────
+        # ── 3.1 Atualizar system_config (system prompt) ───────────────────────
         print("\n🔧 Atualizando system prompt (v4)...")
         await db.execute(
-            "UPDATE bot_config SET config_value = ? WHERE config_key = 'system_prompt'",
+            "INSERT OR REPLACE INTO system_config (key, value, updated_at) "
+            "VALUES ('system_prompt', ?, CURRENT_TIMESTAMP)",
             (SYSTEM_PROMPT,)
         )
-        rows = db.total_changes
-        if rows == 0:
-            print("   ℹ️  Nenhuma linha atualizada — inserindo system_prompt...")
-            await db.execute(
-                "INSERT INTO bot_config (config_key, config_value) VALUES ('system_prompt', ?)",
-                (SYSTEM_PROMPT,)
-            )
-        print("   ✅ System prompt v4 atualizado.")
+        print(f"   ✅ System prompt v4 atualizado ({len(SYSTEM_PROMPT)} chars).")
 
         # ── 3.2 Limpar e reinserir knowledge base ─────────────────────────────
         print("\n📚 Recriando knowledge base (v4)...")
