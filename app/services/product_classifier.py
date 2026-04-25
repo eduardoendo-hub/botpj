@@ -25,7 +25,9 @@ from typing import Dict, Optional, Tuple
 
 from anthropic import AsyncAnthropic
 
+import asyncio
 from app.core.config import settings
+from app.services.token_tracker import track as _track_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -192,6 +194,7 @@ async def classify_product(lead: dict, last_messages: list[dict] | None = None) 
             system=_SYSTEM,
             messages=[{"role": "user", "content": user_msg}],
         )
+        asyncio.ensure_future(_track_tokens("product_classifier", "classify_product", resp.usage, "claude-haiku-4-5-20251001", phone))
         produto = (resp.content[0].text or "").strip().strip('"').strip("'")
         if not produto:
             produto = "A definir"

@@ -268,6 +268,27 @@ async def init_db():
             )
         """)
 
+        # Consumo de tokens da API Anthropic (todos os serviços)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS token_usage (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                service       TEXT NOT NULL,
+                function      TEXT NOT NULL,
+                model         TEXT NOT NULL,
+                input_tokens  INTEGER NOT NULL DEFAULT 0,
+                output_tokens INTEGER NOT NULL DEFAULT 0,
+                total_tokens  INTEGER NOT NULL DEFAULT 0,
+                cost_usd      REAL    NOT NULL DEFAULT 0,
+                phone_number  TEXT    DEFAULT '',
+                created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        await db.execute("""
+            CREATE INDEX IF NOT EXISTS idx_token_usage_date
+            ON token_usage(created_at DESC)
+        """)
+
         await db.commit()
     finally:
         await db.close()
@@ -943,5 +964,152 @@ async def set_company_intel_cached(company_name: str, data: Dict) -> None:
             (key, json.dumps(data, ensure_ascii=False))
         )
         await db.commit()
+    finally:
+        await db.close()
+
+
+# ==================== Token Usage ====================
+
+async def log_token_usage(
+    service: str,
+    function: str,
+    model: str,
+    input_tokens: int,
+    output_tokens: int,
+    total_tokens: int,
+    cost_usd: float,
+    phone_number: str = "",
+) -> None:
+    """Persiste uma linha de consumo de tokens no banco."""
+    db = await get_db()
+    try:
+        await db.execute(
+            """INSERT INTO token_usage
+               (service, function, model, input_tokens, output_tokens, total_tokens, cost_usd, phone_number)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (service, function, model, input_tokens, output_tokens, total_tokens, cost_usd, phone_number),
+        )
+        await db.commit()
+    finally:
+        await db.close()
+
+
+async def get_token_usage_daily(days: int = 30) -> List[Dict]:
+    """Retorna consumo agregado por dia (últimos N dias)."""
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            """SELECT
+                   date(created_at) AS day,
+                   SUM(input_tokens)  AS input_tokens,
+                   SUM(output_tokens) AS output_tokens,
+                   SUM(total_tokens)  AS total_tokens,
+                   SUM(cost_usd)      AS cost_usd,
+                   COUNT(*)           AS calls
+               FROM token_usage
+               WHERE created_at >= date('now', ?)
+               GROUP BY date(created_at)
+               ORDER BY day DESC""",
+            (f"-{days} days",),
+        )
+        rows = await cursor.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        await db.close()
+
+
+async def get_token_usage_by_service(period: str = "month") -> List[Dict]:
+    """Retorna consumo agregado por serviço no período ('today' | 'month' | 'all')."""
+    db = await get_db()
+    try:
+        if period == "today":
+            where = "WHERE date(created_at) = date('now')"
+        elif period == "month":
+            where = "WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')"
+        else:
+            where = ""
+        cursor = await db.execute(
+            f"""SELECT
+                    service,
+                    SUM(input_tokens)  AS input_tokens,
+                    SUM(output_tokens) AS output_tokens,
+                    SUM(total_tokens)  AS total_tokens,
+                    SUM(cost_usd)      AS cost_usd,
+                    COUNT(*)           AS calls
+                FROM token_usage
+                {where}
+                GROUP BY service
+                ORDER BY cost_usd DESC"""
+        )
+        rows = await cursor.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        await db.close()
+
+
+async def get_token_usage_by_model(period: str = "month") -> List[Dict]:
+    """Retorna consumo agregado por modelo no período."""
+    db = await get_db()
+    try:
+        if period == "today":
+            where = "WHERE date(created_at) = date('now')"
+        elif period == "month":
+            where = "WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')"
+        else:
+            where = ""
+        cursor = await db.execute(
+            f"""SELECT
+                    model,
+                    SUM(input_tokens)  AS input_tokens,
+                    SUM(output_tokens) AS output_tokens,
+                    SUM(total_tokens)  AS total_tokens,
+                    SUM(cost_usd)      AS cost_usd,
+                    COUNT(*)           AS calls
+                FROM token_usage
+                {where}
+                GROUP BY model
+                ORDER BY cost_usd DESC"""
+        )
+        rows = await cursor.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        await db.close()
+
+
+async def get_token_usage_totals() -> Dict:
+    """Retorna totais: hoje, este mês e acumulado geral."""
+    db = await get_db()
+    try:
+        def _row(cursor_row) -> Dict:
+            if cursor_row is None:
+                return {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0, "cost_usd": 0.0, "calls": 0}
+            d = dict(cursor_row)
+            for k in ("input_tokens", "output_tokens", "total_tokens", "calls"):
+                d[k] = d.get(k) or 0
+            d["cost_usd"] = d.get("cost_usd") or 0.0
+            return d
+
+        c1 = await db.execute(
+            """SELECT SUM(input_tokens) input_tokens, SUM(output_tokens) output_tokens,
+                      SUM(total_tokens) total_tokens, SUM(cost_usd) cost_usd, COUNT(*) calls
+               FROM token_usage WHERE date(created_at) = date('now')"""
+        )
+        today = _row(await c1.fetchone())
+
+        c2 = await db.execute(
+            """SELECT SUM(input_tokens) input_tokens, SUM(output_tokens) output_tokens,
+                      SUM(total_tokens) total_tokens, SUM(cost_usd) cost_usd, COUNT(*) calls
+               FROM token_usage WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')"""
+        )
+        month = _row(await c2.fetchone())
+
+        c3 = await db.execute(
+            """SELECT SUM(input_tokens) input_tokens, SUM(output_tokens) output_tokens,
+                      SUM(total_tokens) total_tokens, SUM(cost_usd) cost_usd, COUNT(*) calls
+               FROM token_usage"""
+        )
+        total = _row(await c3.fetchone())
+
+        return {"today": today, "month": month, "total": total}
     finally:
         await db.close()

@@ -23,7 +23,9 @@ from typing import Dict, Optional, Tuple
 
 from anthropic import AsyncAnthropic
 
+import asyncio
 from app.core.config import settings
+from app.services.token_tracker import track as _track_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +147,7 @@ async def get_company_intel(company_name: str) -> dict:
             result = _EMPTY.copy()
             result["descricao"] = raw or "Não foram encontradas informações públicas suficientes."
 
+        asyncio.ensure_future(_track_tokens("company_intel", "get_company_intel_sonnet", response.usage, "claude-sonnet-4-20250514"))
         _mem_set(company_name, result)
         await set_company_intel_cached(company_name, result)
         logger.info(
@@ -163,6 +166,7 @@ async def get_company_intel(company_name: str) -> dict:
                 max_tokens=400,
                 messages=[{"role": "user", "content": prompt}],
             )
+            asyncio.ensure_future(_track_tokens("company_intel", "get_company_intel_haiku", fallback.usage, "claude-haiku-4-5-20251001"))
             raw = fallback.content[0].text.strip()
             result = _parse_json(raw)
             if not result:

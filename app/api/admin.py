@@ -18,6 +18,8 @@ from app.core.database import (
     get_all_leads, get_system_prompt, set_system_prompt,
     get_bot_config, get_bot_config_full, set_bot_config_bulk,
     get_webhook_logs, get_db, get_lead_by_phone,
+    get_token_usage_daily, get_token_usage_by_service,
+    get_token_usage_by_model, get_token_usage_totals,
 )
 from app.services.tallos import tallos_service
 from app.services.url_fetcher import fetch_url_content
@@ -640,4 +642,27 @@ async def relatorio_diario_enviar(request: Request):
         "ok": success > 0,
         "message": f"Enviado para {success}/{total} número(s).",
         "details": results,
+    })
+
+
+# ── Consumo de Tokens ──────────────────────────────────────────────────────
+
+@router.get("/tokens", response_class=HTMLResponse)
+async def admin_tokens(request: Request):
+    await _check_auth(request)
+
+    from app.services.token_tracker import USD_TO_BRL
+
+    totals  = await get_token_usage_totals()
+    daily   = await get_token_usage_daily(days=30)
+    by_svc  = await get_token_usage_by_service(period="month")
+    by_mdl  = await get_token_usage_by_model(period="month")
+
+    return _r(request, "token_usage.html", {
+        "active_page": "tokens",
+        "totals":      totals,
+        "daily":       daily,
+        "by_service":  by_svc,
+        "by_model":    by_mdl,
+        "usd_to_brl":  USD_TO_BRL,
     })

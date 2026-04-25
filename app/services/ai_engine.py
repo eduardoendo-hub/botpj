@@ -32,6 +32,7 @@ from app.core.database import (
     get_conversation_history,
     get_system_prompt,
 )
+from app.services.token_tracker import track as _track_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -354,6 +355,7 @@ async def generate_response(
             f"[{phone_number}] [{complexity.upper()}] [{model_id.split('-')[1]}] "
             f"{response.usage.input_tokens}in/{response.usage.output_tokens}out"
         )
+        asyncio.ensure_future(_track_tokens("ai_engine", "generate_response", response.usage, model_id, phone_number))
 
         needs_escalation = _detect_escalation_needed(text)
         if needs_escalation:
@@ -553,6 +555,7 @@ async def analyze_and_update_lead(
             max_tokens=400,
             messages=[{"role": "user", "content": prompt}],
         )
+        asyncio.ensure_future(_track_tokens("ai_engine", "analyze_lead", response.usage, "claude-haiku-4-5-20251001", phone_number))
         text = response.content[0].text.strip()
         match = re.search(r"\{.*\}", text, re.DOTALL)
         if match:
@@ -612,6 +615,7 @@ async def extract_lead_data(phone_number: str, history: List[Dict]) -> Dict:
             max_tokens=200,
             messages=[{"role": "user", "content": prompt}],
         )
+        asyncio.ensure_future(_track_tokens("ai_engine", "extract_lead_data", response.usage, "claude-haiku-4-5-20251001", phone_number))
         text = response.content[0].text.strip()
         match = re.search(r"\{.*\}", text, re.DOTALL)
         if match:
@@ -657,6 +661,7 @@ async def generate_conversation_summary(
             max_tokens=300,
             messages=[{"role": "user", "content": prompt}],
         )
+        asyncio.ensure_future(_track_tokens("ai_engine", "generate_summary", response.usage, "claude-haiku-4-5-20251001", phone_number))
         summary = response.content[0].text.strip()
         logger.info(f"[{phone_number}] Resumo da conversa gerado ({len(summary)} chars)")
         return summary
@@ -689,6 +694,7 @@ async def classify_conversation_context(phone_number: str) -> bool:
                 ),
             }],
         )
+        asyncio.ensure_future(_track_tokens("ai_engine", "classify_context", response.usage, "claude-haiku-4-5-20251001", phone_number))
         return response.content[0].text.strip().upper() == "SIM"
     except Exception as e:
         logger.error(f"[{phone_number}] Erro classify_context: {e}")

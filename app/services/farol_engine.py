@@ -19,6 +19,7 @@ from typing import Dict, Optional, Tuple
 from anthropic import AsyncAnthropic
 
 from app.core.config import settings
+from app.services.token_tracker import track as _track_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -256,6 +257,8 @@ async def classify_farol(
             system=_SYSTEM,
             messages=[{"role": "user", "content": user_msg}],
         )
+        import asyncio
+        asyncio.ensure_future(_track_tokens("farol_engine", "classify_farol", response.usage, "claude-haiku-4-5-20251001", phone))
         raw = response.content[0].text.strip()
 
         # Extrai o primeiro objeto JSON da resposta

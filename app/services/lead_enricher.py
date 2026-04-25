@@ -18,8 +18,10 @@ import hashlib
 import time
 from typing import Dict, Optional
 
+import asyncio
 from anthropic import AsyncAnthropic
 from app.core.config import settings
+from app.services.token_tracker import track as _track_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +91,7 @@ async def enrich_lead_from_activity(
                 "content": _PROMPT.format(transcript=activity_text[:4000]),
             }],
         )
+        asyncio.ensure_future(_track_tokens("lead_enricher", "enrich_lead", resp.usage, "claude-haiku-4-5-20251001", phone))
         raw = resp.content[0].text.strip()
 
         # Remove markdown se vier com ```json
