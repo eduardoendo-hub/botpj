@@ -345,10 +345,10 @@ async def run():
         # ── 3.2 Limpar e reinserir knowledge base ─────────────────────────────
         print("\n📚 Recriando knowledge base (v4)...")
         await db.execute("DELETE FROM knowledge_base")
-        for categoria, titulo, conteudo in KNOWLEDGE_BASE_ENTRIES:
+        for category, title, content in KNOWLEDGE_BASE_ENTRIES:
             await db.execute(
-                "INSERT INTO knowledge_base (categoria, titulo, conteudo) VALUES (?, ?, ?)",
-                (categoria, titulo, conteudo)
+                "INSERT INTO knowledge_base (category, title, content) VALUES (?, ?, ?)",
+                (category, title, content)
             )
         await db.commit()
         print(f"   ✅ {len(KNOWLEDGE_BASE_ENTRIES)} entradas inseridas na knowledge base.")
