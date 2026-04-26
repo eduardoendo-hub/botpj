@@ -125,6 +125,11 @@ def get_cached_enrichment(phone: str) -> dict:
     return {}
 
 
+def clear_cache(phone: str) -> None:
+    """Remove o cache de enriquecimento em memória para um número específico."""
+    _cache.pop(phone, None)
+
+
 def map_enriched_to_lead_fields(enriched: Dict) -> Dict:
     """
     Converte o resultado do LLM para os campos do banco de leads.

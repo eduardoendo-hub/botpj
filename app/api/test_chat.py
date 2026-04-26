@@ -13,6 +13,7 @@ from app.core.database import (
 )
 from app.services.ai_engine import generate_response
 from app.services.bot_controller import _notify_lead_escalation
+from app.services import lead_enricher
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/test")
@@ -104,7 +105,7 @@ async def test_page(request: Request):
   </div>
   <div class="actions">
     <button onclick="reloadHistory()">🔄 Recarregar</button>
-    <button onclick="clearHistory()" style="background:rgba(239,68,68,0.3)">🗑 Limpar</button>
+    <button onclick="clearHistory()" style="background:rgba(239,68,68,0.3)" title="Apaga conversa, sessão e lead — bot começa sem saber quem é você">🔄 Reset completo</button>
     <a href="/pj/admin">⚙️ Admin</a>
   </div>
 </div>
@@ -201,7 +202,7 @@ async def test_page(request: Request):
   }
 
   async function clearHistory() {
-    if (!confirm('Limpar histórico desta conversa?')) return;
+    if (!confirm('Reset completo: apagar conversa, sessão E lead?\nO bot vai começar do zero, sem saber quem você é.')) return;
     await fetch('/pj/test/clear?phone=' + getPhone(), { method: 'POST' });
     const msgs = document.getElementById('messages');
     const typing = document.getElementById('typing');
@@ -315,14 +316,18 @@ async def test_history(phone: str = TEST_PHONE):
 
 @router.post("/clear")
 async def test_clear(phone: str = TEST_PHONE):
+    """Reset completo: apaga conversas, sessão e lead para o número de teste."""
     db = await get_db()
     try:
         await db.execute("DELETE FROM conversations WHERE phone_number=?", (phone,))
         await db.execute("DELETE FROM bot_sessions WHERE phone_number=?", (phone,))
+        await db.execute("DELETE FROM leads WHERE phone_number=?", (phone,))
         await db.commit()
     finally:
         await db.close()
-    return {"status": "ok", "message": "Histórico limpo."}
+    # Limpa caches em memória para o número
+    lead_enricher.clear_cache(phone)
+    return {"status": "ok", "message": "Reset completo: conversa, sessão e lead apagados."}
 
 
 @router.get("/status")
