@@ -17,6 +17,7 @@ Fase 2 — inteligência conversacional:
   · Análise assíncrona após cada resposta (não bloqueia o fluxo principal)
 """
 
+import asyncio
 import logging
 import hashlib
 import time
