@@ -452,6 +452,11 @@ async def bot_config_save(request: Request):
     if "escalation_flow_id" in form:
         updates["escalation_flow_id"] = str(form["escalation_flow_id"]).strip()
 
+    if "bypass_hours_identificadores" in form:
+        raw = str(form["bypass_hours_identificadores"]).strip()
+        items = [i.strip() for i in raw.split("\n") if i.strip()]
+        updates["bypass_hours_identificadores"] = "\n".join(items)
+
     await set_bot_config_bulk(updates)
     return RedirectResponse(url="/admin/bot-config?saved=true", status_code=HTTP_303_SEE_OTHER)
 

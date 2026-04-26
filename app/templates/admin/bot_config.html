@@ -143,6 +143,33 @@
       </div>
     </div>
 
+    <!-- ── BYPASS DE HORÁRIO ── -->
+    <div class="config-section">
+      <h3>🔓 Bypass de Horário por Identificador</h3>
+
+      <div class="config-row">
+        <div class="config-meta">
+          <div class="label">Identificadores que ignoram restrição de horário</div>
+          <div class="desc">
+            Leads que chegam com estes identificadores serão <strong>sempre atendidos pelo bot</strong>,
+            mesmo durante o horário comercial ou em fins de semana bloqueados.<br><br>
+            Use quando a LP ou formulário gera demanda imediata (ex: lead preencheu agora e espera resposta rápida).<br><br>
+            <strong>Um identificador por linha.</strong> O texto deve ser idêntico ao que aparece no campo
+            <code>Identificador</code> do webhook (ex: <em>LP - Incompany</em>).<br><br>
+            <em>O bot ainda respeita a regra de atendente humano ativo — só ignora restrição de horário.</em>
+          </div>
+        </div>
+        <div class="config-control" style="width:380px">
+          <textarea name="bypass_hours_identificadores"
+                    placeholder="LP - Incompany&#10;PJ - Treinamento Empresa&#10;Cadastro - Impacta"
+                    style="min-height:160px; font-family: monospace; font-size: 13px;">{{ config.bypass_hours_identificadores or '' }}</textarea>
+          <div style="font-size:11px; color:#9ca3af; margin-top:4px;">
+            Cada linha = um identificador exato. Não diferencia maiúsculas/minúsculas.
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ── TESTES ── -->
     <div class="config-section">
       <h3>🧪 Números de Teste</h3>

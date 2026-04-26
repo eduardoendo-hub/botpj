@@ -51,6 +51,32 @@ def _is_test_phone(phone_number: str, cfg: dict) -> bool:
     return phone_number in test_phones
 
 
+async def _is_bypass_identificador(phone_number: str, cfg: dict) -> bool:
+    """
+    Retorna True se o lead veio de um identificador na lista de bypass de horário.
+    Esses leads são atendidos pelo bot a qualquer hora — mesmo durante horário comercial
+    e fins de semana bloqueados — pois vieram de LPs/formulários que geram demanda imediata.
+    """
+    bypass_raw = cfg.get("bypass_hours_identificadores", "")
+    if not bypass_raw:
+        return False
+    bypass_list = [i.strip().lower() for i in bypass_raw.split("\n") if i.strip()]
+    if not bypass_list:
+        return False
+    lead = await get_lead_by_phone(phone_number)
+    if not lead:
+        return False
+    identificador = (lead.get("identificador", "") or "").strip().lower()
+    if not identificador:
+        return False
+    match = identificador in bypass_list
+    if match:
+        logger.info(
+            f"[{phone_number}] 🔓 Bypass de horário — identificador='{identificador}' está na lista."
+        )
+    return match
+
+
 async def is_bot_active_now() -> bool:
     """
     Verifica se o bot deve estar ativo neste momento.
@@ -120,6 +146,11 @@ async def handle_incoming_message(
     is_test = _is_test_phone(phone_number, cfg)
     if is_test:
         logger.info(f"[{phone_number}] Número de teste — bot responde diretamente.")
+        await _respond(phone_number, message, contact_name, cfg, session, session_id, send_fn, channel)
+        return
+
+    # Identificador com bypass de horário? Responde a qualquer hora
+    if await _is_bypass_identificador(phone_number, cfg):
         await _respond(phone_number, message, contact_name, cfg, session, session_id, send_fn, channel)
         return
 
