@@ -31,6 +31,7 @@ from app.core.database import (
     get_relevant_knowledge_text,
     get_conversation_history,
     get_system_prompt,
+    get_lead_by_phone,
 )
 from app.services.token_tracker import track as _track_tokens
 
@@ -334,9 +335,10 @@ async def generate_response(
         )
 
         system_prompt = await _get_system_prompt_cached()
+        lead_context  = await _build_lead_context(phone_number)
         full_system = _build_system_prompt(
             system_prompt, knowledge, contact_name,
-            is_returning_lead, history_summary
+            is_returning_lead, history_summary, lead_context
         )
         messages = _build_messages(recent_history, user_message)
 
@@ -705,12 +707,137 @@ async def classify_conversation_context(phone_number: str) -> bool:
 # Helpers internos
 # ─────────────────────────────────────────────────────────────
 
+async def _build_lead_context(phone_number: str) -> str:
+    """
+    Monta um bloco de contexto com tudo que sabemos sobre o lead:
+    dados do banco, enriquecimento de CRM e inteligência de empresa.
+    Retorna string vazia se não houver dados relevantes.
+    Nunca bloqueia — usa apenas caches já existentes.
+    """
+    lines: list[str] = []
+
+    # ── 1. Dados do lead no banco ──────────────────────────────────────
+    try:
+        lead = await get_lead_by_phone(phone_number)
+    except Exception:
+        lead = None
+
+    if lead:
+        campo = lambda k: (lead.get(k) or "").strip()
+        dados_coletados: list[str] = []
+
+        if campo("contact_name"):  dados_coletados.append(f"Nome: {campo('contact_name')}")
+        if campo("email"):         dados_coletados.append(f"E-mail: {campo('email')}")
+        if campo("company"):       dados_coletados.append(f"Empresa: {campo('company')}")
+        if campo("job_title"):     dados_coletados.append(f"Cargo: {campo('job_title')}")
+        if campo("training_interest") or campo("servico"):
+            interesse = campo("training_interest") or campo("servico")
+            dados_coletados.append(f"Interesse: {interesse}")
+        if campo("qtd_colaboradores") or campo("qtd_participantes"):
+            qtd = campo("qtd_colaboradores") or campo("qtd_participantes")
+            dados_coletados.append(f"Nº de alunos informado: {qtd}")
+        if campo("trail"):
+            trilha_map = {"A": "A — turma aberta/individual", "B": "B — corporativo/in company",
+                          "C": "C — consultoria", "D": "D — locação de espaço"}
+            dados_coletados.append(f"Trilha: {trilha_map.get(campo('trail'), campo('trail'))}")
+        if campo("lead_temperature"):
+            dados_coletados.append(f"Temperatura: {campo('lead_temperature')}")
+        if lead.get("score"):
+            dados_coletados.append(f"Score: {lead['score']}")
+
+        if dados_coletados:
+            lines.append("━━━ PERFIL DO LEAD (dados pré-carregados — podem estar desatualizados) ━━━")
+            lines.extend(dados_coletados)
+            lines.append(
+                "\n⚠️  REGRA CRÍTICA DE SOBERANIA DA CONVERSA: "
+                "Estes dados são um ponto de partida, NÃO uma verdade absoluta. "
+                "Se em qualquer momento o lead corrigir, contradizer ou atualizar qualquer informação "
+                "(nome, empresa, email, interesse, quantidade de alunos, etc.), "
+                "SEMPRE acredite no lead e use o que ele disser na conversa. "
+                "A conversa em tempo real tem prioridade máxima sobre qualquer dado pré-carregado. "
+                "Se houver dúvida se a informação está correta, pergunte gentilmente para confirmar."
+            )
+
+        # Instruções de comportamento baseadas no que já sabemos
+        instrucoes: list[str] = []
+        campos_coletados = {k for k in ("contact_name", "email", "company") if campo(k)}
+        if "contact_name" in campos_coletados:
+            instrucoes.append(f"• Já temos o nome — NÃO peça novamente. Use '{campo('contact_name')}' naturalmente.")
+        if "email" in campos_coletados:
+            instrucoes.append("• Já temos o e-mail — NÃO peça novamente.")
+        if "company" in campos_coletados:
+            instrucoes.append(f"• Já sabemos a empresa ({campo('company')}) — NÃO peça novamente.")
+
+        trail = campo("trail")
+        if trail == "B":
+            missing = []
+            if not (campo("qtd_colaboradores") or campo("qtd_participantes")):
+                missing.append("número de alunos")
+            if not campo("training_interest") and not campo("servico"):
+                missing.append("curso/treinamento de interesse")
+            if missing:
+                instrucoes.append(f"• Trilha B confirmada — colete: {', '.join(missing)} e depois encaminhe para consultor.")
+            else:
+                instrucoes.append("• Trilha B com dados completos — encaminhe para consultor com a frase exata.")
+        elif trail == "A":
+            instrucoes.append("• Trilha A — NÃO transfira para consultor. Informe site e grade aberta.")
+        elif trail == "D":
+            instrucoes.append("• Trilha D (locação) — colete dados do evento e encaminhe para consultor.")
+
+        temp = campo("lead_temperature")
+        if temp == "quente":
+            instrucoes.append("• Lead QUENTE — priorize agilidade e ofereça próximo passo concreto imediatamente.")
+        elif temp == "frio":
+            instrucoes.append("• Lead frio — seja mais consultivo, entenda a necessidade antes de propor solução.")
+
+        if instrucoes:
+            lines.append("\nCOMPORTAMENTO ESPERADO COM ESTE LEAD:")
+            lines.extend(instrucoes)
+            lines.append(
+                "• SEMPRE que o lead corrigir qualquer dado (nome, empresa, email, interesse, "
+                "quantidade de alunos, etc.) — recue imediatamente, agradeça a correção e use "
+                "a informação nova. Nunca insista em dados pré-carregados."
+            )
+
+    # ── 2. Inteligência de empresa (só cache — não bloqueia) ───────────
+    company_name = (lead.get("company") or "").strip() if lead else ""
+    if company_name:
+        try:
+            from app.services.company_intel import get_company_intel_cached_only
+            intel = await get_company_intel_cached_only(company_name)
+            if intel and intel.get("descricao"):
+                lines.append(f"\nCONTEXTO DA EMPRESA ({company_name}):")
+                if intel.get("porte"):    lines.append(f"  Porte: {intel['porte']}")
+                if intel.get("setor"):    lines.append(f"  Setor: {intel['setor']}")
+                if intel.get("funcionarios"): lines.append(f"  Funcionários: {intel['funcionarios']}")
+                desc = (intel.get("descricao") or "")[:300]
+                if desc: lines.append(f"  {desc}")
+        except Exception:
+            pass
+
+    # ── 3. Enriquecimento CRM (só cache — não bloqueia) ────────────────
+    try:
+        from app.services.lead_enricher import get_cached_enrichment
+        crm = get_cached_enrichment(phone_number)
+        if crm:
+            lines.append("\nHISTÓRICO / ENRIQUECIMENTO CRM:")
+            if crm.get("resumo"):   lines.append(f"  Resumo: {crm['resumo']}")
+            if crm.get("insights"): lines.append(f"  Insights: {crm['insights']}")
+            if crm.get("temperatura") and not (lead and lead.get("lead_temperature")):
+                lines.append(f"  Temperatura (CRM): {crm['temperatura']}")
+    except Exception:
+        pass
+
+    return "\n".join(lines)
+
+
 def _build_system_prompt(
     base_prompt: str,
     knowledge: str,
     contact_name: str,
     is_returning_lead: bool,
     history_summary: str = "",
+    lead_context: str = "",
 ) -> str:
     parts = [base_prompt]
 
@@ -737,6 +864,10 @@ def _build_system_prompt(
         "\n• TRILHA D (locação): após confirmar que temos o espaço desejado, use EXATAMENTE: 'nosso consultor poderá confirmar disponibilidade e valores — em breve entrará em contato'."
         "\n• Se não souber a resposta: use 'não tenho acesso a essa informação, mas nosso consultor poderá te ajudar'."
     )
+
+    # Contexto do lead — injetado antes do histórico para máxima influência
+    if lead_context:
+        parts.append(f"\n{lead_context}")
 
     if history_summary:
         parts.append(f"\nCONTEXTO ANTERIOR:\n{history_summary}")
