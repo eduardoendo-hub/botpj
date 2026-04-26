@@ -202,7 +202,7 @@ async def test_page(request: Request):
   }
 
   async function clearHistory() {
-    if (!confirm('Reset completo: apagar conversa, sessão E lead?\nO bot vai começar do zero, sem saber quem você é.')) return;
+    if (!confirm('Reset completo: apagar conversa, sessão E lead? O bot vai começar do zero, sem saber quem você é.')) return;
     await fetch('/pj/test/clear?phone=' + getPhone(), { method: 'POST' });
     const msgs = document.getElementById('messages');
     const typing = document.getElementById('typing');
