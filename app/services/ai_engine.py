@@ -254,7 +254,22 @@ _NO_EMAIL_PHRASES = [
     "não tenho e-mail", "nao tenho email", "sem e-mail", "não uso e-mail",
     "nao uso email", "não possuo e-mail", "não tenho", "nao tenho",
 ]
-_EMAIL_TRIGGER_WORDS = ["e-mail", "email", "seu e-mail", "seu email"]
+# Frases que indicam que o bot está PEDINDO o email (não apenas mencionando)
+_EMAIL_TRIGGER_WORDS = [
+    "qual é o seu e-mail", "qual seu e-mail", "qual é o seu email", "qual seu email",
+    "me informe seu e-mail", "me informe seu email",
+    "informe seu e-mail", "informe seu email",
+    "pode me passar seu e-mail", "pode me passar seu email",
+    "me passa seu e-mail", "me passa seu email",
+    "seu e-mail corporativo", "seu email corporativo",
+    "me diga seu e-mail", "me diga seu email",
+    "me confirme seu e-mail", "me confirme seu email",
+    "digite seu e-mail", "digite seu email",
+    "e-mail para envio", "email para envio",
+    "e-mail para contato", "email para contato",
+    "me dê seu e-mail", "me dê seu email",
+    "e-mail completo", "email completo",
+]
 
 
 def _last_bot_message(history: Optional[List[Dict]]) -> str:
