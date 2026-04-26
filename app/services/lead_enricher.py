@@ -113,6 +113,18 @@ async def enrich_lead_from_activity(
         return {}
 
 
+def get_cached_enrichment(phone: str) -> dict:
+    """
+    Retorna dados de enriquecimento CRM do cache em memória (sem I/O).
+    Retorna {} se não houver cache — nunca dispara nova chamada à IA.
+    Usado pelo ai_engine para injetar contexto CRM sem bloquear a resposta.
+    """
+    cached = _cache.get(phone)
+    if cached and (time.time() - cached[2]) < _TTL:
+        return cached[1]
+    return {}
+
+
 def map_enriched_to_lead_fields(enriched: Dict) -> Dict:
     """
     Converte o resultado do LLM para os campos do banco de leads.

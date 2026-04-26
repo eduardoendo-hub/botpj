@@ -96,6 +96,27 @@ def _parse_json(text: str) -> dict:
 
 # ── Pesquisa principal ──────────────────────────────────────────────────────────
 
+async def get_company_intel_cached_only(company_name: str) -> dict:
+    """
+    Retorna dados de empresa APENAS do cache (memória ou banco).
+    Nunca dispara pesquisa web — usado para não bloquear o bot.
+    """
+    if not company_name or company_name in ("—", ""):
+        return {}
+    mem = _mem_get(company_name)
+    if mem is not None:
+        return mem
+    try:
+        from app.core.database import get_company_intel_cached
+        db_cached = await get_company_intel_cached(company_name)
+        if db_cached:
+            _mem_set(company_name, db_cached)
+            return db_cached
+    except Exception:
+        pass
+    return {}
+
+
 async def get_company_intel(company_name: str) -> dict:
     """
     Retorna dict estruturado com informações da empresa.
