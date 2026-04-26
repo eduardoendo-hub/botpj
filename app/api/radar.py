@@ -332,18 +332,16 @@ def _lead_reference_date(lead: dict) -> str:
     """
     Data de referência do lead para exibição no Radar.
     Prioridade:
-      1. crm_moved_date — data em que a etapa do CRM mudou (mais confiável)
-      2. updated_at     — para leads de formulário (re-submissão move o lead)
-      3. created_at     — padrão para todos os outros
+      1. crm_moved_date — data em que o consultor moveu a etapa no CRM (intencional)
+      2. created_at     — padrão para todos os outros
+
+    NOTA: updated_at foi removido da prioridade 2 pois processos automáticos
+    (análise de lead, farol, enriquecimento) atualizam esse campo em background,
+    causando salto indesejado do lead para o dia atual.
     """
     crm_moved = lead.get("crm_moved_date") or ""
     if crm_moved:
         return crm_moved
-
-    if lead.get("raw_form_data"):
-        d = _lead_updated_date_brt(lead)
-        if d:
-            return d
 
     return _lead_date_brt(lead)
 
