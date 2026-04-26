@@ -52,28 +52,28 @@
 <div class="kpi-row">
   <div class="kpi accent-blue">
     <div class="lbl">Hoje — Tokens</div>
-    <div class="val">{{ "{:,}".format(t.today.total_tokens) }}</div>
+    <div class="val">{{ "{:,}".format(t.today.total_tokens)|replace(",", ".") }}</div>
     <div class="sub">{{ t.today.calls }} chamadas</div>
   </div>
   <div class="kpi accent-green">
     <div class="lbl">Hoje — Custo</div>
-    <div class="val">US$ {{ "%.4f"|format(t.today.cost_usd) }}</div>
-    <div class="sub">≈ R$ {{ "%.3f"|format(t.today.cost_usd * brl) }}</div>
+    <div class="val">US$ {{ "%.4f"|format(t.today.cost_usd)|replace(".", ",") }}</div>
+    <div class="sub">≈ R$ {{ "%.3f"|format(t.today.cost_usd * brl)|replace(".", ",") }}</div>
   </div>
   <div class="kpi accent-indigo">
     <div class="lbl">Este Mês — Tokens</div>
-    <div class="val">{{ "{:,}".format(t.month.total_tokens) }}</div>
+    <div class="val">{{ "{:,}".format(t.month.total_tokens)|replace(",", ".") }}</div>
     <div class="sub">{{ t.month.calls }} chamadas</div>
   </div>
   <div class="kpi accent-amber">
     <div class="lbl">Este Mês — Custo</div>
-    <div class="val">US$ {{ "%.3f"|format(t.month.cost_usd) }}</div>
-    <div class="sub">≈ R$ {{ "%.2f"|format(t.month.cost_usd * brl) }}</div>
+    <div class="val">US$ {{ "%.3f"|format(t.month.cost_usd)|replace(".", ",") }}</div>
+    <div class="sub">≈ R$ {{ "%.2f"|format(t.month.cost_usd * brl)|replace(".", ",") }}</div>
   </div>
   <div class="kpi accent-rose">
     <div class="lbl">Acumulado Total</div>
-    <div class="val">US$ {{ "%.3f"|format(t.total.cost_usd) }}</div>
-    <div class="sub">{{ "{:,}".format(t.total.total_tokens) }} tokens · {{ t.total.calls }} chamadas</div>
+    <div class="val">US$ {{ "%.3f"|format(t.total.cost_usd)|replace(".", ",") }}</div>
+    <div class="sub">{{ "{:,}".format(t.total.total_tokens)|replace(",", ".") }} tokens · {{ t.total.calls }} chamadas</div>
   </div>
 </div>
 
@@ -110,12 +110,12 @@
           {% for row in daily %}
           <tr>
             <td><strong>{{ row.day }}</strong></td>
-            <td class="num">{{ "{:,}".format(row.input_tokens) }}</td>
-            <td class="num">{{ "{:,}".format(row.output_tokens) }}</td>
-            <td class="num">{{ "{:,}".format(row.total_tokens) }}</td>
+            <td class="num">{{ "{:,}".format(row.input_tokens)|replace(",", ".") }}</td>
+            <td class="num">{{ "{:,}".format(row.output_tokens)|replace(",", ".") }}</td>
+            <td class="num">{{ "{:,}".format(row.total_tokens)|replace(",", ".") }}</td>
             <td class="num">{{ row.calls }}</td>
-            <td class="cost">US$ {{ "%.5f"|format(row.cost_usd) }}</td>
-            <td class="cost" style="color:#d97706">R$ {{ "%.4f"|format(row.cost_usd * brl) }}</td>
+            <td class="cost">US$ {{ "%.5f"|format(row.cost_usd)|replace(".", ",") }}</td>
+            <td class="cost" style="color:#d97706">R$ {{ "%.4f"|format(row.cost_usd * brl)|replace(".", ",") }}</td>
           </tr>
           {% endfor %}
         {% else %}
@@ -145,9 +145,9 @@
             {% for row in by_service %}
             <tr>
               <td><strong>{{ row.service }}</strong></td>
-              <td class="num">{{ "{:,}".format(row.total_tokens) }}</td>
+              <td class="num">{{ "{:,}".format(row.total_tokens)|replace(",", ".") }}</td>
               <td class="num">{{ row.calls }}</td>
-              <td class="cost">US$ {{ "%.5f"|format(row.cost_usd) }}</td>
+              <td class="cost">US$ {{ "%.5f"|format(row.cost_usd)|replace(".", ",") }}</td>
             </tr>
             {% endfor %}
           {% else %}
@@ -185,9 +185,9 @@
                 {% endif %}
                 <span style="font-size:11px;color:#64748b;margin-left:6px">{{ mname|truncate(30, true, '…') }}</span>
               </td>
-              <td class="num">{{ "{:,}".format(row.total_tokens) }}</td>
+              <td class="num">{{ "{:,}".format(row.total_tokens)|replace(",", ".") }}</td>
               <td class="num">{{ row.calls }}</td>
-              <td class="cost">US$ {{ "%.5f"|format(row.cost_usd) }}</td>
+              <td class="cost">US$ {{ "%.5f"|format(row.cost_usd)|replace(".", ",") }}</td>
             </tr>
             {% endfor %}
           {% else %}
