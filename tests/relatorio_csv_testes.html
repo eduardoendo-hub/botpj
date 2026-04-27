@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Relatório Testes CSV — Bot SDR PJ</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f4f8;color:#1e293b}
+  .header{background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;padding:28px 40px}
+  .header h1{font-size:22px;font-weight:800;margin-bottom:4px}
+  .header p{font-size:13px;color:#a5b4fc}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;padding:20px 40px}
+  .kpi{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;text-align:center}
+  .kpi .val{font-size:28px;font-weight:800;line-height:1;margin-bottom:2px}
+  .kpi .lbl{font-size:11px;color:#64748b}
+  .content{padding:0 40px 40px}
+  @media(max-width:600px){.kpis,.content{padding-left:12px;padding-right:12px}}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📋 Relatório de Testes CSV — Bot SDR PJ</h1>
+  <p>Gerado em 25/04/2026 às 00:24 · URL: http://localhost:8001 · 89 cenários do CSV</p>
+</div>
+<div class="kpis">
+  <div class="kpi"><div class="val" style="color:#6366f1">89</div><div class="lbl">Total</div></div>
+  <div class="kpi"><div class="val" style="color:#16a34a">49</div><div class="lbl">✅ Passou</div></div>
+  <div class="kpi"><div class="val" style="color:#dc2626">40</div><div class="lbl">❌ Falhou</div></div>
+  <div class="kpi"><div class="val" style="color:#0ea5e9">55%</div><div class="lbl">Taxa de sucesso</div></div>
+</div>
+<div class="content">
+  
+        <div style="margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="background:#84cc16;color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:12px">Aluguel de Sala</div>
+            <div style="font-size:13px;color:#64748b">1/10 OK</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">ID</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Descrição</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Tipo</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Estado</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Input</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Keywords</th>
+                <th style="padding:8px 12px;text-align:center;color:#64748b;font-weight:600">Resultado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Perfeito, João! Temos excelentes opções de salas para locação. 
+
+Para te ajudar melhor, preciso de algumas informações sobre seu evento:
+
+• Que tipo de evento será? (treinamento, workshop, reunião, palestra, etc.)
+• Qual a data e horário desejados?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T07-01</td>
+                <td style="padding:8px 12px;color:#1e293b">Solicitação de locação</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">menu_principal</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Preciso alugar uma sala para treinamento</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">data</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">evento</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗pessoas</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Excelente! Com 50 pessoas, temos várias opções disponíveis.
+
+Agora preciso:
+
+1. *Qual a data do seu workshop?*
+
+2. *Qual layout você prefere?* (laboratório com computadores, mesas e cadeiras, auditório, ou mesas redondas?)">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T07-02</td>
+                <td style="padding:8px 12px;color:#1e293b">Capacidade dentro do limite</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">fluxo_locacao_capacidade</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Para 50 pessoas</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">layout</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">data</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗formato</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Entendi, João! 😊
+
+Só para confirmar: você mencionou 300 pessoas para o workshop. Isso é uma quantidade bem grande, e nossa maior sala comporta até 100 pessoas.
+
+Deixa eu te fazer uma pergunta importante: *essa demanda de 300 pessoas seria em uma única sessão, ou vocês estão pensando em dividir em vá">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T07-03</td>
+                <td style="padding:8px 12px;color:#1e293b">Capacidade acima do limite</td>
+                <td style="padding:8px 12px;color:#64748b">limitacao</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">fluxo_locacao_capacidade</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Preciso para 300 pessoas</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">100</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗capacidade</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗máxima</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo! Então você precisa de um laboratório de informática com computadores disponíveis. 👍
+
+Para eu passar essas informações ao nosso consultor, me confirma:
+
+Qual é a *data* do seu evento e quantas *pessoas* vão participar?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T07-04</td>
+                <td style="padding:8px 12px;color:#1e293b">Laboratório com computadores</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">fluxo_locacao</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Preciso de sala com computadores</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">laboratório</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">computadores</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗quantos</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Entendi que será um evento noturno a partir das 19h! 
+
+Para eu te ajudar com o espaço ideal, preciso saber mais alguns detalhes:
+
+1. Que tipo de evento será? (treinamento, workshop, reunião, palestra, apresentação, etc.)
+2. Para qual data você precisa?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T07-05</td>
+                <td style="padding:8px 12px;color:#1e293b">Evento noturno</td>
+                <td style="padding:8px 12px;color:#64748b">limitacao</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">fluxo_locacao</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Evento à noite a partir das 19h</td>
+                <td style="padding:8px 12px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗horário</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗disponibilidade</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗férias</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: João, entendo que é um evento especial! Porém, preciso verificar essa possibilidade específica com nossa equipe, já que envolve animais no espaço.
+
+Para eu encaminhar sua solicitação corretamente, pode me confirmar:
+• Quantas pessoas participarão do evento?
+• Qual a data desejada?
+
+Nosso consultor e">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T07-06</td>
+                <td style="padding:8px 12px;color:#1e293b">Evento com pets</td>
+                <td style="padding:8px 12px;color:#64748b">edge_case</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">fluxo_locacao</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Será um evento pet, vamos levar cachorros</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">verificar</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗política</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗permitido</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Entendido, João! O coffee break é importante para o seu evento 👍
+
+A disponibilidade de coffee break e os custos extras serão verificados pelo nosso consultor conforme o tipo e tamanho do seu evento.
+
+Antes disso, preciso confirmar alguns dados:
+
+*Qual é o tipo de evento que você vai realizar?* (trei">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T07-07</td>
+                <td style="padding:8px 12px;color:#1e293b">Coffee break</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">fluxo_locacao</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Precisa ter coffee break incluso</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">consultor</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗verificar</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗serviços</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Claro, João! Vou solicitar as fotos para você.
+
+Antes, preciso confirmar alguns detalhes do seu evento para que o consultor envie exatamente o que você precisa:
+
+1. *Que tipo de evento* você vai realizar?
+2. *Qual a data* desejada?
+3. *Quantas pessoas* participarão?
+4. *Qual layout* você prefere? (l">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T07-08</td>
+                <td style="padding:8px 12px;color:#1e293b">Fotos do espaço</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">fluxo_locacao</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Podem me enviar fotos da sala</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">consultor</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">enviar</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">fotos</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Entendi, João! Para elaborar o orçamento de locação com razão social, CNPJ e condições comerciais, vou precisar coletar alguns dados.
+
+Você já me informou que precisa alugar uma sala para evento. Agora preciso saber:
+
+*Sobre o evento:*
+• Que tipo de evento será? (treinamento, workshop, reunião, pale">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T07-09</td>
+                <td style="padding:8px 12px;color:#1e293b">RFQ formal com dados CNPJ</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">fluxo_locacao</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">O orçamento deve conter Razão Social, CNPJ, condições</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">proposta</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗consultor</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗e-mail</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: 🔇 [Modo teste] Bot pausado — atendente humano ativo.
+Clique em '🔄 Reativar Bot' para reiniciar.">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T07-10</td>
+                <td style="padding:8px 12px;color:#1e293b">Formatos de sala disponíveis</td>
+                <td style="padding:8px 12px;color:#64748b">duvida_frequente</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">fluxo_locacao</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Qual o formato de sala disponível</td>
+                <td style="padding:8px 12px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗laboratório</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗mesas</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗cadeiras universitárias</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗mesas redondas</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr></tbody></table></div>
+        <div style="margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="background:#6b7280;color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:12px">Casos Especiais</div>
+            <div style="font-size:13px;color:#64748b">2/8 OK</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">ID</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Descrição</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Tipo</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Estado</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Input</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Keywords</th>
+                <th style="padding:8px 12px;text-align:center;color:#64748b;font-weight:600">Resultado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Desculpe, não entendi direito 😊 Pode reformular sua mensagem? Estou aqui para ajudar com treinamentos corporativos e locação de espaços.">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T12-01</td>
+                <td style="padding:8px 12px;color:#1e293b">Venda de produto</td>
+                <td style="padding:8px 12px;color:#64748b">fora_escopo</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Vendo notebooks seminovos alguém aí compra</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">treinamentos</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗canal</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗exclusivo</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗secretaria</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Boa noite! 😊 Fico feliz em ajudar com sua cotação.
+
+Para que eu monte a proposta ideal para você, preciso entender melhor sua necessidade. Essa cotação seria para:
+
+*Um treinamento corporativo para sua empresa/equipe ou para você mesmo em uma turma aberta?*">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T12-02</td>
+                <td style="padding:8px 12px;color:#1e293b">Fora do horário comercial</td>
+                <td style="padding:8px 12px;color:#64748b">fora_horario</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">inicio</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Boa noite preciso de uma cotação</td>
+                <td style="padding:8px 12px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗disponível</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗próximo dia útil</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗retornaremos</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo! 😊 Bem-vindo ao atendimento da Impacta!
+
+Vejo que você confirmou interesse, mas gostaria de entender melhor o que você procura. Você está buscando:
+
+*Um treinamento corporativo para sua equipe?* (ou empresa)
+*Um curso individual em turma aberta?*
+*Locação de espaço para um evento?*
+
+Me conte u">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T12-03</td>
+                <td style="padding:8px 12px;color:#1e293b">Retorna após ausência (responde SIM)</td>
+                <td style="padding:8px 12px;color:#64748b">retorno</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">detectou_contato_anterior</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">SIM</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">atendimento</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗novo</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Claro, João! Entendo que você prefere falar com alguém da nossa equipe agora mesmo. 🙌
+
+Antes de encaminhar você para um consultor, posso confirmar:
+• Qual é o tema principal que você gostaria de conversar? (treinamento corporativo, locação de espaço, proposta urgente, etc.)
+• Qual seria o melhor can">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T12-04</td>
+                <td style="padding:8px 12px;color:#1e293b">Quer atendimento humano imediato</td>
+                <td style="padding:8px 12px;color:#64748b">escalonamento</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Quero falar com uma pessoa agora</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">consultor</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗transferir</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗aguarde</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: João, não consegui entender direito essas informações 😊
+
+Pode me informar:
+1. *Nome da empresa* (razão social)
+2. *CNPJ* (no formato XX.XXX.XXX/XXXX-XX)
+
+Qual é o nome e CNPJ da sua empresa?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T12-05</td>
+                <td style="padding:8px 12px;color:#1e293b">Mensagem ininteligível</td>
+                <td style="padding:8px 12px;color:#64748b">validacao</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">asdfghjkl qwerty 123456</td>
+                <td style="padding:8px 12px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗entendi</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗reformular</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗ajudar</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Nosso atendimento é em português. Para treinamentos corporativos, estou aqui para ajudar! 🏢
+
+Ótimo, João! Vamos montar uma proposta para sua empresa.
+
+Qual é o nome da empresa e o CNPJ?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T12-06</td>
+                <td style="padding:8px 12px;color:#1e293b">Lead em inglês</td>
+                <td style="padding:8px 12px;color:#64748b">edge_case</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">I need a quote for corporate training</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">português</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">treinamento</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: O CNPJ informado parece inválido. Por favor, informe o CNPJ no formato XX.XXX.XXX/XXXX-XX.">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T12-07</td>
+                <td style="padding:8px 12px;color:#1e293b">CNPJ formato inválido</td>
+                <td style="padding:8px 12px;color:#64748b">validacao</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_cnpj</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">CNPJ: 123</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">CNPJ</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">válido</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">formato</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Sem problema! Podemos encaminhar a proposta pelo WhatsApp mesmo. Fico aguardando para continuar com sua proposta.
+
+Então João, me conta: você está buscando um treinamento para sua empresa ou para si mesmo? 😊">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T12-08</td>
+                <td style="padding:8px 12px;color:#1e293b">Lead sem e-mail</td>
+                <td style="padding:8px 12px;color:#64748b">edge_case</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_email</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Não tenho e-mail</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">WhatsApp</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">proposta</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗alternativa</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr></tbody></table></div>
+        <div style="margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="background:#d97706;color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:12px">Clientes que Retornam</div>
+            <div style="font-size:13px;color:#64748b">2/3 OK</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">ID</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Descrição</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Tipo</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Estado</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Input</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Keywords</th>
+                <th style="padding:8px 12px;text-align:center;color:#64748b;font-weight:600">Resultado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Que ótimo! Vamos retomar. Para eu localizar sua proposta anterior e dar continuidade, pode confirmar seus dados?
+
+Preciso do seu:
+• Nome completo
+• Empresa
+• E-mail da cotação anterior
+
+Assim consigo acessar tudo e avançamos rápido! 😊">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T11-01</td>
+                <td style="padding:8px 12px;color:#1e293b">Lead com cotação anterior</td>
+                <td style="padding:8px 12px;color:#64748b">retorno</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">inicio</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Já fiz cotação com vocês antes quero retomar</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">retomar</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">proposta</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">dados</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Peço desculpas pelo transtorno! Isso é urgente para nós. Vou registrar sua solicitação como prioritária para que um consultor entre em contato com você o mais breve possível. 😊
+
+Para eu localizar sua proposta anterior e dar continuidade, pode confirmar seus dados?
+
+• Seu nome completo
+• Nome da empr">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T11-02</td>
+                <td style="padding:8px 12px;color:#1e293b">Cliente sem retorno</td>
+                <td style="padding:8px 12px;color:#64748b">reclamacao</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">inicio</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Somos clientes enviamos e-mail há uma semana sem resposta</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">desculpa</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">urgente</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">consultor</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: 🔇 [Modo teste] Bot pausado — atendente humano ativo.
+Clique em '🔄 Reativar Bot' para reiniciar.">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T11-03</td>
+                <td style="padding:8px 12px;color:#1e293b">Aumentar quantidade de alunos</td>
+                <td style="padding:8px 12px;color:#64748b">retorno</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Na cotação anterior eram 10, agora são 20</td>
+                <td style="padding:8px 12px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗20</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗proposta</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗atualizar</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr></tbody></table></div>
+        <div style="margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="background:#f59e0b;color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:12px">Curso Solicitado</div>
+            <div style="font-size:13px;color:#64748b">5/12 OK</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">ID</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Descrição</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Tipo</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Estado</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Input</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Keywords</th>
+                <th style="padding:8px 12px;text-align:center;color:#64748b;font-weight:600">Resultado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo, João! 😊
+
+Entendi que é para sua empresa e o interesse é em *Excel avançado*. Perfeito!
+
+Agora preciso de dois dados importantes:
+
+1. *Qual é o nome da sua empresa?*
+2. *Qual é o CNPJ?*
+
+Após isso, vou precisar saber quantos alunos participarão do treinamento.">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T03-01</td>
+                <td style="padding:8px 12px;color:#1e293b">Excel avançado</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_curso</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Excel avançado</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">Excel</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">alunos</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗Módulo</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Excelente! Power BI é uma ferramenta poderosa para análise de dados e geração de insights. 📊
+
+Agora preciso de alguns dados para montar sua proposta:
+
+*Qual é o nome da sua empresa e o CNPJ?*">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T03-02</td>
+                <td style="padding:8px 12px;color:#1e293b">Power BI</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_curso</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Power BI</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">Power BI</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗alunos</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Perfeito, João! Excel e Power BI são uma excelente combinação para análise de dados.
+
+Para eu montar a proposta ideal para sua equipe, preciso saber:
+
+*Qual é o nome da sua empresa e o CNPJ?*
+
+E depois me conta quantos alunos participarão do treinamento! 😊">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T03-03</td>
+                <td style="padding:8px 12px;color:#1e293b">Combo Excel + Power BI</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_curso</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Excel e Power BI para minha equipe</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">Excel</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">Power BI</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">alunos</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo, João! 👍
+
+Entendi que é para sua empresa e o interesse é em *Python*. Antes de prosseguir, preciso confirmar:
+
+*Qual é o nome da empresa e o CNPJ?*">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T03-04</td>
+                <td style="padding:8px 12px;color:#1e293b">Python</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_curso</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Python</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">Python</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗alunos</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo, João! 🎓
+
+Então é para sua empresa em Azure AZ-900. Perfeito!
+
+Agora, quantos alunos participarão desse treinamento de Azure AZ-900?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T03-05</td>
+                <td style="padding:8px 12px;color:#1e293b">Azure AZ-900</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_curso</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Azure AZ-900</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">Azure</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">alunos</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo, João! 😊
+
+Entendi que é para sua empresa e o interesse é em *SQL para análise de dados*. Vou anotar isso.
+
+Para eu montar a proposta, preciso confirmar:
+
+*Qual é o nome completo da sua empresa e o CNPJ?*">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T03-06</td>
+                <td style="padding:8px 12px;color:#1e293b">SQL análise de dados</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_curso</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">SQL para análise de dados</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">SQL</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗nível</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗alunos</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Entendi, João! Adobe Premiere é uma excelente escolha para capacitação em edição de vídeo. 📹
+
+Vou verificar a disponibilidade com um especialista e retorno em breve com mais informações.
+
+Enquanto isso, me informa:
+1. *Qual é o nome da sua empresa e o CNPJ?*
+2. *Quantos alunos participarão desse tre">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T03-07</td>
+                <td style="padding:8px 12px;color:#1e293b">Adobe Premiere (fora portfólio principal)</td>
+                <td style="padding:8px 12px;color:#64748b">edge_case</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_curso</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Adobe Premiere</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">especialista</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">verificar</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">disponibilidade</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo, João! 🎯
+
+A Impacta oferece treinamentos em Dados & Business Intelligence com opções como SQL, Python, Data Science, Big Data e Power BI — do básico ao avançado.
+
+Antes de eu indicar a melhor solução, preciso de dois dados:
+
+*1. Qual é o nome da sua empresa e o CNPJ?*">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T03-08</td>
+                <td style="padding:8px 12px;color:#1e293b">Lead não sabe qual curso</td>
+                <td style="padding:8px 12px;color:#64748b">edge_case</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_curso</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Preciso de algo na área de dados</td>
+                <td style="padding:8px 12px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗necessidade</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗equipe</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗alinhamento</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: João, entendi! 😊
+
+Porém, este canal é exclusivo para treinamentos corporativos PJ. Para outros assuntos, como compra de equipamentos, entre em contato pelo e-mail: solicitacao.secretaria@impacta.com.br
+
+Mas se você está buscando um *treinamento corporativo* para sua equipe — seja em tecnologia, anál">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T03-09</td>
+                <td style="padding:8px 12px;color:#1e293b">Completamente fora do escopo</td>
+                <td style="padding:8px 12px;color:#64748b">fora_escopo</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_curso</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Quero comprar um notebook</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">treinamentos</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">canal</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">exclusivo</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Perfeito! Scrum é excelente para equipes de TI! 👍
+
+Para eu montar a melhor proposta para sua equipe, preciso saber:
+
+*Qual é o nome da sua empresa e o CNPJ?*">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T03-10</td>
+                <td style="padding:8px 12px;color:#1e293b">Scrum</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_curso</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Scrum para minha equipe de TI</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">Scrum</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗alunos</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo, João! 🎯
+
+Entendi que é para sua empresa e o interesse é em *Excel com VBA*. Excel VBA é perfeito para automatizar tarefas e criar macros.
+
+Antes de prosseguir, preciso confirmar:
+
+*Qual é o nome completo da sua empresa e o CNPJ?*">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T03-11</td>
+                <td style="padding:8px 12px;color:#1e293b">Excel VBA</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_curso</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Excel com VBA</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">VBA</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">Excel</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗alunos</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo, João! 🙌
+
+Entendi que você quer treinar sua equipe em *AWS Cloud Foundations*. Esse é um excelente curso para quem quer iniciar na computação em nuvem — com 20 horas de carga horária, abordagem prática e preparação para a certificação AWS Certified Cloud Practitioner.
+
+Agora preciso de alguns ">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T03-12</td>
+                <td style="padding:8px 12px;color:#1e293b">AWS Cloud Foundations</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_curso</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">AWS Cloud Foundations</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">AWS</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">alunos</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr></tbody></table></div>
+        <div style="margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="background:#3b82f6;color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:12px">Fluxo Inicial</div>
+            <div style="font-size:13px;color:#64748b">4/8 OK</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">ID</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Descrição</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Tipo</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Estado</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Input</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Keywords</th>
+                <th style="padding:8px 12px;text-align:center;color:#64748b;font-weight:600">Resultado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Seja bem-vindo(a) ao Universo IMPACTA! 😊 Aqui você encontra soluções em treinamentos corporativos, turmas fechadas, online ao vivo e muito mais. Qual é o seu nome?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T01-01</td>
+                <td style="padding:8px 12px;color:#1e293b">Lead inicia com saudação simples</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">inicio</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Oi</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">bem-vindo</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">IMPACTA</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">nome</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Seja bem-vindo(a) ao Universo IMPACTA! 🎓 Sou o assistente de Treinamentos Corporativos PJ. Para começar, qual é o seu nome?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T01-02</td>
+                <td style="padding:8px 12px;color:#1e293b">Lead cumprimenta de forma diferente</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">inicio</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Bom dia</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">bem-vindo</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">nome</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Oi João! Tudo bem? 😊
+
+Ótimo ter você aqui! Para que eu possa te ajudar melhor, preciso saber: você está buscando um treinamento para sua empresa ou equipe?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T01-03</td>
+                <td style="padding:8px 12px;color:#1e293b">Lead fornece nome válido</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_nome</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">João Silva</td>
+                <td style="padding:8px 12px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗e-mail</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Perfeito, João! Obrigado por confirmar seu nome completo: *João Silva*.
+
+Agora preciso de seu *e-mail* para continuar com a qualificação. Pode informar? 😊">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T01-04</td>
+                <td style="padding:8px 12px;color:#1e293b">E-mail inválido sem @</td>
+                <td style="padding:8px 12px;color:#64748b">validacao</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_email</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">joaosilva</td>
+                <td style="padding:8px 12px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗Ops</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗E-mail válido</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Ops! Informe um E-mail válido. Por favor, digite novamente seu e-mail completo (ex: nome@empresa.com.br).">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T01-05</td>
+                <td style="padding:8px 12px;color:#1e293b">E-mail inválido com @ incompleto</td>
+                <td style="padding:8px 12px;color:#64748b">validacao</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_email</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">joao@</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">Ops</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">E-mail válido</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Perfeito, João Silva! Anotei seu e-mail: joao.silva@empresa.com.br
+
+Agora me conta: qual empresa e qual o CNPJ dela?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T01-06</td>
+                <td style="padding:8px 12px;color:#1e293b">E-mail válido aceito</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_email</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">joao.silva@empresa.com.br</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">empresa</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗curso</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Claro, João! Entendo perfeitamente. 🤝
+
+Vou encaminhar você para o atendimento humano agora. Só para agilizar, deixa eu confirmar:
+
+*Empresa:* qual é o nome?
+*Assunto principal:* treinamento corporativo, certo?
+
+Com essas informações, o consultor já recebe o contexto e te atende mais rápido!">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T01-07</td>
+                <td style="padding:8px 12px;color:#1e293b">Resposta fora do menu</td>
+                <td style="padding:8px 12px;color:#64748b">validacao</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">menu_principal</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">quero falar com humano</td>
+                <td style="padding:8px 12px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗inválida</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗botões</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗opção</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Oi! Tudo bem? 👋
+
+Seja bem-vindo(a)! Sou o assistente de atendimento da IMPACTA, especializado em treinamentos corporativos.
+
+Para eu começar a qualificar sua demanda, qual é o seu nome completo?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T01-08</td>
+                <td style="padding:8px 12px;color:#1e293b">Número no campo de nome</td>
+                <td style="padding:8px 12px;color:#64748b">validacao</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_nome</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">5511999998888</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">nome</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">completo</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr></tbody></table></div>
+        <div style="margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="background:#0f766e;color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:12px">Frases do Sistema</div>
+            <div style="font-size:13px;color:#64748b">1/6 OK</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">ID</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Descrição</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Tipo</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Estado</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Input</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Keywords</th>
+                <th style="padding:8px 12px;text-align:center;color:#64748b;font-weight:600">Resultado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Seja bem-vindo(a) ao Universo IMPACTA! 🏢 Sou o SDR de Treinamentos PJ e estou aqui para te ajudar. Me conta o seu nome para começarmos!">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T13-01</td>
+                <td style="padding:8px 12px;color:#1e293b">Boas-vindas</td>
+                <td style="padding:8px 12px;color:#64748b">validacao_texto</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">inicio</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Olá</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">bem-vindo</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">IMPACTA</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Obrigado, João Silva! 👍
+
+Agora preciso do seu e-mail para seguir com sua proposta. Qual é seu e-mail?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T13-02</td>
+                <td style="padding:8px 12px;color:#1e293b">Erro e-mail</td>
+                <td style="padding:8px 12px;color:#64748b">validacao_texto</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_email</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">email_invalido</td>
+                <td style="padding:8px 12px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗Ops</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗E-mail válido</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Desculpe, João, não entendi direito 😊 Pode reformular sua mensagem? 
+
+Para que eu possa ajudá-lo com sua proposta de treinamento, preciso dos dados da sua empresa. Qual é o nome da empresa e o CNPJ?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T13-03</td>
+                <td style="padding:8px 12px;color:#1e293b">Resposta inválida</td>
+                <td style="padding:8px 12px;color:#64748b">validacao_texto</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">menu_principal</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">resposta_aleatoria_xyz</td>
+                <td style="padding:8px 12px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗Resposta inválida</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗botões</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo! Vou te transferir para um consultor! 🚀
+
+Antes disso, só para agilizar o atendimento, pode me informar rapidinho:
+
+*Qual é o seu interesse?* (ex: treinamento corporativo para sua equipe, locação de espaço, ou você gostaria de uma consulta para descobrir a solução ideal)
+
+Aguarde um momento enq">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T13-04</td>
+                <td style="padding:8px 12px;color:#1e293b">Sem atendente disponível</td>
+                <td style="padding:8px 12px;color:#64748b">validacao_texto</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">fora_horario</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">quero falar com consultor</td>
+                <td style="padding:8px 12px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗não estamos operando</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗Atendimentos Humanizados</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Oi! 👋 Tudo bem?
+
+Sou o atendimento comercial da Impacta, especialista em treinamentos corporativos, turmas abertas, turmas exclusivas e locação de espaços.
+
+Como posso te ajudar hoje? Você está buscando um treinamento para sua equipe, um curso individual ou talvez uma consultoria personalizada? 😊">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T13-05</td>
+                <td style="padding:8px 12px;color:#1e293b">Pesquisa de satisfação</td>
+                <td style="padding:8px 12px;color:#64748b">validacao_texto</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">pos_atendimento</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">ok</td>
+                <td style="padding:8px 12px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗satisfação</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗1 a 10</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Seja bem-vindo(a) ao Universo IMPACTA! 🏢 Sou o SDR de Treinamentos PJ e estou aqui para te ajudar. Me conta o seu nome para começarmos!">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T13-06</td>
+                <td style="padding:8px 12px;color:#1e293b">Reengajamento após inatividade</td>
+                <td style="padding:8px 12px;color:#64748b">validacao_texto</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">inativo</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Oi tudo bem</td>
+                <td style="padding:8px 12px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗não conseguimos avançar</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗disponível</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr></tbody></table></div>
+        <div style="margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="background:#6366f1;color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:12px">Modalidade</div>
+            <div style="font-size:13px;color:#64748b">6/9 OK</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">ID</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Descrição</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Tipo</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Estado</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Input</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Keywords</th>
+                <th style="padding:8px 12px;text-align:center;color:#64748b;font-weight:600">Resultado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Excelente, João! Presencial então! 👍
+
+Nossos cursos presenciais são realizados na *Rua Cubatão, 726 — Vila Mariana, São Paulo*, próximo ao metrô Paraíso (linhas 2-verde e 4-amarela).
+
+Agora, qual é o *prazo desejado* para realizar o treinamento? (ex: próximas 2 semanas, este mês, próximo mês, etc.)">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T06-01</td>
+                <td style="padding:8px 12px;color:#1e293b">Presencial</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_modalidade</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Presencial</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">Vila Mariana</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">Cubatão</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">Paraíso</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo! 😊 Então confirmei: *5 alunos*, Excel avançado, modalidade *online ao vivo*.
+
+Nas aulas online ao vivo, vocês terão interação em tempo real com o instrutor, e a gravação das aulas fica disponível por 90 dias, liberada em até 48 horas após cada sessão.
+
+Agora, qual é o *prazo desejado* para ini">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T06-02</td>
+                <td style="padding:8px 12px;color:#1e293b">Online sem especificar</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_modalidade</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Online</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">ao vivo</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">instrutor</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗EAD</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Perfeito, João! 🎯
+
+Então confirmei:
+• *5 alunos*
+• *Excel Módulo II (Avançado)*
+• *Online ao vivo* com instrutor em tempo real, interação e Q&A
+• Gravação disponível por 90 dias (liberada em até 48h após cada aula)
+
+Só falta um detalhe: *qual é o prazo que você precisa?* Por exemplo, vocês querem co">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T06-03</td>
+                <td style="padding:8px 12px;color:#1e293b">Ao vivo com instrutor</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_modalidade</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Ao vivo com instrutor</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">interação</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">tempo real</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">gravação</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">90 dias</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo! 😊
+
+Então vamos confirmar: *5 alunos* para *Excel avançado* em modalidade *EAD gravado*.
+
+Só para alinhar — no EAD, o conteúdo fica em aulas gravadas, 100% autodidata, e vocês estudam no próprio ritmo, sem interação ao vivo com o instrutor.
+
+Agora me informa: *qual é o prazo desejado* para ini">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T06-04</td>
+                <td style="padding:8px 12px;color:#1e293b">EAD gravado</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_modalidade</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">EAD</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">gravadas</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">ritmo</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">autodidata</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo, João! Então vamos com *in company na sua empresa* para os 5 alunos. 👍
+
+Só um detalhe importante: para o treinamento in company, a sua empresa precisa providenciar a infraestrutura:
+
+• 1 computador por aluno com Excel instalado (mesma versão)
+• 1 computador para o instrutor
+• Projetor ou telão">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T06-05</td>
+                <td style="padding:8px 12px;color:#1e293b">In Company</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_modalidade</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Na nossa empresa</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">infraestrutura</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">Excel instalado</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">projetor</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗computadores</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Ótima pergunta, João! 👍
+
+Sim, as aulas online ao vivo ficam gravadas por até 90 dias e são liberadas em até 48 horas após cada sessão. Isso permite que os alunos revisem o conteúdo quando precisarem.
+
+Mas antes de detalhar mais sobre as aulas, preciso entender melhor sua necessidade: qual curso ou t">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T06-06</td>
+                <td style="padding:8px 12px;color:#1e293b">Dúvida sobre gravação das aulas</td>
+                <td style="padding:8px 12px;color:#64748b">duvida_frequente</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">As aulas ao vivo ficam gravadas</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">90 dias</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">gravadas</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">48 horas</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Entendi, João! 😊
+
+Como você está em Belo Horizonte, nossos cursos *presenciais* são exclusivos para São Paulo (na Rua Cubatão, 726 — Vila Mariana).
+
+Para sua equipe em Belo Horizonte, posso te oferecer duas alternativas:
+
+• *Online ao vivo* — as aulas têm interação em tempo real com o instrutor, e a">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T06-07</td>
+                <td style="padding:8px 12px;color:#1e293b">Presencial fora de SP</td>
+                <td style="padding:8px 12px;color:#64748b">edge_case</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_modalidade</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Quero presencial mas estou em Belo Horizonte</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">ao vivo</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">in company</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">online</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: 🔇 [Modo teste] Bot pausado — atendente humano ativo.
+Clique em '🔄 Reativar Bot' para reiniciar.">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T06-08</td>
+                <td style="padding:8px 12px;color:#1e293b">Só pode sábado</td>
+                <td style="padding:8px 12px;color:#64748b">edge_case</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_modalidade</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Só posso fazer aos sábados</td>
+                <td style="padding:8px 12px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗grade</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗verificar</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗sábado</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Ótima pergunta, João! Vou explicar as principais diferenças:
+
+*Online ao vivo:*
+• Aulas com instrutor em tempo real
+• Interação direta e sessões de perguntas e respostas
+• Gravação das aulas disponível por 90 dias (liberada em até 48h após cada sessão)
+
+*EAD (gravado):*
+• Conteúdo em aulas gravadas,">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T06-09</td>
+                <td style="padding:8px 12px;color:#1e293b">Diferença EAD vs ao vivo</td>
+                <td style="padding:8px 12px;color:#64748b">duvida_frequente</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Qual a diferença entre EAD e ao vivo</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">EAD</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">ao vivo</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">instrutor</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">interação</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr></tbody></table></div>
+        <div style="margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="background:#06b6d4;color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:12px">Nível de Conhecimento</div>
+            <div style="font-size:13px;color:#64748b">4/5 OK</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">ID</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Descrição</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Tipo</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Estado</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Input</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Keywords</th>
+                <th style="padding:8px 12px;text-align:center;color:#64748b;font-weight:600">Resultado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo, João! 😊
+
+Como a equipe nunca usou Excel, vou fazer uma recomendação: para quem está começando do zero, o ideal é começar com o *Excel Módulo I (básico/intermediário)*, que constrói uma base sólida. Depois, quando a equipe evoluir, vocês podem seguir para o Excel avançado.
+
+Mas antes de montar">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T05-01</td>
+                <td style="padding:8px 12px;color:#1e293b">Alunos do zero</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_nivel</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Do zero, nunca usaram</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">básico</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">módulo</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Perfeito! Com 5 alunos que já dominam o básico e querem evoluir, recomendo o *Excel Módulo II (Avançado)* 📊
+
+Neste módulo, vocês aprenderão fórmulas mais complexas, tabelas dinâmicas, análises avançadas e muito mais!
+
+Agora, sobre a *modalidade* do treinamento, qual você prefere?
+
+• *Presencial* (na">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T05-02</td>
+                <td style="padding:8px 12px;color:#1e293b">Já usam mas querem evoluir</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_nivel</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Já usam mas querem evoluir</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">avançado</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">módulo</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Entendi, João! 👍
+
+Com níveis mistos na sua equipe, temos uma ótima solução: oferecemos um *teste de nivelamento gratuito* da Impacta. Assim conseguimos identificar exatamente quem está no nível básico/intermediário e quem já está avançado — permitindo uma proposta bem ajustada às necessidades reais ">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T05-03</td>
+                <td style="padding:8px 12px;color:#1e293b">Níveis mistos na equipe</td>
+                <td style="padding:8px 12px;color:#64748b">edge_case</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_nivel</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Alguns sabem básico, outros avançados</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">nivelamento</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">gratuito</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">teste</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Sem problema, João! 😊
+
+Vou te ajudar a entender melhor. Deixa eu fazer algumas perguntas rápidas:
+
+*Sobre o nível da equipe:* Vocês já usam Excel no dia a dia? Dominam funções como PROCV, SE, tabelas dinâmicas, ou estão começando agora?
+
+Isso vai me ajudar a recomendar o módulo mais adequado para os">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T05-04</td>
+                <td style="padding:8px 12px;color:#1e293b">Lead não sabe o nível</td>
+                <td style="padding:8px 12px;color:#64748b">edge_case</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_nivel</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Não sei exatamente</td>
+                <td style="padding:8px 12px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗nivelamento</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗gratuito</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Excelente, João! 👏
+
+Como a equipe já domina PROCV, SE e tabelas dinâmicas, vou recomendar o *Excel 365 - Módulo II (Avançado)* — que é perfeito para esse nível!
+
+Além disso, após esse módulo, sugiro considerar *Power BI* como próximo passo natural para evoluir em análise de dados e business intellig">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T05-05</td>
+                <td style="padding:8px 12px;color:#1e293b">Sabem PROCV e tabelas dinâmicas</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_nivel</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Já sabem PROCV, SE e tabelas dinâmicas</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">avançado</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">Power BI</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr></tbody></table></div>
+        <div style="margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="background:#10b981;color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:12px">Número de Alunos</div>
+            <div style="font-size:13px;color:#64748b">6/7 OK</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">ID</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Descrição</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Tipo</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Estado</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Input</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Keywords</th>
+                <th style="padding:8px 12px;text-align:center;color:#64748b;font-weight:600">Resultado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Entendi, João! 😊
+
+Você mencionou &quot;1 pessoa&quot; — isso significa que é só você que vai participar do treinamento de Excel Avançado, certo?
+
+Se for esse o caso, você está buscando um curso *individual em turma aberta* (com outros alunos também). Ótimo! Para cursos individuais em turma aberta, v">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T04-01</td>
+                <td style="padding:8px 12px;color:#1e293b">1 aluno</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_n_alunos</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">1 pessoa</td>
+                <td style="padding:8px 12px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗modalidade</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Perfeito, João! Excel avançado para 2 alunos.
+
+Agora me diz: qual a modalidade preferida para o treinamento?
+
+• *Presencial* (na nossa unidade Paraíso, próximo ao metrô)
+• *Online ao vivo* (com instrutor em tempo real, interação e gravação disponível por 90 dias)
+• *EAD gravado* (conteúdo gravado, 1">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T04-02</td>
+                <td style="padding:8px 12px;color:#1e293b">2 alunos</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_n_alunos</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">2 pessoas</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">modalidade</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Perfeito! Com 15 alunos, recomendamos uma turma exclusiva para a sua empresa, com possibilidade de customizar horário e conteúdo conforme sua necessidade. 🎯
+
+Agora preciso saber: qual a modalidade preferida para o treinamento?
+
+• *Presencial* (na nossa unidade Paraíso, próximo ao metrô)
+• *Online ao">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T04-03</td>
+                <td style="padding:8px 12px;color:#1e293b">15 alunos — turma exclusiva</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_n_alunos</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">15 pessoas</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">turma exclusiva</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Excelente, João! Com 50 alunos, recomendamos uma *turma exclusiva* para sua empresa — isso significa conteúdo customizado, horários flexíveis e sem risco de cancelamento. 👏
+
+Agora, sobre a modalidade do treinamento, qual você prefere?
+
+• *Presencial* (na Rua Cubatão, 726 — Vila Mariana, SP, próximo ">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T04-04</td>
+                <td style="padding:8px 12px;color:#1e293b">50 alunos</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_n_alunos</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">50 alunos</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">turma exclusiva</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">modalidade</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Entendi, João! 😊
+
+Então temos um interesse em *Excel Avançado* com uma estimativa de *10 a 20 alunos*.
+
+Antes de eu continuar, preciso de dois dados importantes:
+
+1. *Qual é o nome completo da sua empresa?*
+2. *Qual é o CNPJ?*
+
+Depois disso, vou te perguntar sobre a modalidade preferida (presencial,">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T04-05</td>
+                <td style="padding:8px 12px;color:#1e293b">Lead não sabe ainda</td>
+                <td style="padding:8px 12px;color:#64748b">edge_case</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_n_alunos</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Talvez 10, talvez 20</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">modalidade</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Excelente, João! 👏
+
+Com 15 alunos, recomendamos uma turma exclusiva para a sua empresa, com possibilidade de customizar horários e conteúdo conforme suas necessidades.
+
+Antes de avançar, preciso confirmar:
+
+*Qual a modalidade preferida: presencial, online ao vivo ou in company?*
+
+(Presencial aqui em">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T04-06</td>
+                <td style="padding:8px 12px;color:#1e293b">Número por extenso</td>
+                <td style="padding:8px 12px;color:#64748b">edge_case</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_n_alunos</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">uns quinze</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">modalidade</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Não entendi o número de alunos. Por favor, informe quantos alunos participarão do treinamento.">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T04-07</td>
+                <td style="padding:8px 12px;color:#1e293b">Zero alunos</td>
+                <td style="padding:8px 12px;color:#64748b">validacao</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">aguardando_n_alunos</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">0</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">alunos</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">número</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr></tbody></table></div>
+        <div style="margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="background:#f43f5e;color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:12px">Objeções</div>
+            <div style="font-size:13px;color:#64748b">5/6 OK</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">ID</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Descrição</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Tipo</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Estado</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Input</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Keywords</th>
+                <th style="padding:8px 12px;text-align:center;color:#64748b;font-weight:600">Resultado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Sem problema! Qual seria o melhor horário para conversarmos? Posso agendar para o nosso consultor entrar em contato com você no horário que for mais conveniente. 😊">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T08-01</td>
+                <td style="padding:8px 12px;color:#1e293b">Não tem tempo agora</td>
+                <td style="padding:8px 12px;color:#64748b">objecao</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Não tenho tempo agora</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">horário</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">melhor</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">conversar</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Sem problema, João! Vou encaminhar para nosso consultor preparar uma proposta personalizada por e-mail. 
+
+Para isso, preciso de alguns dados mínimos:
+
+1. *Empresa* e *CNPJ*
+2. *Qual curso ou tema* de interesse?
+3. *Quantos alunos* participarão?
+4. *Qual modalidade* você prefere: presencial, online a">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T08-02</td>
+                <td style="padding:8px 12px;color:#1e293b">Quer receber por e-mail</td>
+                <td style="padding:8px 12px;color:#64748b">objecao</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Pode me mandar tudo por e-mail</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">e-mail</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">dados</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">proposta</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Entendi, João! Final do mês é um prazo bem definido. 👍
+
+Antes de montar a proposta, preciso saber alguns detalhes importantes:
+
+*Qual é o tema ou curso que sua empresa precisa?* (ex: Excel, Power BI, AWS, liderança, etc.)">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T08-03</td>
+                <td style="padding:8px 12px;color:#1e293b">Urgência de prazo</td>
+                <td style="padding:8px 12px;color:#64748b">objecao</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Precisamos iniciar até o final do mês</td>
+                <td style="padding:8px 12px"><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗verificar</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗turmas</span> <span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗datas</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Ótima pergunta, João! Sim, isso pode acontecer com turmas abertas. 📌
+
+Turmas abertas têm uma grade fixa no calendário e funcionam quando atingem o mínimo de 4 a 5 alunos. Se não batermos esse mínimo, a turma pode ser cancelada — mas quando isso acontece, a gente reagenda para outra data ou oferece o">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T08-04</td>
+                <td style="padding:8px 12px;color:#1e293b">Turma cancelada por falta de alunos</td>
+                <td style="padding:8px 12px;color:#64748b">objecao</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Já aconteceu de a turma ser cancelada</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">mínimo</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">alunos</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">turma exclusiva</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Ótima pergunta, João! 👍
+
+Sim, nossos certificados são *reconhecidos pelo MEC como extensão universitária*. Isso significa que você pode usar o certificado em currículo lattes, em processos seletivos de órgãos governamentais e para fins profissionais — válido em todo Brasil.
+
+A Impacta é uma faculdad">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T08-05</td>
+                <td style="padding:8px 12px;color:#1e293b">Reconhecimento do certificado</td>
+                <td style="padding:8px 12px;color:#64748b">duvida_frequente</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">O certificado é reconhecido</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">MEC</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">extensão universitária</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Claro, João! A Impacta emite nota fiscal normalmente para empresas. Para isso, precisamos do CNPJ e razão social da sua empresa.
+
+Pode me informar o nome da empresa e o CNPJ?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T08-06</td>
+                <td style="padding:8px 12px;color:#1e293b">Pergunta sobre NF</td>
+                <td style="padding:8px 12px;color:#64748b">duvida_frequente</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Podem emitir nota fiscal para minha empresa</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">NF</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">nota fiscal</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">empresa</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">CNPJ</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr></tbody></table></div>
+        <div style="margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="background:#0ea5e9;color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:12px">Processo Comercial</div>
+            <div style="font-size:13px;color:#64748b">3/4 OK</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">ID</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Descrição</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Tipo</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Estado</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Input</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Keywords</th>
+                <th style="padding:8px 12px;text-align:center;color:#64748b;font-weight:600">Resultado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo! O prazo padrão é de até 24 horas úteis após recebermos todos os dados.
+
+Para que eu possa registrar sua solicitação corretamente, preciso de algumas informações:
+
+Para qual empresa você trabalha? E pode me informar o CNPJ também?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T10-01</td>
+                <td style="padding:8px 12px;color:#1e293b">Prazo da proposta</td>
+                <td style="padding:8px 12px;color:#64748b">processo</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Quando recebo a proposta</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">horas</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">úteis</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗24h</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Entendo a urgência, João! Vou registrar como prioridade. O prazo padrão é 24h úteis — faremos o possível para priorizar o seu atendimento.
+
+Para agilizar sua proposta, preciso de alguns dados essenciais:
+
+Qual o nome da sua empresa e o CNPJ?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T10-02</td>
+                <td style="padding:8px 12px;color:#1e293b">Proposta urgente hoje</td>
+                <td style="padding:8px 12px;color:#64748b">edge_case</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Preciso da proposta ainda hoje</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">24h</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">priorizar</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">urgência</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo, João! Com 15 alunos, recomendamos uma turma exclusiva para a sua empresa — ela é customizada conforme suas necessidades e sem risco de cancelamento. 👍
+
+Antes de falar sobre a nota fiscal, preciso confirmar alguns dados:
+
+1. Qual é o nome da empresa e o CNPJ?
+2. Qual curso ou tema de interesse">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T10-03</td>
+                <td style="padding:8px 12px;color:#1e293b">NF única para todos</td>
+                <td style="padding:8px 12px;color:#64748b">processo</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Precisamos de uma única nota fiscal para os 15 alunos</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">NF</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">empresa</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">CNPJ</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Ótima pergunta, João! Para montar uma proposta personalizada, precisamos dos seguintes dados:
+
+📋 *Dados necessários:*
+• Nome da empresa e CNPJ
+• Curso ou tema de interesse
+• Número de alunos que participarão
+• Modalidade preferida (presencial, online ao vivo, EAD gravado ou in company)
+• Prazo desej">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T10-04</td>
+                <td style="padding:8px 12px;color:#1e293b">Quais dados para proposta</td>
+                <td style="padding:8px 12px;color:#64748b">processo</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Quais dados vocês precisam para montar a proposta</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">empresa</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">CNPJ</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">curso</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">alunos</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">modalidade</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr></tbody></table></div>
+        <div style="margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="background:#8b5cf6;color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:12px">Roteamento PF/PJ</div>
+            <div style="font-size:13px;color:#64748b">3/4 OK</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">ID</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Descrição</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Tipo</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Estado</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Input</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Keywords</th>
+                <th style="padding:8px 12px;text-align:center;color:#64748b;font-weight:600">Resultado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo! 😊
+
+Para eu montar a melhor proposta, preciso de mais algumas informações:
+
+*Qual é o nome da sua empresa e o CNPJ?*">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T02-01</td>
+                <td style="padding:8px 12px;color:#1e293b">Seleciona curso para empresa</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">menu_pf_pj</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Para minha Empresa</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">empresa</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">CNPJ</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Entendi, João! Para cursos individuais em turma aberta, vou te encaminhar para um consultor que poderá informar as opções, datas e condições de matrícula.
+
+Deixa eu confirmar seus dados:
+• Nome: João Silva ✓
+• E-mail: joao.teste@empresa.com ✓
+
+Está tudo certo? E qual é o curso que você tem interesse">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T02-02</td>
+                <td style="padding:8px 12px;color:#1e293b">Seleciona curso para si mesmo</td>
+                <td style="padding:8px 12px;color:#64748b">happy_path</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">menu_pf_pj</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Para mim</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">consultor</span><span style="background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:4px;font-size:11px">✗transferindo</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">❌ FALHOU</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Perfeito, João! Sim, a Impacta emite nota fiscal normalmente para empresas PJ. 
+
+Para isso, preciso dos dados da sua empresa. Pode me informar o nome da empresa e o CNPJ?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T02-03</td>
+                <td style="padding:8px 12px;color:#1e293b">PF mas empresa vai pagar</td>
+                <td style="padding:8px 12px;color:#64748b">edge_case</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">fluxo_pf</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">minha empresa vai pagar pode emitir NF</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">empresa</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">CNPJ</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">PJ</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo, João! 😊
+
+Sim, você pode contratar como PJ sendo MEI. Para isso, vou precisar do seu *CNPJ* (ou número de registro do MEI) e do *nome da sua empresa*.
+
+Pode informar esses dados?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T02-04</td>
+                <td style="padding:8px 12px;color:#1e293b">MEI pode contratar como PJ</td>
+                <td style="padding:8px 12px;color:#64748b">edge_case</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">fluxo_pj</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Sou MEI posso contratar como PJ</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">CNPJ</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">sim</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">empresa</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr></tbody></table></div>
+        <div style="margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="background:#a855f7;color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:12px">Sobre a Impacta</div>
+            <div style="font-size:13px;color:#64748b">7/7 OK</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">ID</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Descrição</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Tipo</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Estado</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Input</th>
+                <th style="padding:8px 12px;text-align:left;color:#64748b;font-weight:600">Keywords</th>
+                <th style="padding:8px 12px;text-align:center;color:#64748b;font-weight:600">Resultado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Ótima pergunta, João! 
+
+A Impacta é uma referência no mercado com *37 anos de atuação*. Somos faculdade reconhecida pelo MEC, especializada em educação, tecnologia e inovação. Já treinamos mais de 30 mil empresas e impactamos mais de 2 milhões de alunos! 🎓
+
+Por 10 anos seguidos recebemos o título de">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T09-01</td>
+                <td style="padding:8px 12px;color:#1e293b">Tempo de mercado</td>
+                <td style="padding:8px 12px;color:#64748b">institucional</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Há quanto tempo a Impacta existe</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">37 anos</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">mercado</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo pergunta! 📍
+
+A Impacta está localizada na *Rua Cubatão, 726 — Vila Mariana, São Paulo*. Fica bem pertinho do *metrô Paraíso* (linhas 2-verde e 4-amarela), o que facilita bastante o acesso.
+
+Mas antes de falarmos sobre presencial, gostaria de saber: você está buscando um treinamento para sua em">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T09-02</td>
+                <td style="padding:8px 12px;color:#1e293b">Endereço</td>
+                <td style="padding:8px 12px;color:#64748b">institucional</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Qual o endereço de vocês</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">Cubatão</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">Vila Mariana</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">Paraíso</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Ótimo, João! 📞
+
+Nossa comunicação é feita via WhatsApp e e-mail mesmo. Um consultor entrará em contato com você pelos canais que você preferir — por aqui ou pelo e-mail que você forneceu.
+
+Voltando: qual é a empresa e o CNPJ para eu registrar sua solicitação?">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T09-03</td>
+                <td style="padding:8px 12px;color:#1e293b">Telefone</td>
+                <td style="padding:8px 12px;color:#64748b">institucional</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Qual o telefone de vocês</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">WhatsApp</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">e-mail</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">contato</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Isso mesmo, João! 🎓
+
+A Impacta é uma faculdade credenciada pelo MEC com mais de 37 anos no mercado. Todos os nossos cursos emitem certificado digital reconhecido como extensão universitária — válido para currículo Lattes, processos seletivos em órgãos governamentais e fins profissionais.
+
+Somos refe">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T09-04</td>
+                <td style="padding:8px 12px;color:#1e293b">Reconhecimento MEC</td>
+                <td style="padding:8px 12px;color:#64748b">institucional</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">A Impacta é reconhecida pelo MEC</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">MEC</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">faculdade</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">extensão universitária</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Ótima pergunta, João! 
+
+O teste de nivelamento da Impacta é *gratuito* e serve para identificar o nível atual dos seus alunos — se estão em nível básico, intermediário ou avançado. Com isso, a gente consegue indicar qual módulo é mais adequado para a turma.
+
+Recomendamos o teste especialmente quando">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T09-05</td>
+                <td style="padding:8px 12px;color:#1e293b">Teste de nivelamento</td>
+                <td style="padding:8px 12px;color:#64748b">duvida_frequente</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Como funciona o teste de nivelamento</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">gratuito</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">nível</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">módulo</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9" title="Resposta: Sim, João! A Impacta trabalha com trilhas personalizadas para empresas. Podemos incluir casos reais da sua empresa no conteúdo, adaptar exemplos ao segmento do cliente e montar programas customizados de acordo com as necessidades do time.
+
+Para eu entender melhor sua necessidade e preparar uma propo">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T09-06</td>
+                <td style="padding:8px 12px;color:#1e293b">Personalização de conteúdo</td>
+                <td style="padding:8px 12px;color:#64748b">duvida_frequente</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Vocês personalizam o conteúdo para a nossa empresa</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">personalizadas</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">trilhas</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">casos reais</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr>
+              <tr style="background:#fff;border-bottom:1px solid #f1f5f9" title="Resposta: Ótima pergunta, João! 👍
+
+Os instrutores da Impacta são profissionais que *vivem o mercado* — têm experiência prática na área de atuação, não são apenas professores acadêmicos. Eles trazem exemplos reais e aplicações do dia a dia corporativo para as aulas, o que faz toda a diferença na qualidade do a">
+                <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#4f46e5">T09-07</td>
+                <td style="padding:8px 12px;color:#1e293b">Instrutor profissional</td>
+                <td style="padding:8px 12px;color:#64748b">duvida_frequente</td>
+                <td style="padding:8px 12px;color:#64748b;font-size:11px;font-family:monospace">qualquer</td>
+                <td style="padding:8px 12px;color:#374151;font-style:italic;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">O instrutor tem experiência de mercado ou é só professor</td>
+                <td style="padding:8px 12px"><span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">mercado</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">prática</span> <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-size:11px">instrutor</span></td>
+                <td style="padding:8px 12px;text-align:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">✅ OK</span></td>
+              </tr></tbody></table></div>
+</div>
+</body>
+</html>

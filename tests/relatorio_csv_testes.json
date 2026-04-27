@@ -1,0 +1,2274 @@
+[
+  {
+    "id": "T01-01",
+    "bloco": "Fluxo Inicial",
+    "tipo": "happy_path",
+    "descricao": "Lead inicia com saudação simples",
+    "estado": "inicio",
+    "phone": "5511920000001",
+    "input": "Oi",
+    "response": "Seja bem-vindo(a) ao Universo IMPACTA! 😊 Aqui você encontra soluções em treinamentos corporativos, turmas fechadas, online ao vivo e muito mais. Qual é o seu nome?",
+    "deve_conter": [
+      "bem-vindo",
+      "IMPACTA",
+      "nome"
+    ],
+    "kw_found": [
+      "bem-vindo",
+      "IMPACTA",
+      "nome"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T01-02",
+    "bloco": "Fluxo Inicial",
+    "tipo": "happy_path",
+    "descricao": "Lead cumprimenta de forma diferente",
+    "estado": "inicio",
+    "phone": "5511920000002",
+    "input": "Bom dia",
+    "response": "Seja bem-vindo(a) ao Universo IMPACTA! 🎓 Sou o assistente de Treinamentos Corporativos PJ. Para começar, qual é o seu nome?",
+    "deve_conter": [
+      "bem-vindo",
+      "nome"
+    ],
+    "kw_found": [
+      "bem-vindo",
+      "nome"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T01-03",
+    "bloco": "Fluxo Inicial",
+    "tipo": "happy_path",
+    "descricao": "Lead fornece nome válido",
+    "estado": "aguardando_nome",
+    "phone": "5511920000003",
+    "input": "João Silva",
+    "response": "Oi João! Tudo bem? 😊\n\nÓtimo ter você aqui! Para que eu possa te ajudar melhor, preciso saber: você está buscando um treinamento para sua empresa ou equipe?",
+    "deve_conter": [
+      "e-mail"
+    ],
+    "kw_found": [],
+    "kw_missing": [
+      "e-mail"
+    ],
+    "kw_pct": 0,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T01-04",
+    "bloco": "Fluxo Inicial",
+    "tipo": "validacao",
+    "descricao": "E-mail inválido sem @",
+    "estado": "aguardando_email",
+    "phone": "5511920000004",
+    "input": "joaosilva",
+    "response": "Perfeito, João! Obrigado por confirmar seu nome completo: *João Silva*.\n\nAgora preciso de seu *e-mail* para continuar com a qualificação. Pode informar? 😊",
+    "deve_conter": [
+      "Ops",
+      "E-mail válido"
+    ],
+    "kw_found": [],
+    "kw_missing": [
+      "Ops",
+      "E-mail válido"
+    ],
+    "kw_pct": 0,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T01-05",
+    "bloco": "Fluxo Inicial",
+    "tipo": "validacao",
+    "descricao": "E-mail inválido com @ incompleto",
+    "estado": "aguardando_email",
+    "phone": "5511920000005",
+    "input": "joao@",
+    "response": "Ops! Informe um E-mail válido. Por favor, digite novamente seu e-mail completo (ex: nome@empresa.com.br).",
+    "deve_conter": [
+      "Ops",
+      "E-mail válido"
+    ],
+    "kw_found": [
+      "Ops",
+      "E-mail válido"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T01-06",
+    "bloco": "Fluxo Inicial",
+    "tipo": "happy_path",
+    "descricao": "E-mail válido aceito",
+    "estado": "aguardando_email",
+    "phone": "5511920000006",
+    "input": "joao.silva@empresa.com.br",
+    "response": "Perfeito, João Silva! Anotei seu e-mail: joao.silva@empresa.com.br\n\nAgora me conta: qual empresa e qual o CNPJ dela?",
+    "deve_conter": [
+      "empresa",
+      "curso"
+    ],
+    "kw_found": [
+      "empresa"
+    ],
+    "kw_missing": [
+      "curso"
+    ],
+    "kw_pct": 50,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "⚠️  PARCIAL",
+    "error": null
+  },
+  {
+    "id": "T01-07",
+    "bloco": "Fluxo Inicial",
+    "tipo": "validacao",
+    "descricao": "Resposta fora do menu",
+    "estado": "menu_principal",
+    "phone": "5511920000007",
+    "input": "quero falar com humano",
+    "response": "Claro, João! Entendo perfeitamente. 🤝\n\nVou encaminhar você para o atendimento humano agora. Só para agilizar, deixa eu confirmar:\n\n*Empresa:* qual é o nome?\n*Assunto principal:* treinamento corporativo, certo?\n\nCom essas informações, o consultor já recebe o contexto e te atende mais rápido!",
+    "deve_conter": [
+      "inválida",
+      "botões",
+      "opção"
+    ],
+    "kw_found": [],
+    "kw_missing": [
+      "inválida",
+      "botões",
+      "opção"
+    ],
+    "kw_pct": 0,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T01-08",
+    "bloco": "Fluxo Inicial",
+    "tipo": "validacao",
+    "descricao": "Número no campo de nome",
+    "estado": "aguardando_nome",
+    "phone": "5511920000008",
+    "input": "5511999998888",
+    "response": "Oi! Tudo bem? 👋\n\nSeja bem-vindo(a)! Sou o assistente de atendimento da IMPACTA, especializado em treinamentos corporativos.\n\nPara eu começar a qualificar sua demanda, qual é o seu nome completo?",
+    "deve_conter": [
+      "nome",
+      "completo"
+    ],
+    "kw_found": [
+      "nome",
+      "completo"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T02-01",
+    "bloco": "Roteamento PF/PJ",
+    "tipo": "happy_path",
+    "descricao": "Seleciona curso para empresa",
+    "estado": "menu_pf_pj",
+    "phone": "5511920000009",
+    "input": "Para minha Empresa",
+    "response": "Ótimo! 😊\n\nPara eu montar a melhor proposta, preciso de mais algumas informações:\n\n*Qual é o nome da sua empresa e o CNPJ?*",
+    "deve_conter": [
+      "empresa",
+      "CNPJ"
+    ],
+    "kw_found": [
+      "empresa",
+      "CNPJ"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T02-02",
+    "bloco": "Roteamento PF/PJ",
+    "tipo": "happy_path",
+    "descricao": "Seleciona curso para si mesmo",
+    "estado": "menu_pf_pj",
+    "phone": "5511920000010",
+    "input": "Para mim",
+    "response": "Entendi, João! Para cursos individuais em turma aberta, vou te encaminhar para um consultor que poderá informar as opções, datas e condições de matrícula.\n\nDeixa eu confirmar seus dados:\n• Nome: João Silva ✓\n• E-mail: joao.teste@empresa.com ✓\n\nEstá tudo certo? E qual é o curso que você tem interesse? 😊",
+    "deve_conter": [
+      "transferindo",
+      "consultor"
+    ],
+    "kw_found": [
+      "consultor"
+    ],
+    "kw_missing": [
+      "transferindo"
+    ],
+    "kw_pct": 50,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "⚠️  PARCIAL",
+    "error": null
+  },
+  {
+    "id": "T02-03",
+    "bloco": "Roteamento PF/PJ",
+    "tipo": "edge_case",
+    "descricao": "PF mas empresa vai pagar",
+    "estado": "fluxo_pf",
+    "phone": "5511920000011",
+    "input": "minha empresa vai pagar pode emitir NF",
+    "response": "Perfeito, João! Sim, a Impacta emite nota fiscal normalmente para empresas PJ. \n\nPara isso, preciso dos dados da sua empresa. Pode me informar o nome da empresa e o CNPJ?",
+    "deve_conter": [
+      "empresa",
+      "CNPJ",
+      "PJ"
+    ],
+    "kw_found": [
+      "empresa",
+      "CNPJ",
+      "PJ"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T02-04",
+    "bloco": "Roteamento PF/PJ",
+    "tipo": "edge_case",
+    "descricao": "MEI pode contratar como PJ",
+    "estado": "fluxo_pj",
+    "phone": "5511920000012",
+    "input": "Sou MEI posso contratar como PJ",
+    "response": "Ótimo, João! 😊\n\nSim, você pode contratar como PJ sendo MEI. Para isso, vou precisar do seu *CNPJ* (ou número de registro do MEI) e do *nome da sua empresa*.\n\nPode informar esses dados?",
+    "deve_conter": [
+      "CNPJ",
+      "sim",
+      "empresa"
+    ],
+    "kw_found": [
+      "CNPJ",
+      "sim",
+      "empresa"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T03-01",
+    "bloco": "Curso Solicitado",
+    "tipo": "happy_path",
+    "descricao": "Excel avançado",
+    "estado": "aguardando_curso",
+    "phone": "5511920000013",
+    "input": "Excel avançado",
+    "response": "Ótimo, João! 😊\n\nEntendi que é para sua empresa e o interesse é em *Excel avançado*. Perfeito!\n\nAgora preciso de dois dados importantes:\n\n1. *Qual é o nome da sua empresa?*\n2. *Qual é o CNPJ?*\n\nApós isso, vou precisar saber quantos alunos participarão do treinamento.",
+    "deve_conter": [
+      "Excel",
+      "Módulo",
+      "alunos"
+    ],
+    "kw_found": [
+      "Excel",
+      "alunos"
+    ],
+    "kw_missing": [
+      "Módulo"
+    ],
+    "kw_pct": 67,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "⚠️  PARCIAL",
+    "error": null
+  },
+  {
+    "id": "T03-02",
+    "bloco": "Curso Solicitado",
+    "tipo": "happy_path",
+    "descricao": "Power BI",
+    "estado": "aguardando_curso",
+    "phone": "5511920000014",
+    "input": "Power BI",
+    "response": "Excelente! Power BI é uma ferramenta poderosa para análise de dados e geração de insights. 📊\n\nAgora preciso de alguns dados para montar sua proposta:\n\n*Qual é o nome da sua empresa e o CNPJ?*",
+    "deve_conter": [
+      "Power BI",
+      "alunos"
+    ],
+    "kw_found": [
+      "Power BI"
+    ],
+    "kw_missing": [
+      "alunos"
+    ],
+    "kw_pct": 50,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "⚠️  PARCIAL",
+    "error": null
+  },
+  {
+    "id": "T03-03",
+    "bloco": "Curso Solicitado",
+    "tipo": "happy_path",
+    "descricao": "Combo Excel + Power BI",
+    "estado": "aguardando_curso",
+    "phone": "5511920000015",
+    "input": "Excel e Power BI para minha equipe",
+    "response": "Perfeito, João! Excel e Power BI são uma excelente combinação para análise de dados.\n\nPara eu montar a proposta ideal para sua equipe, preciso saber:\n\n*Qual é o nome da sua empresa e o CNPJ?*\n\nE depois me conta quantos alunos participarão do treinamento! 😊",
+    "deve_conter": [
+      "Excel",
+      "Power BI",
+      "alunos"
+    ],
+    "kw_found": [
+      "Excel",
+      "Power BI",
+      "alunos"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T03-04",
+    "bloco": "Curso Solicitado",
+    "tipo": "happy_path",
+    "descricao": "Python",
+    "estado": "aguardando_curso",
+    "phone": "5511920000016",
+    "input": "Python",
+    "response": "Ótimo, João! 👍\n\nEntendi que é para sua empresa e o interesse é em *Python*. Antes de prosseguir, preciso confirmar:\n\n*Qual é o nome da empresa e o CNPJ?*",
+    "deve_conter": [
+      "Python",
+      "alunos"
+    ],
+    "kw_found": [
+      "Python"
+    ],
+    "kw_missing": [
+      "alunos"
+    ],
+    "kw_pct": 50,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "⚠️  PARCIAL",
+    "error": null
+  },
+  {
+    "id": "T03-05",
+    "bloco": "Curso Solicitado",
+    "tipo": "happy_path",
+    "descricao": "Azure AZ-900",
+    "estado": "aguardando_curso",
+    "phone": "5511920000017",
+    "input": "Azure AZ-900",
+    "response": "Ótimo, João! 🎓\n\nEntão é para sua empresa em Azure AZ-900. Perfeito!\n\nAgora, quantos alunos participarão desse treinamento de Azure AZ-900?",
+    "deve_conter": [
+      "Azure",
+      "alunos"
+    ],
+    "kw_found": [
+      "Azure",
+      "alunos"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T03-06",
+    "bloco": "Curso Solicitado",
+    "tipo": "happy_path",
+    "descricao": "SQL análise de dados",
+    "estado": "aguardando_curso",
+    "phone": "5511920000018",
+    "input": "SQL para análise de dados",
+    "response": "Ótimo, João! 😊\n\nEntendi que é para sua empresa e o interesse é em *SQL para análise de dados*. Vou anotar isso.\n\nPara eu montar a proposta, preciso confirmar:\n\n*Qual é o nome completo da sua empresa e o CNPJ?*",
+    "deve_conter": [
+      "SQL",
+      "nível",
+      "alunos"
+    ],
+    "kw_found": [
+      "SQL"
+    ],
+    "kw_missing": [
+      "nível",
+      "alunos"
+    ],
+    "kw_pct": 33,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T03-07",
+    "bloco": "Curso Solicitado",
+    "tipo": "edge_case",
+    "descricao": "Adobe Premiere (fora portfólio principal)",
+    "estado": "aguardando_curso",
+    "phone": "5511920000019",
+    "input": "Adobe Premiere",
+    "response": "Entendi, João! Adobe Premiere é uma excelente escolha para capacitação em edição de vídeo. 📹\n\nVou verificar a disponibilidade com um especialista e retorno em breve com mais informações.\n\nEnquanto isso, me informa:\n1. *Qual é o nome da sua empresa e o CNPJ?*\n2. *Quantos alunos participarão desse treinamento?*",
+    "deve_conter": [
+      "especialista",
+      "verificar",
+      "disponibilidade"
+    ],
+    "kw_found": [
+      "especialista",
+      "verificar",
+      "disponibilidade"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T03-08",
+    "bloco": "Curso Solicitado",
+    "tipo": "edge_case",
+    "descricao": "Lead não sabe qual curso",
+    "estado": "aguardando_curso",
+    "phone": "5511920000020",
+    "input": "Preciso de algo na área de dados",
+    "response": "Ótimo, João! 🎯\n\nA Impacta oferece treinamentos em Dados & Business Intelligence com opções como SQL, Python, Data Science, Big Data e Power BI — do básico ao avançado.\n\nAntes de eu indicar a melhor solução, preciso de dois dados:\n\n*1. Qual é o nome da sua empresa e o CNPJ?*",
+    "deve_conter": [
+      "necessidade",
+      "equipe",
+      "alinhamento"
+    ],
+    "kw_found": [],
+    "kw_missing": [
+      "necessidade",
+      "equipe",
+      "alinhamento"
+    ],
+    "kw_pct": 0,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T03-09",
+    "bloco": "Curso Solicitado",
+    "tipo": "fora_escopo",
+    "descricao": "Completamente fora do escopo",
+    "estado": "aguardando_curso",
+    "phone": "5511920000021",
+    "input": "Quero comprar um notebook",
+    "response": "João, entendi! 😊\n\nPorém, este canal é exclusivo para treinamentos corporativos PJ. Para outros assuntos, como compra de equipamentos, entre em contato pelo e-mail: solicitacao.secretaria@impacta.com.br\n\nMas se você está buscando um *treinamento corporativo* para sua equipe — seja em tecnologia, análise de dados, Excel, desenvolvimento, ou qualquer outra área — estou aqui para ajudar! \n\nVocê teria interesse em algum treinamento para sua empresa? 😊",
+    "deve_conter": [
+      "treinamentos",
+      "canal",
+      "exclusivo"
+    ],
+    "kw_found": [
+      "treinamentos",
+      "canal",
+      "exclusivo"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T03-10",
+    "bloco": "Curso Solicitado",
+    "tipo": "happy_path",
+    "descricao": "Scrum",
+    "estado": "aguardando_curso",
+    "phone": "5511920000022",
+    "input": "Scrum para minha equipe de TI",
+    "response": "Perfeito! Scrum é excelente para equipes de TI! 👍\n\nPara eu montar a melhor proposta para sua equipe, preciso saber:\n\n*Qual é o nome da sua empresa e o CNPJ?*",
+    "deve_conter": [
+      "Scrum",
+      "alunos"
+    ],
+    "kw_found": [
+      "Scrum"
+    ],
+    "kw_missing": [
+      "alunos"
+    ],
+    "kw_pct": 50,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "⚠️  PARCIAL",
+    "error": null
+  },
+  {
+    "id": "T03-11",
+    "bloco": "Curso Solicitado",
+    "tipo": "happy_path",
+    "descricao": "Excel VBA",
+    "estado": "aguardando_curso",
+    "phone": "5511920000023",
+    "input": "Excel com VBA",
+    "response": "Ótimo, João! 🎯\n\nEntendi que é para sua empresa e o interesse é em *Excel com VBA*. Excel VBA é perfeito para automatizar tarefas e criar macros.\n\nAntes de prosseguir, preciso confirmar:\n\n*Qual é o nome completo da sua empresa e o CNPJ?*",
+    "deve_conter": [
+      "VBA",
+      "Excel",
+      "alunos"
+    ],
+    "kw_found": [
+      "VBA",
+      "Excel"
+    ],
+    "kw_missing": [
+      "alunos"
+    ],
+    "kw_pct": 67,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "⚠️  PARCIAL",
+    "error": null
+  },
+  {
+    "id": "T03-12",
+    "bloco": "Curso Solicitado",
+    "tipo": "happy_path",
+    "descricao": "AWS Cloud Foundations",
+    "estado": "aguardando_curso",
+    "phone": "5511920000024",
+    "input": "AWS Cloud Foundations",
+    "response": "Ótimo, João! 🙌\n\nEntendi que você quer treinar sua equipe em *AWS Cloud Foundations*. Esse é um excelente curso para quem quer iniciar na computação em nuvem — com 20 horas de carga horária, abordagem prática e preparação para a certificação AWS Certified Cloud Practitioner.\n\nAgora preciso de alguns dados para montar sua proposta:\n\n*Quantos alunos participarão deste treinamento?*",
+    "deve_conter": [
+      "AWS",
+      "alunos"
+    ],
+    "kw_found": [
+      "AWS",
+      "alunos"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T04-01",
+    "bloco": "Número de Alunos",
+    "tipo": "happy_path",
+    "descricao": "1 aluno",
+    "estado": "aguardando_n_alunos",
+    "phone": "5511920000025",
+    "input": "1 pessoa",
+    "response": "Entendi, João! 😊\n\nVocê mencionou \"1 pessoa\" — isso significa que é só você que vai participar do treinamento de Excel Avançado, certo?\n\nSe for esse o caso, você está buscando um curso *individual em turma aberta* (com outros alunos também). Ótimo! Para cursos individuais em turma aberta, vou te encaminhar para um consultor que poderá informar as opções, datas e condições de matrícula.\n\nAntes, pode me confirmar seu *nome completo* e *e-mail* para que eu tenha os dados corretos?",
+    "deve_conter": [
+      "modalidade"
+    ],
+    "kw_found": [],
+    "kw_missing": [
+      "modalidade"
+    ],
+    "kw_pct": 0,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T04-02",
+    "bloco": "Número de Alunos",
+    "tipo": "happy_path",
+    "descricao": "2 alunos",
+    "estado": "aguardando_n_alunos",
+    "phone": "5511920000026",
+    "input": "2 pessoas",
+    "response": "Perfeito, João! Excel avançado para 2 alunos.\n\nAgora me diz: qual a modalidade preferida para o treinamento?\n\n• *Presencial* (na nossa unidade Paraíso, próximo ao metrô)\n• *Online ao vivo* (com instrutor em tempo real, interação e gravação disponível por 90 dias)\n• *EAD gravado* (conteúdo gravado, 100% no seu ritmo)\n\nQual você prefere? 😊",
+    "deve_conter": [
+      "modalidade"
+    ],
+    "kw_found": [
+      "modalidade"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T04-03",
+    "bloco": "Número de Alunos",
+    "tipo": "happy_path",
+    "descricao": "15 alunos — turma exclusiva",
+    "estado": "aguardando_n_alunos",
+    "phone": "5511920000027",
+    "input": "15 pessoas",
+    "response": "Perfeito! Com 15 alunos, recomendamos uma turma exclusiva para a sua empresa, com possibilidade de customizar horário e conteúdo conforme sua necessidade. 🎯\n\nAgora preciso saber: qual a modalidade preferida para o treinamento?\n\n• *Presencial* (na nossa unidade Paraíso, próximo ao metrô)\n• *Online ao vivo* (com instrutor em tempo real, interação e gravação disponível por 90 dias)\n• *EAD gravado* (conteúdo gravado, 100% autodidata, no seu ritmo)\n• *In company* (na sua empresa)\n\nQual opção funciona melhor para vocês?",
+    "deve_conter": [
+      "turma exclusiva"
+    ],
+    "kw_found": [
+      "turma exclusiva"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T04-04",
+    "bloco": "Número de Alunos",
+    "tipo": "happy_path",
+    "descricao": "50 alunos",
+    "estado": "aguardando_n_alunos",
+    "phone": "5511920000028",
+    "input": "50 alunos",
+    "response": "Excelente, João! Com 50 alunos, recomendamos uma *turma exclusiva* para sua empresa — isso significa conteúdo customizado, horários flexíveis e sem risco de cancelamento. 👏\n\nAgora, sobre a modalidade do treinamento, qual você prefere?\n\n• *Presencial* (na Rua Cubatão, 726 — Vila Mariana, SP, próximo ao metrô Paraíso)\n• *Online ao vivo* (com instrutor em tempo real, interação e gravação disponível por 90 dias)\n• *In company* (na sua empresa, com infraestrutura por sua conta)\n\nQual funciona melhor para vocês?",
+    "deve_conter": [
+      "turma exclusiva",
+      "modalidade"
+    ],
+    "kw_found": [
+      "turma exclusiva",
+      "modalidade"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T04-05",
+    "bloco": "Número de Alunos",
+    "tipo": "edge_case",
+    "descricao": "Lead não sabe ainda",
+    "estado": "aguardando_n_alunos",
+    "phone": "5511920000029",
+    "input": "Talvez 10, talvez 20",
+    "response": "Entendi, João! 😊\n\nEntão temos um interesse em *Excel Avançado* com uma estimativa de *10 a 20 alunos*.\n\nAntes de eu continuar, preciso de dois dados importantes:\n\n1. *Qual é o nome completo da sua empresa?*\n2. *Qual é o CNPJ?*\n\nDepois disso, vou te perguntar sobre a modalidade preferida (presencial, online ao vivo ou EAD gravado) para eu montar a proposta corretamente.",
+    "deve_conter": [
+      "modalidade"
+    ],
+    "kw_found": [
+      "modalidade"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T04-06",
+    "bloco": "Número de Alunos",
+    "tipo": "edge_case",
+    "descricao": "Número por extenso",
+    "estado": "aguardando_n_alunos",
+    "phone": "5511920000030",
+    "input": "uns quinze",
+    "response": "Excelente, João! 👏\n\nCom 15 alunos, recomendamos uma turma exclusiva para a sua empresa, com possibilidade de customizar horários e conteúdo conforme suas necessidades.\n\nAntes de avançar, preciso confirmar:\n\n*Qual a modalidade preferida: presencial, online ao vivo ou in company?*\n\n(Presencial aqui em São Paulo na Rua Cubatão / Online ao vivo com interação em tempo real / EAD gravado / Na sua empresa)",
+    "deve_conter": [
+      "modalidade"
+    ],
+    "kw_found": [
+      "modalidade"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T04-07",
+    "bloco": "Número de Alunos",
+    "tipo": "validacao",
+    "descricao": "Zero alunos",
+    "estado": "aguardando_n_alunos",
+    "phone": "5511920000031",
+    "input": "0",
+    "response": "Não entendi o número de alunos. Por favor, informe quantos alunos participarão do treinamento.",
+    "deve_conter": [
+      "alunos",
+      "número"
+    ],
+    "kw_found": [
+      "alunos",
+      "número"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T05-01",
+    "bloco": "Nível de Conhecimento",
+    "tipo": "happy_path",
+    "descricao": "Alunos do zero",
+    "estado": "aguardando_nivel",
+    "phone": "5511920000032",
+    "input": "Do zero, nunca usaram",
+    "response": "Ótimo, João! 😊\n\nComo a equipe nunca usou Excel, vou fazer uma recomendação: para quem está começando do zero, o ideal é começar com o *Excel Módulo I (básico/intermediário)*, que constrói uma base sólida. Depois, quando a equipe evoluir, vocês podem seguir para o Excel avançado.\n\nMas antes de montar a proposta, preciso confirmar a *modalidade* que vocês preferem:\n\n• *Presencial* (aqui em São Paulo, Rua Cubatão, 726)\n• *Online ao vivo* (com instrutor em tempo real, gravação disponível)\n• *EAD gravado* (100% autodidata, seu próprio ritmo)\n• *In company* (na sua empresa)\n\nQual delas funciona melhor para os 5 alunos? 😊",
+    "deve_conter": [
+      "básico",
+      "módulo"
+    ],
+    "kw_found": [
+      "básico",
+      "módulo"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T05-02",
+    "bloco": "Nível de Conhecimento",
+    "tipo": "happy_path",
+    "descricao": "Já usam mas querem evoluir",
+    "estado": "aguardando_nivel",
+    "phone": "5511920000033",
+    "input": "Já usam mas querem evoluir",
+    "response": "Perfeito! Com 5 alunos que já dominam o básico e querem evoluir, recomendo o *Excel Módulo II (Avançado)* 📊\n\nNeste módulo, vocês aprenderão fórmulas mais complexas, tabelas dinâmicas, análises avançadas e muito mais!\n\nAgora, sobre a *modalidade* do treinamento, qual você prefere?\n\n• *Presencial* (na nossa unidade Paraíso, Rua Cubatão, 726 — próximo ao metrô)\n• *Online ao vivo* (com instrutor em tempo real, interação e gravação disponível por 90 dias)\n• *EAD gravado* (conteúdo 100% autodidata, no seu próprio ritmo)\n• *In company* (na sua empresa)\n\nQual funciona melhor para vocês? 😊",
+    "deve_conter": [
+      "avançado",
+      "módulo"
+    ],
+    "kw_found": [
+      "avançado",
+      "módulo"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T05-03",
+    "bloco": "Nível de Conhecimento",
+    "tipo": "edge_case",
+    "descricao": "Níveis mistos na equipe",
+    "estado": "aguardando_nivel",
+    "phone": "5511920000034",
+    "input": "Alguns sabem básico, outros avançados",
+    "response": "Entendi, João! 👍\n\nCom níveis mistos na sua equipe, temos uma ótima solução: oferecemos um *teste de nivelamento gratuito* da Impacta. Assim conseguimos identificar exatamente quem está no nível básico/intermediário e quem já está avançado — permitindo uma proposta bem ajustada às necessidades reais de cada grupo.\n\nMas antes disso, volta para mim: qual é a *modalidade* preferida para o treinamento?\n\n• *Presencial* (Rua Cubatão, 726 — Vila Mariana, próximo ao metrô Paraíso)\n• *Online ao vivo* (instrutor em tempo real, gravação por 90 dias)\n• *EAD gravado* (autodidata, seu ritmo)\n• *In company* (na sua empresa)",
+    "deve_conter": [
+      "nivelamento",
+      "gratuito",
+      "teste"
+    ],
+    "kw_found": [
+      "nivelamento",
+      "gratuito",
+      "teste"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T05-04",
+    "bloco": "Nível de Conhecimento",
+    "tipo": "edge_case",
+    "descricao": "Lead não sabe o nível",
+    "estado": "aguardando_nivel",
+    "phone": "5511920000035",
+    "input": "Não sei exatamente",
+    "response": "Sem problema, João! 😊\n\nVou te ajudar a entender melhor. Deixa eu fazer algumas perguntas rápidas:\n\n*Sobre o nível da equipe:* Vocês já usam Excel no dia a dia? Dominam funções como PROCV, SE, tabelas dinâmicas, ou estão começando agora?\n\nIsso vai me ajudar a recomendar o módulo mais adequado para os 5 alunos!",
+    "deve_conter": [
+      "nivelamento",
+      "gratuito"
+    ],
+    "kw_found": [],
+    "kw_missing": [
+      "nivelamento",
+      "gratuito"
+    ],
+    "kw_pct": 0,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T05-05",
+    "bloco": "Nível de Conhecimento",
+    "tipo": "happy_path",
+    "descricao": "Sabem PROCV e tabelas dinâmicas",
+    "estado": "aguardando_nivel",
+    "phone": "5511920000036",
+    "input": "Já sabem PROCV, SE e tabelas dinâmicas",
+    "response": "Excelente, João! 👏\n\nComo a equipe já domina PROCV, SE e tabelas dinâmicas, vou recomendar o *Excel 365 - Módulo II (Avançado)* — que é perfeito para esse nível!\n\nAlém disso, após esse módulo, sugiro considerar *Power BI* como próximo passo natural para evoluir em análise de dados e business intelligence.\n\nMas antes, preciso confirmar a *modalidade* do treinamento:\n\n• *Presencial* (Rua Cubatão, 726 — Vila Mariana, próximo ao metrô Paraíso)\n• *Online ao vivo* (instrutor em tempo real, interação, gravação por 90 dias)\n• *EAD gravado* (conteúdo autodidata, seu ritmo)\n• *In company* (na sua empresa)\n\nQual modalidade vocês preferem? 😊",
+    "deve_conter": [
+      "avançado",
+      "Power BI"
+    ],
+    "kw_found": [
+      "avançado",
+      "Power BI"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T06-01",
+    "bloco": "Modalidade",
+    "tipo": "happy_path",
+    "descricao": "Presencial",
+    "estado": "aguardando_modalidade",
+    "phone": "5511920000037",
+    "input": "Presencial",
+    "response": "Excelente, João! Presencial então! 👍\n\nNossos cursos presenciais são realizados na *Rua Cubatão, 726 — Vila Mariana, São Paulo*, próximo ao metrô Paraíso (linhas 2-verde e 4-amarela).\n\nAgora, qual é o *prazo desejado* para realizar o treinamento? (ex: próximas 2 semanas, este mês, próximo mês, etc.)",
+    "deve_conter": [
+      "Vila Mariana",
+      "Cubatão",
+      "Paraíso"
+    ],
+    "kw_found": [
+      "Vila Mariana",
+      "Cubatão",
+      "Paraíso"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T06-02",
+    "bloco": "Modalidade",
+    "tipo": "happy_path",
+    "descricao": "Online sem especificar",
+    "estado": "aguardando_modalidade",
+    "phone": "5511920000038",
+    "input": "Online",
+    "response": "Ótimo! 😊 Então confirmei: *5 alunos*, Excel avançado, modalidade *online ao vivo*.\n\nNas aulas online ao vivo, vocês terão interação em tempo real com o instrutor, e a gravação das aulas fica disponível por 90 dias, liberada em até 48 horas após cada sessão.\n\nAgora, qual é o *prazo desejado* para iniciar o treinamento? (Ex: próximas 2 semanas, mês que vem, data específica)",
+    "deve_conter": [
+      "ao vivo",
+      "EAD",
+      "instrutor"
+    ],
+    "kw_found": [
+      "ao vivo",
+      "instrutor"
+    ],
+    "kw_missing": [
+      "EAD"
+    ],
+    "kw_pct": 67,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "⚠️  PARCIAL",
+    "error": null
+  },
+  {
+    "id": "T06-03",
+    "bloco": "Modalidade",
+    "tipo": "happy_path",
+    "descricao": "Ao vivo com instrutor",
+    "estado": "aguardando_modalidade",
+    "phone": "5511920000039",
+    "input": "Ao vivo com instrutor",
+    "response": "Perfeito, João! 🎯\n\nEntão confirmei:\n• *5 alunos*\n• *Excel Módulo II (Avançado)*\n• *Online ao vivo* com instrutor em tempo real, interação e Q&A\n• Gravação disponível por 90 dias (liberada em até 48h após cada aula)\n\nSó falta um detalhe: *qual é o prazo que você precisa?* Por exemplo, vocês querem começar este mês, próximo mês, ou têm uma data específica em mente?\n\nAssim eu consigo montar a proposta certinha para vocês! 😊",
+    "deve_conter": [
+      "interação",
+      "tempo real",
+      "gravação",
+      "90 dias"
+    ],
+    "kw_found": [
+      "interação",
+      "tempo real",
+      "gravação",
+      "90 dias"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T06-04",
+    "bloco": "Modalidade",
+    "tipo": "happy_path",
+    "descricao": "EAD gravado",
+    "estado": "aguardando_modalidade",
+    "phone": "5511920000040",
+    "input": "EAD",
+    "response": "Ótimo! 😊\n\nEntão vamos confirmar: *5 alunos* para *Excel avançado* em modalidade *EAD gravado*.\n\nSó para alinhar — no EAD, o conteúdo fica em aulas gravadas, 100% autodidata, e vocês estudam no próprio ritmo, sem interação ao vivo com o instrutor.\n\nAgora me informa: *qual é o prazo desejado* para iniciar o treinamento? (Ex: próximas 2 semanas, mês que vem, etc.)",
+    "deve_conter": [
+      "gravadas",
+      "ritmo",
+      "autodidata"
+    ],
+    "kw_found": [
+      "gravadas",
+      "ritmo",
+      "autodidata"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T06-05",
+    "bloco": "Modalidade",
+    "tipo": "happy_path",
+    "descricao": "In Company",
+    "estado": "aguardando_modalidade",
+    "phone": "5511920000041",
+    "input": "Na nossa empresa",
+    "response": "Ótimo, João! Então vamos com *in company na sua empresa* para os 5 alunos. 👍\n\nSó um detalhe importante: para o treinamento in company, a sua empresa precisa providenciar a infraestrutura:\n\n• 1 computador por aluno com Excel instalado (mesma versão)\n• 1 computador para o instrutor\n• Projetor ou telão\n• Internet estável\n\nVocês conseguem providenciar isso? 😊",
+    "deve_conter": [
+      "infraestrutura",
+      "computadores",
+      "Excel instalado",
+      "projetor"
+    ],
+    "kw_found": [
+      "infraestrutura",
+      "Excel instalado",
+      "projetor"
+    ],
+    "kw_missing": [
+      "computadores"
+    ],
+    "kw_pct": 75,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "⚠️  PARCIAL",
+    "error": null
+  },
+  {
+    "id": "T06-06",
+    "bloco": "Modalidade",
+    "tipo": "duvida_frequente",
+    "descricao": "Dúvida sobre gravação das aulas",
+    "estado": "qualquer",
+    "phone": "5511920000042",
+    "input": "As aulas ao vivo ficam gravadas",
+    "response": "Ótima pergunta, João! 👍\n\nSim, as aulas online ao vivo ficam gravadas por até 90 dias e são liberadas em até 48 horas após cada sessão. Isso permite que os alunos revisem o conteúdo quando precisarem.\n\nMas antes de detalhar mais sobre as aulas, preciso entender melhor sua necessidade: qual curso ou tema você está buscando para sua empresa?",
+    "deve_conter": [
+      "90 dias",
+      "gravadas",
+      "48 horas"
+    ],
+    "kw_found": [
+      "90 dias",
+      "gravadas",
+      "48 horas"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T06-07",
+    "bloco": "Modalidade",
+    "tipo": "edge_case",
+    "descricao": "Presencial fora de SP",
+    "estado": "aguardando_modalidade",
+    "phone": "5511920000043",
+    "input": "Quero presencial mas estou em Belo Horizonte",
+    "response": "Entendi, João! 😊\n\nComo você está em Belo Horizonte, nossos cursos *presenciais* são exclusivos para São Paulo (na Rua Cubatão, 726 — Vila Mariana).\n\nPara sua equipe em Belo Horizonte, posso te oferecer duas alternativas:\n\n• *Online ao vivo* — as aulas têm interação em tempo real com o instrutor, e a gravação fica disponível por 90 dias\n• *In company* — levamos o treinamento presencial até sua empresa em Belo Horizonte (você providencia 1 computador por aluno com Excel instalado, computador para o instrutor, projetor e internet estável)\n\nQual dessas opções se encaixa melhor nos 5 alunos da sua equipe? 😊",
+    "deve_conter": [
+      "ao vivo",
+      "in company",
+      "online"
+    ],
+    "kw_found": [
+      "ao vivo",
+      "in company",
+      "online"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T06-08",
+    "bloco": "Modalidade",
+    "tipo": "edge_case",
+    "descricao": "Só pode sábado",
+    "estado": "aguardando_modalidade",
+    "phone": "5511920000044",
+    "input": "Só posso fazer aos sábados",
+    "response": "🔇 [Modo teste] Bot pausado — atendente humano ativo.\nClique em '🔄 Reativar Bot' para reiniciar.",
+    "deve_conter": [
+      "grade",
+      "verificar",
+      "sábado"
+    ],
+    "kw_found": [],
+    "kw_missing": [
+      "grade",
+      "verificar",
+      "sábado"
+    ],
+    "kw_pct": 0,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T06-09",
+    "bloco": "Modalidade",
+    "tipo": "duvida_frequente",
+    "descricao": "Diferença EAD vs ao vivo",
+    "estado": "qualquer",
+    "phone": "5511920000045",
+    "input": "Qual a diferença entre EAD e ao vivo",
+    "response": "Ótima pergunta, João! Vou explicar as principais diferenças:\n\n*Online ao vivo:*\n• Aulas com instrutor em tempo real\n• Interação direta e sessões de perguntas e respostas\n• Gravação das aulas disponível por 90 dias (liberada em até 48h após cada sessão)\n\n*EAD (gravado):*\n• Conteúdo em aulas gravadas, 100% autodidata\n• Estude no seu próprio ritmo\n• Sem interação ao vivo com instrutor\n• Acesso por período determinado\n\nA principal diferença é a *interação com o instrutor* - no online ao vivo você tem suporte em tempo real, enquanto no EAD você estuda de forma independente.\n\nQual tema ou curso vocês têm interesse? Assim posso te orientar melhor sobre as modalidades disponíveis! 🎓",
+    "deve_conter": [
+      "EAD",
+      "ao vivo",
+      "instrutor",
+      "interação"
+    ],
+    "kw_found": [
+      "EAD",
+      "ao vivo",
+      "instrutor",
+      "interação"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T07-01",
+    "bloco": "Aluguel de Sala",
+    "tipo": "happy_path",
+    "descricao": "Solicitação de locação",
+    "estado": "menu_principal",
+    "phone": "5511920000046",
+    "input": "Preciso alugar uma sala para treinamento",
+    "response": "Perfeito, João! Temos excelentes opções de salas para locação. \n\nPara te ajudar melhor, preciso de algumas informações sobre seu evento:\n\n• Que tipo de evento será? (treinamento, workshop, reunião, palestra, etc.)\n• Qual a data e horário desejados?",
+    "deve_conter": [
+      "data",
+      "evento",
+      "pessoas"
+    ],
+    "kw_found": [
+      "data",
+      "evento"
+    ],
+    "kw_missing": [
+      "pessoas"
+    ],
+    "kw_pct": 67,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "⚠️  PARCIAL",
+    "error": null
+  },
+  {
+    "id": "T07-02",
+    "bloco": "Aluguel de Sala",
+    "tipo": "happy_path",
+    "descricao": "Capacidade dentro do limite",
+    "estado": "fluxo_locacao_capacidade",
+    "phone": "5511920000047",
+    "input": "Para 50 pessoas",
+    "response": "Excelente! Com 50 pessoas, temos várias opções disponíveis.\n\nAgora preciso:\n\n1. *Qual a data do seu workshop?*\n\n2. *Qual layout você prefere?* (laboratório com computadores, mesas e cadeiras, auditório, ou mesas redondas?)",
+    "deve_conter": [
+      "layout",
+      "formato",
+      "data"
+    ],
+    "kw_found": [
+      "layout",
+      "data"
+    ],
+    "kw_missing": [
+      "formato"
+    ],
+    "kw_pct": 67,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "⚠️  PARCIAL",
+    "error": null
+  },
+  {
+    "id": "T07-03",
+    "bloco": "Aluguel de Sala",
+    "tipo": "limitacao",
+    "descricao": "Capacidade acima do limite",
+    "estado": "fluxo_locacao_capacidade",
+    "phone": "5511920000048",
+    "input": "Preciso para 300 pessoas",
+    "response": "Entendi, João! 😊\n\nSó para confirmar: você mencionou 300 pessoas para o workshop. Isso é uma quantidade bem grande, e nossa maior sala comporta até 100 pessoas.\n\nDeixa eu te fazer uma pergunta importante: *essa demanda de 300 pessoas seria em uma única sessão, ou vocês estão pensando em dividir em várias turmas/horários?*\n\nEssa informação vai ser importante para nosso consultor montar a melhor solução para vocês!",
+    "deve_conter": [
+      "100",
+      "capacidade",
+      "máxima"
+    ],
+    "kw_found": [
+      "100"
+    ],
+    "kw_missing": [
+      "capacidade",
+      "máxima"
+    ],
+    "kw_pct": 33,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T07-04",
+    "bloco": "Aluguel de Sala",
+    "tipo": "happy_path",
+    "descricao": "Laboratório com computadores",
+    "estado": "fluxo_locacao",
+    "phone": "5511920000049",
+    "input": "Preciso de sala com computadores",
+    "response": "Ótimo! Então você precisa de um laboratório de informática com computadores disponíveis. 👍\n\nPara eu passar essas informações ao nosso consultor, me confirma:\n\nQual é a *data* do seu evento e quantas *pessoas* vão participar?",
+    "deve_conter": [
+      "laboratório",
+      "computadores",
+      "quantos"
+    ],
+    "kw_found": [
+      "laboratório",
+      "computadores"
+    ],
+    "kw_missing": [
+      "quantos"
+    ],
+    "kw_pct": 67,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "⚠️  PARCIAL",
+    "error": null
+  },
+  {
+    "id": "T07-05",
+    "bloco": "Aluguel de Sala",
+    "tipo": "limitacao",
+    "descricao": "Evento noturno",
+    "estado": "fluxo_locacao",
+    "phone": "5511920000050",
+    "input": "Evento à noite a partir das 19h",
+    "response": "Entendi que será um evento noturno a partir das 19h! \n\nPara eu te ajudar com o espaço ideal, preciso saber mais alguns detalhes:\n\n1. Que tipo de evento será? (treinamento, workshop, reunião, palestra, apresentação, etc.)\n2. Para qual data você precisa?",
+    "deve_conter": [
+      "horário",
+      "disponibilidade",
+      "férias"
+    ],
+    "kw_found": [],
+    "kw_missing": [
+      "horário",
+      "disponibilidade",
+      "férias"
+    ],
+    "kw_pct": 0,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T07-06",
+    "bloco": "Aluguel de Sala",
+    "tipo": "edge_case",
+    "descricao": "Evento com pets",
+    "estado": "fluxo_locacao",
+    "phone": "5511920000051",
+    "input": "Será um evento pet, vamos levar cachorros",
+    "response": "João, entendo que é um evento especial! Porém, preciso verificar essa possibilidade específica com nossa equipe, já que envolve animais no espaço.\n\nPara eu encaminhar sua solicitação corretamente, pode me confirmar:\n• Quantas pessoas participarão do evento?\n• Qual a data desejada?\n\nNosso consultor especializado em locação poderá verificar a viabilidade e te dar todas as informações sobre disponibilidade e condições para esse tipo de evento específico.",
+    "deve_conter": [
+      "verificar",
+      "política",
+      "permitido"
+    ],
+    "kw_found": [
+      "verificar"
+    ],
+    "kw_missing": [
+      "política",
+      "permitido"
+    ],
+    "kw_pct": 33,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T07-07",
+    "bloco": "Aluguel de Sala",
+    "tipo": "happy_path",
+    "descricao": "Coffee break",
+    "estado": "fluxo_locacao",
+    "phone": "5511920000052",
+    "input": "Precisa ter coffee break incluso",
+    "response": "Entendido, João! O coffee break é importante para o seu evento 👍\n\nA disponibilidade de coffee break e os custos extras serão verificados pelo nosso consultor conforme o tipo e tamanho do seu evento.\n\nAntes disso, preciso confirmar alguns dados:\n\n*Qual é o tipo de evento que você vai realizar?* (treinamento, workshop, reunião, palestra, encontro, etc.)",
+    "deve_conter": [
+      "consultor",
+      "verificar",
+      "serviços"
+    ],
+    "kw_found": [
+      "consultor"
+    ],
+    "kw_missing": [
+      "verificar",
+      "serviços"
+    ],
+    "kw_pct": 33,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T07-08",
+    "bloco": "Aluguel de Sala",
+    "tipo": "happy_path",
+    "descricao": "Fotos do espaço",
+    "estado": "fluxo_locacao",
+    "phone": "5511920000053",
+    "input": "Podem me enviar fotos da sala",
+    "response": "Claro, João! Vou solicitar as fotos para você.\n\nAntes, preciso confirmar alguns detalhes do seu evento para que o consultor envie exatamente o que você precisa:\n\n1. *Que tipo de evento* você vai realizar?\n2. *Qual a data* desejada?\n3. *Quantas pessoas* participarão?\n4. *Qual layout* você prefere? (laboratório com computadores / mesas e cadeiras / auditório / mesas redondas)\n\nAnotei tudo e nosso consultor poderá confirmar disponibilidade, enviar fotos detalhadas e valores — em breve entrará em contato! 😊",
+    "deve_conter": [
+      "consultor",
+      "enviar",
+      "fotos"
+    ],
+    "kw_found": [
+      "consultor",
+      "enviar",
+      "fotos"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T07-09",
+    "bloco": "Aluguel de Sala",
+    "tipo": "happy_path",
+    "descricao": "RFQ formal com dados CNPJ",
+    "estado": "fluxo_locacao",
+    "phone": "5511920000054",
+    "input": "O orçamento deve conter Razão Social, CNPJ, condições",
+    "response": "Entendi, João! Para elaborar o orçamento de locação com razão social, CNPJ e condições comerciais, vou precisar coletar alguns dados.\n\nVocê já me informou que precisa alugar uma sala para evento. Agora preciso saber:\n\n*Sobre o evento:*\n• Que tipo de evento será? (treinamento, workshop, reunião, palestra, etc.)\n• Qual a data e horário desejado?\n\n*Sobre a empresa:*\n• Nome da empresa e CNPJ para a proposta formal\n\nPode me contar sobre o tipo de evento primeiro?",
+    "deve_conter": [
+      "proposta",
+      "consultor",
+      "e-mail"
+    ],
+    "kw_found": [
+      "proposta"
+    ],
+    "kw_missing": [
+      "consultor",
+      "e-mail"
+    ],
+    "kw_pct": 33,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T07-10",
+    "bloco": "Aluguel de Sala",
+    "tipo": "duvida_frequente",
+    "descricao": "Formatos de sala disponíveis",
+    "estado": "fluxo_locacao",
+    "phone": "5511920000055",
+    "input": "Qual o formato de sala disponível",
+    "response": "🔇 [Modo teste] Bot pausado — atendente humano ativo.\nClique em '🔄 Reativar Bot' para reiniciar.",
+    "deve_conter": [
+      "laboratório",
+      "mesas",
+      "cadeiras universitárias",
+      "mesas redondas"
+    ],
+    "kw_found": [],
+    "kw_missing": [
+      "laboratório",
+      "mesas",
+      "cadeiras universitárias",
+      "mesas redondas"
+    ],
+    "kw_pct": 0,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T08-01",
+    "bloco": "Objeções",
+    "tipo": "objecao",
+    "descricao": "Não tem tempo agora",
+    "estado": "qualquer",
+    "phone": "5511920000056",
+    "input": "Não tenho tempo agora",
+    "response": "Sem problema! Qual seria o melhor horário para conversarmos? Posso agendar para o nosso consultor entrar em contato com você no horário que for mais conveniente. 😊",
+    "deve_conter": [
+      "horário",
+      "melhor",
+      "conversar"
+    ],
+    "kw_found": [
+      "horário",
+      "melhor",
+      "conversar"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T08-02",
+    "bloco": "Objeções",
+    "tipo": "objecao",
+    "descricao": "Quer receber por e-mail",
+    "estado": "qualquer",
+    "phone": "5511920000057",
+    "input": "Pode me mandar tudo por e-mail",
+    "response": "Sem problema, João! Vou encaminhar para nosso consultor preparar uma proposta personalizada por e-mail. \n\nPara isso, preciso de alguns dados mínimos:\n\n1. *Empresa* e *CNPJ*\n2. *Qual curso ou tema* de interesse?\n3. *Quantos alunos* participarão?\n4. *Qual modalidade* você prefere: presencial, online ao vivo, EAD gravado ou in company?\n5. *Prazo desejado* para iniciar?\n\nDepois que você confirmar esses dados, encaminho tudo para o consultor montar a proposta! 👍",
+    "deve_conter": [
+      "e-mail",
+      "dados",
+      "proposta"
+    ],
+    "kw_found": [
+      "e-mail",
+      "dados",
+      "proposta"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T08-03",
+    "bloco": "Objeções",
+    "tipo": "objecao",
+    "descricao": "Urgência de prazo",
+    "estado": "qualquer",
+    "phone": "5511920000058",
+    "input": "Precisamos iniciar até o final do mês",
+    "response": "Entendi, João! Final do mês é um prazo bem definido. 👍\n\nAntes de montar a proposta, preciso saber alguns detalhes importantes:\n\n*Qual é o tema ou curso que sua empresa precisa?* (ex: Excel, Power BI, AWS, liderança, etc.)",
+    "deve_conter": [
+      "verificar",
+      "turmas",
+      "datas"
+    ],
+    "kw_found": [],
+    "kw_missing": [
+      "verificar",
+      "turmas",
+      "datas"
+    ],
+    "kw_pct": 0,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T08-04",
+    "bloco": "Objeções",
+    "tipo": "objecao",
+    "descricao": "Turma cancelada por falta de alunos",
+    "estado": "qualquer",
+    "phone": "5511920000059",
+    "input": "Já aconteceu de a turma ser cancelada",
+    "response": "Ótima pergunta, João! Sim, isso pode acontecer com turmas abertas. 📌\n\nTurmas abertas têm uma grade fixa no calendário e funcionam quando atingem o mínimo de 4 a 5 alunos. Se não batermos esse mínimo, a turma pode ser cancelada — mas quando isso acontece, a gente reagenda para outra data ou oferece outras opções para o aluno.\n\nAgora, se você está pensando em trazer uma equipe da sua empresa (15 ou mais alunos), recomendo uma *turma exclusiva*. Essa opção é muito mais segura porque é customizada só para vocês — sem risco de cancelamento! 💡\n\nMe conta: quantos alunos da sua empresa estariam interessados em fazer um treinamento conosco?",
+    "deve_conter": [
+      "mínimo",
+      "alunos",
+      "turma exclusiva"
+    ],
+    "kw_found": [
+      "mínimo",
+      "alunos",
+      "turma exclusiva"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T08-05",
+    "bloco": "Objeções",
+    "tipo": "duvida_frequente",
+    "descricao": "Reconhecimento do certificado",
+    "estado": "qualquer",
+    "phone": "5511920000060",
+    "input": "O certificado é reconhecido",
+    "response": "Ótima pergunta, João! 👍\n\nSim, nossos certificados são *reconhecidos pelo MEC como extensão universitária*. Isso significa que você pode usar o certificado em currículo lattes, em processos seletivos de órgãos governamentais e para fins profissionais — válido em todo Brasil.\n\nA Impacta é uma faculdade credenciada pelo MEC, o que garante a validade nacional do certificado de extensão universitária.\n\nAgora, para eu montar a proposta certa para você: qual é a empresa e o CNPJ?",
+    "deve_conter": [
+      "MEC",
+      "extensão universitária"
+    ],
+    "kw_found": [
+      "MEC",
+      "extensão universitária"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T08-06",
+    "bloco": "Objeções",
+    "tipo": "duvida_frequente",
+    "descricao": "Pergunta sobre NF",
+    "estado": "qualquer",
+    "phone": "5511920000061",
+    "input": "Podem emitir nota fiscal para minha empresa",
+    "response": "Claro, João! A Impacta emite nota fiscal normalmente para empresas. Para isso, precisamos do CNPJ e razão social da sua empresa.\n\nPode me informar o nome da empresa e o CNPJ?",
+    "deve_conter": [
+      "NF",
+      "nota fiscal",
+      "empresa",
+      "CNPJ"
+    ],
+    "kw_found": [
+      "NF",
+      "nota fiscal",
+      "empresa",
+      "CNPJ"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T09-01",
+    "bloco": "Sobre a Impacta",
+    "tipo": "institucional",
+    "descricao": "Tempo de mercado",
+    "estado": "qualquer",
+    "phone": "5511920000062",
+    "input": "Há quanto tempo a Impacta existe",
+    "response": "Ótima pergunta, João! \n\nA Impacta é uma referência no mercado com *37 anos de atuação*. Somos faculdade reconhecida pelo MEC, especializada em educação, tecnologia e inovação. Já treinamos mais de 30 mil empresas e impactamos mais de 2 milhões de alunos! 🎓\n\nPor 10 anos seguidos recebemos o título de Melhor Escola de TI do Brasil, e todos os nossos cursos emitem certificado digital reconhecido pelo MEC como extensão universitária.\n\nMas volta lá na sua pergunta anterior: você está buscando um treinamento para sua *empresa/equipe* ou para *você mesmo*?",
+    "deve_conter": [
+      "37 anos",
+      "mercado"
+    ],
+    "kw_found": [
+      "37 anos",
+      "mercado"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T09-02",
+    "bloco": "Sobre a Impacta",
+    "tipo": "institucional",
+    "descricao": "Endereço",
+    "estado": "qualquer",
+    "phone": "5511920000063",
+    "input": "Qual o endereço de vocês",
+    "response": "Ótimo pergunta! 📍\n\nA Impacta está localizada na *Rua Cubatão, 726 — Vila Mariana, São Paulo*. Fica bem pertinho do *metrô Paraíso* (linhas 2-verde e 4-amarela), o que facilita bastante o acesso.\n\nMas antes de falarmos sobre presencial, gostaria de saber: você está buscando um treinamento para sua empresa? Se sim, qual é o nome da empresa e o CNPJ?",
+    "deve_conter": [
+      "Cubatão",
+      "Vila Mariana",
+      "Paraíso"
+    ],
+    "kw_found": [
+      "Cubatão",
+      "Vila Mariana",
+      "Paraíso"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T09-03",
+    "bloco": "Sobre a Impacta",
+    "tipo": "institucional",
+    "descricao": "Telefone",
+    "estado": "qualquer",
+    "phone": "5511920000064",
+    "input": "Qual o telefone de vocês",
+    "response": "Ótimo, João! 📞\n\nNossa comunicação é feita via WhatsApp e e-mail mesmo. Um consultor entrará em contato com você pelos canais que você preferir — por aqui ou pelo e-mail que você forneceu.\n\nVoltando: qual é a empresa e o CNPJ para eu registrar sua solicitação?",
+    "deve_conter": [
+      "WhatsApp",
+      "e-mail",
+      "contato"
+    ],
+    "kw_found": [
+      "WhatsApp",
+      "e-mail",
+      "contato"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T09-04",
+    "bloco": "Sobre a Impacta",
+    "tipo": "institucional",
+    "descricao": "Reconhecimento MEC",
+    "estado": "qualquer",
+    "phone": "5511920000065",
+    "input": "A Impacta é reconhecida pelo MEC",
+    "response": "Isso mesmo, João! 🎓\n\nA Impacta é uma faculdade credenciada pelo MEC com mais de 37 anos no mercado. Todos os nossos cursos emitem certificado digital reconhecido como extensão universitária — válido para currículo Lattes, processos seletivos em órgãos governamentais e fins profissionais.\n\nSomos referência em educação, tecnologia e inovação. Já treinamos mais de 30 mil empresas e impactamos mais de 2 milhões de alunos.\n\nMas agora, vamos ao seu objetivo: qual curso ou tema de treinamento você busca para sua empresa? 😊",
+    "deve_conter": [
+      "MEC",
+      "faculdade",
+      "extensão universitária"
+    ],
+    "kw_found": [
+      "MEC",
+      "faculdade",
+      "extensão universitária"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T09-05",
+    "bloco": "Sobre a Impacta",
+    "tipo": "duvida_frequente",
+    "descricao": "Teste de nivelamento",
+    "estado": "qualquer",
+    "phone": "5511920000066",
+    "input": "Como funciona o teste de nivelamento",
+    "response": "Ótima pergunta, João! \n\nO teste de nivelamento da Impacta é *gratuito* e serve para identificar o nível atual dos seus alunos — se estão em nível básico, intermediário ou avançado. Com isso, a gente consegue indicar qual módulo é mais adequado para a turma.\n\nRecomendamos o teste especialmente quando:\n• A equipe tem alunos com *níveis mistos* (alguns iniciantes, outros mais avançados)\n• Você *não sabe ao certo* o nível exato da turma\n\nIsso garante que todos aprendam no ritmo certo, sem pular etapas importantes ou ficar entediado com conteúdo já conhecido. \n\nQual curso vocês estão pensando em fazer? Excel, Java, Lógica de Programação ou outro?",
+    "deve_conter": [
+      "gratuito",
+      "nível",
+      "módulo"
+    ],
+    "kw_found": [
+      "gratuito",
+      "nível",
+      "módulo"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T09-06",
+    "bloco": "Sobre a Impacta",
+    "tipo": "duvida_frequente",
+    "descricao": "Personalização de conteúdo",
+    "estado": "qualquer",
+    "phone": "5511920000067",
+    "input": "Vocês personalizam o conteúdo para a nossa empresa",
+    "response": "Sim, João! A Impacta trabalha com trilhas personalizadas para empresas. Podemos incluir casos reais da sua empresa no conteúdo, adaptar exemplos ao segmento do cliente e montar programas customizados de acordo com as necessidades do time.\n\nPara eu entender melhor sua necessidade e preparar uma proposta adequada, pode me informar:\n\nQual empresa e o CNPJ da organização?",
+    "deve_conter": [
+      "personalizadas",
+      "trilhas",
+      "casos reais"
+    ],
+    "kw_found": [
+      "personalizadas",
+      "trilhas",
+      "casos reais"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T09-07",
+    "bloco": "Sobre a Impacta",
+    "tipo": "duvida_frequente",
+    "descricao": "Instrutor profissional",
+    "estado": "qualquer",
+    "phone": "5511920000068",
+    "input": "O instrutor tem experiência de mercado ou é só professor",
+    "response": "Ótima pergunta, João! 👍\n\nOs instrutores da Impacta são profissionais que *vivem o mercado* — têm experiência prática na área de atuação, não são apenas professores acadêmicos. Eles trazem exemplos reais e aplicações do dia a dia corporativo para as aulas, o que faz toda a diferença na qualidade do aprendizado.\n\nAgora, para eu montar a proposta certa para você, preciso saber: *qual a sua empresa e o CNPJ?*",
+    "deve_conter": [
+      "mercado",
+      "prática",
+      "instrutor"
+    ],
+    "kw_found": [
+      "mercado",
+      "prática",
+      "instrutor"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T10-01",
+    "bloco": "Processo Comercial",
+    "tipo": "processo",
+    "descricao": "Prazo da proposta",
+    "estado": "qualquer",
+    "phone": "5511920000069",
+    "input": "Quando recebo a proposta",
+    "response": "Ótimo! O prazo padrão é de até 24 horas úteis após recebermos todos os dados.\n\nPara que eu possa registrar sua solicitação corretamente, preciso de algumas informações:\n\nPara qual empresa você trabalha? E pode me informar o CNPJ também?",
+    "deve_conter": [
+      "24h",
+      "horas",
+      "úteis"
+    ],
+    "kw_found": [
+      "horas",
+      "úteis"
+    ],
+    "kw_missing": [
+      "24h"
+    ],
+    "kw_pct": 67,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "⚠️  PARCIAL",
+    "error": null
+  },
+  {
+    "id": "T10-02",
+    "bloco": "Processo Comercial",
+    "tipo": "edge_case",
+    "descricao": "Proposta urgente hoje",
+    "estado": "qualquer",
+    "phone": "5511920000070",
+    "input": "Preciso da proposta ainda hoje",
+    "response": "Entendo a urgência, João! Vou registrar como prioridade. O prazo padrão é 24h úteis — faremos o possível para priorizar o seu atendimento.\n\nPara agilizar sua proposta, preciso de alguns dados essenciais:\n\nQual o nome da sua empresa e o CNPJ?",
+    "deve_conter": [
+      "24h",
+      "priorizar",
+      "urgência"
+    ],
+    "kw_found": [
+      "24h",
+      "priorizar",
+      "urgência"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T10-03",
+    "bloco": "Processo Comercial",
+    "tipo": "processo",
+    "descricao": "NF única para todos",
+    "estado": "qualquer",
+    "phone": "5511920000071",
+    "input": "Precisamos de uma única nota fiscal para os 15 alunos",
+    "response": "Ótimo, João! Com 15 alunos, recomendamos uma turma exclusiva para a sua empresa — ela é customizada conforme suas necessidades e sem risco de cancelamento. 👍\n\nAntes de falar sobre a nota fiscal, preciso confirmar alguns dados:\n\n1. Qual é o nome da empresa e o CNPJ?\n2. Qual curso ou tema de interesse para esses 15 alunos?",
+    "deve_conter": [
+      "NF",
+      "empresa",
+      "CNPJ"
+    ],
+    "kw_found": [
+      "NF",
+      "empresa",
+      "CNPJ"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T10-04",
+    "bloco": "Processo Comercial",
+    "tipo": "processo",
+    "descricao": "Quais dados para proposta",
+    "estado": "qualquer",
+    "phone": "5511920000072",
+    "input": "Quais dados vocês precisam para montar a proposta",
+    "response": "Ótima pergunta, João! Para montar uma proposta personalizada, precisamos dos seguintes dados:\n\n📋 *Dados necessários:*\n• Nome da empresa e CNPJ\n• Curso ou tema de interesse\n• Número de alunos que participarão\n• Modalidade preferida (presencial, online ao vivo, EAD gravado ou in company)\n• Prazo desejado para realização\n\nO prazo padrão para receber a proposta é de até 24 horas úteis após o envio de todos os dados.\n\nJá tenho seu nome e e-mail. Pode me informar o nome da empresa onde você trabalha?",
+    "deve_conter": [
+      "empresa",
+      "CNPJ",
+      "curso",
+      "alunos",
+      "modalidade"
+    ],
+    "kw_found": [
+      "empresa",
+      "CNPJ",
+      "curso",
+      "alunos",
+      "modalidade"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T11-01",
+    "bloco": "Clientes que Retornam",
+    "tipo": "retorno",
+    "descricao": "Lead com cotação anterior",
+    "estado": "inicio",
+    "phone": "5511920000073",
+    "input": "Já fiz cotação com vocês antes quero retomar",
+    "response": "Que ótimo! Vamos retomar. Para eu localizar sua proposta anterior e dar continuidade, pode confirmar seus dados?\n\nPreciso do seu:\n• Nome completo\n• Empresa\n• E-mail da cotação anterior\n\nAssim consigo acessar tudo e avançamos rápido! 😊",
+    "deve_conter": [
+      "retomar",
+      "proposta",
+      "dados"
+    ],
+    "kw_found": [
+      "retomar",
+      "proposta",
+      "dados"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T11-02",
+    "bloco": "Clientes que Retornam",
+    "tipo": "reclamacao",
+    "descricao": "Cliente sem retorno",
+    "estado": "inicio",
+    "phone": "5511920000074",
+    "input": "Somos clientes enviamos e-mail há uma semana sem resposta",
+    "response": "Peço desculpas pelo transtorno! Isso é urgente para nós. Vou registrar sua solicitação como prioritária para que um consultor entre em contato com você o mais breve possível. 😊\n\nPara eu localizar sua proposta anterior e dar continuidade, pode confirmar seus dados?\n\n• Seu nome completo\n• Nome da empresa\n• E-mail que usou para enviar a solicitação há uma semana\n\nFico aqui aguardando! 🚀",
+    "deve_conter": [
+      "desculpa",
+      "urgente",
+      "consultor"
+    ],
+    "kw_found": [
+      "desculpa",
+      "urgente",
+      "consultor"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T11-03",
+    "bloco": "Clientes que Retornam",
+    "tipo": "retorno",
+    "descricao": "Aumentar quantidade de alunos",
+    "estado": "qualquer",
+    "phone": "5511920000075",
+    "input": "Na cotação anterior eram 10, agora são 20",
+    "response": "🔇 [Modo teste] Bot pausado — atendente humano ativo.\nClique em '🔄 Reativar Bot' para reiniciar.",
+    "deve_conter": [
+      "20",
+      "proposta",
+      "atualizar"
+    ],
+    "kw_found": [],
+    "kw_missing": [
+      "20",
+      "proposta",
+      "atualizar"
+    ],
+    "kw_pct": 0,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T12-01",
+    "bloco": "Casos Especiais",
+    "tipo": "fora_escopo",
+    "descricao": "Venda de produto",
+    "estado": "qualquer",
+    "phone": "5511920000076",
+    "input": "Vendo notebooks seminovos alguém aí compra",
+    "response": "Desculpe, não entendi direito 😊 Pode reformular sua mensagem? Estou aqui para ajudar com treinamentos corporativos e locação de espaços.",
+    "deve_conter": [
+      "treinamentos",
+      "canal",
+      "exclusivo",
+      "secretaria"
+    ],
+    "kw_found": [
+      "treinamentos"
+    ],
+    "kw_missing": [
+      "canal",
+      "exclusivo",
+      "secretaria"
+    ],
+    "kw_pct": 25,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T12-02",
+    "bloco": "Casos Especiais",
+    "tipo": "fora_horario",
+    "descricao": "Fora do horário comercial",
+    "estado": "inicio",
+    "phone": "5511920000077",
+    "input": "Boa noite preciso de uma cotação",
+    "response": "Boa noite! 😊 Fico feliz em ajudar com sua cotação.\n\nPara que eu monte a proposta ideal para você, preciso entender melhor sua necessidade. Essa cotação seria para:\n\n*Um treinamento corporativo para sua empresa/equipe ou para você mesmo em uma turma aberta?*",
+    "deve_conter": [
+      "disponível",
+      "próximo dia útil",
+      "retornaremos"
+    ],
+    "kw_found": [],
+    "kw_missing": [
+      "disponível",
+      "próximo dia útil",
+      "retornaremos"
+    ],
+    "kw_pct": 0,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T12-03",
+    "bloco": "Casos Especiais",
+    "tipo": "retorno",
+    "descricao": "Retorna após ausência (responde SIM)",
+    "estado": "detectou_contato_anterior",
+    "phone": "5511920000078",
+    "input": "SIM",
+    "response": "Ótimo! 😊 Bem-vindo ao atendimento da Impacta!\n\nVejo que você confirmou interesse, mas gostaria de entender melhor o que você procura. Você está buscando:\n\n*Um treinamento corporativo para sua equipe?* (ou empresa)\n*Um curso individual em turma aberta?*\n*Locação de espaço para um evento?*\n\nMe conte um pouco mais sobre sua necessidade para eu poder ajudá-lo da melhor forma! 👍",
+    "deve_conter": [
+      "atendimento",
+      "novo"
+    ],
+    "kw_found": [
+      "atendimento"
+    ],
+    "kw_missing": [
+      "novo"
+    ],
+    "kw_pct": 50,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "⚠️  PARCIAL",
+    "error": null
+  },
+  {
+    "id": "T12-04",
+    "bloco": "Casos Especiais",
+    "tipo": "escalonamento",
+    "descricao": "Quer atendimento humano imediato",
+    "estado": "qualquer",
+    "phone": "5511920000079",
+    "input": "Quero falar com uma pessoa agora",
+    "response": "Claro, João! Entendo que você prefere falar com alguém da nossa equipe agora mesmo. 🙌\n\nAntes de encaminhar você para um consultor, posso confirmar:\n• Qual é o tema principal que você gostaria de conversar? (treinamento corporativo, locação de espaço, proposta urgente, etc.)\n• Qual seria o melhor canal para contato: WhatsApp ou e-mail?\n\nAssim vou registrar tudo certinho e o consultor já recebe o contexto! ⏱️",
+    "deve_conter": [
+      "transferir",
+      "consultor",
+      "aguarde"
+    ],
+    "kw_found": [
+      "consultor"
+    ],
+    "kw_missing": [
+      "transferir",
+      "aguarde"
+    ],
+    "kw_pct": 33,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T12-05",
+    "bloco": "Casos Especiais",
+    "tipo": "validacao",
+    "descricao": "Mensagem ininteligível",
+    "estado": "qualquer",
+    "phone": "5511920000080",
+    "input": "asdfghjkl qwerty 123456",
+    "response": "João, não consegui entender direito essas informações 😊\n\nPode me informar:\n1. *Nome da empresa* (razão social)\n2. *CNPJ* (no formato XX.XXX.XXX/XXXX-XX)\n\nQual é o nome e CNPJ da sua empresa?",
+    "deve_conter": [
+      "entendi",
+      "reformular",
+      "ajudar"
+    ],
+    "kw_found": [],
+    "kw_missing": [
+      "entendi",
+      "reformular",
+      "ajudar"
+    ],
+    "kw_pct": 0,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T12-06",
+    "bloco": "Casos Especiais",
+    "tipo": "edge_case",
+    "descricao": "Lead em inglês",
+    "estado": "qualquer",
+    "phone": "5511920000081",
+    "input": "I need a quote for corporate training",
+    "response": "Nosso atendimento é em português. Para treinamentos corporativos, estou aqui para ajudar! 🏢\n\nÓtimo, João! Vamos montar uma proposta para sua empresa.\n\nQual é o nome da empresa e o CNPJ?",
+    "deve_conter": [
+      "português",
+      "treinamento"
+    ],
+    "kw_found": [
+      "português",
+      "treinamento"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T12-07",
+    "bloco": "Casos Especiais",
+    "tipo": "validacao",
+    "descricao": "CNPJ formato inválido",
+    "estado": "aguardando_cnpj",
+    "phone": "5511920000082",
+    "input": "CNPJ: 123",
+    "response": "O CNPJ informado parece inválido. Por favor, informe o CNPJ no formato XX.XXX.XXX/XXXX-XX.",
+    "deve_conter": [
+      "CNPJ",
+      "válido",
+      "formato"
+    ],
+    "kw_found": [
+      "CNPJ",
+      "válido",
+      "formato"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T12-08",
+    "bloco": "Casos Especiais",
+    "tipo": "edge_case",
+    "descricao": "Lead sem e-mail",
+    "estado": "aguardando_email",
+    "phone": "5511920000083",
+    "input": "Não tenho e-mail",
+    "response": "Sem problema! Podemos encaminhar a proposta pelo WhatsApp mesmo. Fico aguardando para continuar com sua proposta.\n\nEntão João, me conta: você está buscando um treinamento para sua empresa ou para si mesmo? 😊",
+    "deve_conter": [
+      "WhatsApp",
+      "proposta",
+      "alternativa"
+    ],
+    "kw_found": [
+      "WhatsApp",
+      "proposta"
+    ],
+    "kw_missing": [
+      "alternativa"
+    ],
+    "kw_pct": 67,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "⚠️  PARCIAL",
+    "error": null
+  },
+  {
+    "id": "T13-01",
+    "bloco": "Frases do Sistema",
+    "tipo": "validacao_texto",
+    "descricao": "Boas-vindas",
+    "estado": "inicio",
+    "phone": "5511920000084",
+    "input": "Olá",
+    "response": "Seja bem-vindo(a) ao Universo IMPACTA! 🏢 Sou o SDR de Treinamentos PJ e estou aqui para te ajudar. Me conta o seu nome para começarmos!",
+    "deve_conter": [
+      "bem-vindo",
+      "IMPACTA"
+    ],
+    "kw_found": [
+      "bem-vindo",
+      "IMPACTA"
+    ],
+    "kw_missing": [],
+    "kw_pct": 100,
+    "forbidden": [],
+    "passed": true,
+    "status_label": "✅ OK",
+    "error": null
+  },
+  {
+    "id": "T13-02",
+    "bloco": "Frases do Sistema",
+    "tipo": "validacao_texto",
+    "descricao": "Erro e-mail",
+    "estado": "aguardando_email",
+    "phone": "5511920000085",
+    "input": "email_invalido",
+    "response": "Obrigado, João Silva! 👍\n\nAgora preciso do seu e-mail para seguir com sua proposta. Qual é seu e-mail?",
+    "deve_conter": [
+      "Ops",
+      "E-mail válido"
+    ],
+    "kw_found": [],
+    "kw_missing": [
+      "Ops",
+      "E-mail válido"
+    ],
+    "kw_pct": 0,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T13-03",
+    "bloco": "Frases do Sistema",
+    "tipo": "validacao_texto",
+    "descricao": "Resposta inválida",
+    "estado": "menu_principal",
+    "phone": "5511920000086",
+    "input": "resposta_aleatoria_xyz",
+    "response": "Desculpe, João, não entendi direito 😊 Pode reformular sua mensagem? \n\nPara que eu possa ajudá-lo com sua proposta de treinamento, preciso dos dados da sua empresa. Qual é o nome da empresa e o CNPJ?",
+    "deve_conter": [
+      "Resposta inválida",
+      "botões"
+    ],
+    "kw_found": [],
+    "kw_missing": [
+      "Resposta inválida",
+      "botões"
+    ],
+    "kw_pct": 0,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T13-04",
+    "bloco": "Frases do Sistema",
+    "tipo": "validacao_texto",
+    "descricao": "Sem atendente disponível",
+    "estado": "fora_horario",
+    "phone": "5511920000087",
+    "input": "quero falar com consultor",
+    "response": "Ótimo! Vou te transferir para um consultor! 🚀\n\nAntes disso, só para agilizar o atendimento, pode me informar rapidinho:\n\n*Qual é o seu interesse?* (ex: treinamento corporativo para sua equipe, locação de espaço, ou você gostaria de uma consulta para descobrir a solução ideal)\n\nAguarde um momento enquanto conecto você com o especialista certo! 😊",
+    "deve_conter": [
+      "não estamos operando",
+      "Atendimentos Humanizados"
+    ],
+    "kw_found": [],
+    "kw_missing": [
+      "não estamos operando",
+      "Atendimentos Humanizados"
+    ],
+    "kw_pct": 0,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T13-05",
+    "bloco": "Frases do Sistema",
+    "tipo": "validacao_texto",
+    "descricao": "Pesquisa de satisfação",
+    "estado": "pos_atendimento",
+    "phone": "5511920000088",
+    "input": "ok",
+    "response": "Oi! 👋 Tudo bem?\n\nSou o atendimento comercial da Impacta, especialista em treinamentos corporativos, turmas abertas, turmas exclusivas e locação de espaços.\n\nComo posso te ajudar hoje? Você está buscando um treinamento para sua equipe, um curso individual ou talvez uma consultoria personalizada? 😊",
+    "deve_conter": [
+      "satisfação",
+      "1 a 10"
+    ],
+    "kw_found": [],
+    "kw_missing": [
+      "satisfação",
+      "1 a 10"
+    ],
+    "kw_pct": 0,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  },
+  {
+    "id": "T13-06",
+    "bloco": "Frases do Sistema",
+    "tipo": "validacao_texto",
+    "descricao": "Reengajamento após inatividade",
+    "estado": "inativo",
+    "phone": "5511920000089",
+    "input": "Oi tudo bem",
+    "response": "Seja bem-vindo(a) ao Universo IMPACTA! 🏢 Sou o SDR de Treinamentos PJ e estou aqui para te ajudar. Me conta o seu nome para começarmos!",
+    "deve_conter": [
+      "não conseguimos avançar",
+      "disponível"
+    ],
+    "kw_found": [],
+    "kw_missing": [
+      "não conseguimos avançar",
+      "disponível"
+    ],
+    "kw_pct": 0,
+    "forbidden": [],
+    "passed": false,
+    "status_label": "❌ FALHOU",
+    "error": null
+  }
+]

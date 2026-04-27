@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório de Testes — Bot SDR PJ</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+          background:#f0f4f8; color:#1e293b; }
+  .header { background:linear-gradient(135deg,#1e1b4b,#312e81); color:#fff;
+             padding:32px 40px; }
+  .header h1 { font-size:26px; font-weight:800; margin-bottom:4px; }
+  .header p { font-size:14px; color:#a5b4fc; }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+           gap:16px; padding:24px 40px; }
+  .kpi { background:#fff; border:1px solid #e2e8f0; border-radius:12px;
+          padding:18px; text-align:center; }
+  .kpi .val { font-size:32px; font-weight:800; line-height:1; margin-bottom:4px; }
+  .kpi .lbl { font-size:12px; color:#64748b; }
+  .content { padding:0 40px 40px; }
+  @media(max-width:600px) { .kpis,.content { padding-left:16px;padding-right:16px; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🤖 Relatório de Testes — Bot SDR PJ</h1>
+  <p>Gerado em 25/04/2026 às 00:03 · URL testada: http://localhost:8001 · 16 cenários executados</p>
+</div>
+<div class="kpis">
+  <div class="kpi">
+    <div class="val" style="color:#6366f1">16</div>
+    <div class="lbl">Cenários testados</div>
+  </div>
+  <div class="kpi">
+    <div class="val" style="color:#16a34a">14</div>
+    <div class="lbl">✅ Aprovados (≥70)</div>
+  </div>
+  <div class="kpi">
+    <div class="val" style="color:#ca8a04">0</div>
+    <div class="lbl">⚠️ Parciais (40–69)</div>
+  </div>
+  <div class="kpi">
+    <div class="val" style="color:#dc2626">2</div>
+    <div class="lbl">❌ Reprovados (&lt;40)</div>
+  </div>
+  <div class="kpi">
+    <div class="val" style="color:#0ea5e9">84</div>
+    <div class="lbl">Score médio geral</div>
+  </div>
+</div>
+<div class="content">
+  
+        <div style="margin-bottom:32px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+            <div style="background:#3b82f6;color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:13px">Trilha A</div>
+            <div style="font-size:15px;font-weight:600;color:#1e293b">Turma Aberta / Individual</div>
+            <div style="margin-left:auto"><span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">✅ 93/100</span></div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-left:4px solid #16a34a;border-radius:8px;margin-bottom:16px;overflow:hidden">
+            <div style="background:#f8fafc;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e5e7eb;cursor:pointer"
+                 onclick="toggle('A1')">
+              <span style="font-weight:700;color:#1e293b">[A1] Pessoa física — curso de liderança</span>
+              <span style="font-size:12px;color:#64748b">— João Almeida</span>
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <span style="font-size:11px;color:#64748b">Escalação: ✅</span>
+                <span style="font-size:11px;color:#64748b">Keywords: 60%</span>
+                <span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">✅ 80/100</span>
+                <span style="color:#94a3b8;font-size:14px" id="arr-A1">▼</span>
+              </div>
+            </div>
+            <div id="body-A1" style="display:none;padding:16px 20px">
+              <p style="font-size:13px;color:#64748b;margin-bottom:12px">Lead individual quer fazer um curso de liderança para si mesmo</p>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Esperado escalar:</strong> False
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Escalou:</strong> False
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Keywords encontradas:</strong> turma aberta, liderança, data
+                </div>
+                
+              </div>
+              <div style="background:#f8fafc;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto">
+                
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Olá! Quero fazer um curso de liderança.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Olá! 👋 Ótimo, temos excelentes soluções em liderança e gestão.
+
+Para entender melhor sua necessidade, preciso de alguns detalhes: esse treinamento seria para você mesmo, ou para uma equipe/empresa? 😊</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Sou coordenador em uma empresa de logística, quero me desenvolver pessoalmente.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Ótimo! Para cursos individuais em turma aberta, vou te encaminhar para um consultor que poderá informar as opções, datas e condições de matrícula. 
+
+Antes, pode me confirmar seu nome completo e e-mail?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Quero fazer eu mesmo, não preciso para minha equipe.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Perfeito! Entendi que é para seu desenvolvimento pessoal mesmo.
+
+Para te ajudar melhor com as opções de cursos de liderança, pode me confirmar seu nome completo e e-mail?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Tem cursos presenciais? Moro em São Paulo.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Sim! 🎯 Temos cursos presenciais em São Paulo, na Rua Cubatão, 726 — Vila Mariana, bem perto do metrô Paraíso (linhas 2-verde e 4-amarela).
+
+Agora, para eu seguir com seu cadastro, pode me confirmar seu nome completo e e-mail?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Quais são os valores e datas das próximas turmas?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Ótima pergunta! 📅 Os valores e datas das próximas turmas de liderança estão disponíveis no nosso site ou um consultor pode te enviar com todas as opções assim que eu tiver seus dados.
+
+Para isso, preciso apenas do seu nome completo e e-mail. Pode compartilhar comigo?</span>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-left:4px solid #16a34a;border-radius:8px;margin-bottom:16px;overflow:hidden">
+            <div style="background:#f8fafc;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e5e7eb;cursor:pointer"
+                 onclick="toggle('A2')">
+              <span style="font-weight:700;color:#1e293b">[A2] RH — inscrever 2 pessoas em turma existente</span>
+              <span style="font-size:12px;color:#64748b">— Ana Ferreira</span>
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <span style="font-size:11px;color:#64748b">Escalação: ✅</span>
+                <span style="font-size:11px;color:#64748b">Keywords: 100%</span>
+                <span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">✅ 100/100</span>
+                <span style="color:#94a3b8;font-size:14px" id="arr-A2">▼</span>
+              </div>
+            </div>
+            <div id="body-A2" style="display:none;padding:16px 20px">
+              <p style="font-size:13px;color:#64748b;margin-bottom:12px">RH de empresa pequena quer inscrever dois funcionários em curso da grade</p>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Esperado escalar:</strong> False
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Escalou:</strong> False
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Keywords encontradas:</strong> turma aberta, inscrição, online, pagamento
+                </div>
+                
+              </div>
+              <div style="background:#f8fafc;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto">
+                
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Boa tarde! Trabalho no RH de uma empresa e quero inscrever dois funcionários num curso.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Boa tarde! 😊
+
+Que ótimo! Vou te ajudar com a inscrição dos dois funcionários da sua empresa.
+
+Para começar, preciso de algumas informações:
+
+Qual seu nome completo?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Somos uma empresa de contabilidade com 12 funcionários.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Perfeito! Uma empresa de contabilidade com 12 funcionários tem um ótimo perfil para nossos treinamentos corporativos.
+
+Para eu te ajudar da melhor forma, preciso conhecer você melhor:
+
+Qual seu nome completo?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Eles precisam de um curso de Excel avançado ou Power BI. Vocês têm isso?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Ótimo! Sim, temos ambos os cursos! 🎯
+
+*Excel Avançado* — ideal para quem já domina o básico e quer evoluir com funções complexas, análises mais sofisticadas e automação.
+
+*Power BI* — perfeito para quem quer dar um salto e aprender Business Intelligence, criando relatórios e dashboards interativos que transformam dados em insights estratégicos. É muito procurado na área contábil e financeira!
+
+Antes de eu recomendar qual é mais adequado para os dois, me diz:
+
+*Qual é o nível de Excel que eles têm hoje?* Eles já dominam PROCV, SE e tabelas dinâmicas, ou ainda estão em um nível intermediário?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Seriam 2 pessoas, queríamos turma aberta mesmo. Tem opção online?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Perfeito! Com 2 pessoas em turma aberta, temos excelentes opções online para vocês! 💻
+
+Sobre a modalidade online, você prefere:
+
+*Online ao vivo* — aulas em tempo real com instrutor, interação, dúvidas diretas. A gravação fica disponível por 90 dias, liberada em até 48 horas após cada sessão.
+
+Ou
+
+*EAD gravado* — conteúdo em aulas gravadas, 100% autodidata, você estuda no seu próprio ritmo, sem horário fixo.
+
+Qual faz mais sentido para os dois?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Como funciona o pagamento para empresa?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Ótima pergunta! Para turmas abertas em modalidade online, a forma de pagamento é definida no momento da inscrição no site.
+
+Como vocês são uma empresa, vou precisar de alguns dados para que um consultor possa enviar uma proposta completa com as melhores opções de pagamento para PJ:
+
+*Qual seu nome completo?*
+
+E depois vou precisar do seu e-mail para a gente continuar! 😊</span>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-left:4px solid #16a34a;border-radius:8px;margin-bottom:16px;overflow:hidden">
+            <div style="background:#f8fafc;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e5e7eb;cursor:pointer"
+                 onclick="toggle('A3')">
+              <span style="font-weight:700;color:#1e293b">[A3] Lead pergunta sobre grade de cursos</span>
+              <span style="font-size:12px;color:#64748b">— Marcos Oliveira</span>
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <span style="font-size:11px;color:#64748b">Escalação: ✅</span>
+                <span style="font-size:11px;color:#64748b">Keywords: 100%</span>
+                <span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">✅ 100/100</span>
+                <span style="color:#94a3b8;font-size:14px" id="arr-A3">▼</span>
+              </div>
+            </div>
+            <div id="body-A3" style="display:none;padding:16px 20px">
+              <p style="font-size:13px;color:#64748b;margin-bottom:12px">Lead quer conhecer o catálogo completo antes de decidir</p>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Esperado escalar:</strong> False
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Escalou:</strong> False
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Keywords encontradas:</strong> catálogo, curso, gestão, duração
+                </div>
+                
+              </div>
+              <div style="background:#f8fafc;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto">
+                
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Oi, quais cursos vocês oferecem?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Oi! 👋 Tudo bem?
+
+A Impacta oferece uma variedade grande de cursos corporativos nas principais áreas de tecnologia e desenvolvimento. Temos desde *Excel, Power BI e dados*, passando por *Cloud (Azure, AWS)*, *Scrum e gestão ágil*, até *Liderança, Vendas e soft skills*.
+
+Também temos soluções customizadas para necessidades específicas! 
+
+*Para te ajudar melhor:* você está buscando um curso para si mesmo, ou é para sua equipe/empresa? E tem alguma área que você está mais interessado?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Sou gerente de projetos e quero me atualizar. Pode me mandar um catálogo?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Ótimo! 👍 Como gerente de projetos, você tem excelentes opções para se atualizar!
+
+Temos o curso *Planejamento e Gerência de Projetos com Ênfase no PMI* — 40 horas, com foco em práticas do PMBOK®, abordagem teórica + prática, e desenvolvimento de projetos reais. Perfeito para estruturar melhor seus projetos com controle de escopo, tempo, custos e riscos.
+
+Sobre o catálogo: prefiro já começar a qualificar sua necessidade para encaminhar exatamente o que você precisa! 😊
+
+*Me diga:*
+• Você busca esse treinamento *para você mesmo* (como profissional individual) ou *para sua equipe/empresa*?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Tem algum curso de gestão de projetos ou PMP?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Ótimo! Temos sim! 🎯
+
+A Impacta oferece o curso *Planejamento e Gerência de Projetos com Ênfase no PMI*, que é completo para quem quer dominar gestão de projetos com as melhores práticas do PMBOK®. É uma formação sólida em conceitos, ferramentas e aplicação prática.
+
+Agora, para eu te encaminhar da melhor forma:
+
+*Essa formação é para você mesmo* (como profissional individual buscando se atualizar) *ou para sua equipe/empresa*?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">E de comunicação e apresentação?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Ótima pergunta! 👌 Temos cursos nessa área também!
+
+A Impacta oferece formações em *Comunicação Executiva* e *Apresentações Impactantes* — cursos práticos focados em desenvolver habilidades de comunicação clara, persuasão, técnicas de apresentação e impacto profissional. Perfeito para gerentes que precisam comunicar bem com stakeholders e lideranças.
+
+Mas antes de detalhar mais, preciso entender melhor sua necessidade:
+
+*Você está buscando esses cursos para você mesmo* (como profissional individual) *ou para sua equipe/empresa?*</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Qual a duração e o valor médio dos cursos?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Boa pergunta! 📊
+
+Os cursos de gestão e soft skills variam bastante em duração e investimento — alguns têm 20h, outros 40h ou mais, dependendo da profundidade e modalidade.
+
+Para te passar *valores e durações exatos*, preciso entender melhor sua situação:
+
+*Você está buscando esses cursos para você mesmo* (como profissional individual em turma aberta) *ou para sua equipe/empresa?*
+
+Essa informação é importante porque:
+• Se for *individual em turma aberta*, as datas e valores estão disponíveis no nosso site — posso te direcionar lá.
+• Se for *para sua equipe*, podemos montar uma *turma exclusiva* com cronograma e investimento personalizados.
+
+Qual é o seu caso? 😊</span>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div></div>
+        <div style="margin-bottom:32px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+            <div style="background:#8b5cf6;color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:13px">Trilha B</div>
+            <div style="font-size:15px;font-weight:600;color:#1e293b">Corporativo / In Company</div>
+            <div style="margin-left:auto"><span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">✅ 78/100</span></div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-left:4px solid #dc2626;border-radius:8px;margin-bottom:16px;overflow:hidden">
+            <div style="background:#f8fafc;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e5e7eb;cursor:pointer"
+                 onclick="toggle('B1')">
+              <span style="font-weight:700;color:#1e293b">[B1] RH — treinamento exclusivo de liderança para 25 pessoas</span>
+              <span style="font-size:12px;color:#64748b">— Renata Costa</span>
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <span style="font-size:11px;color:#64748b">Escalação: ❌</span>
+                <span style="font-size:11px;color:#64748b">Keywords: 25%</span>
+                <span style="background:#fee2e2;color:#dc2626;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">❌ 12/100</span>
+                <span style="color:#94a3b8;font-size:14px" id="arr-B1">▼</span>
+              </div>
+            </div>
+            <div id="body-B1" style="display:none;padding:16px 20px">
+              <p style="font-size:13px;color:#64748b;margin-bottom:12px">RH de empresa grande quer turma exclusiva, customizada, in company</p>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Esperado escalar:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Escalou:</strong> False
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Keywords encontradas:</strong> proposta
+                </div>
+                
+              </div>
+              <div style="background:#f8fafc;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto">
+                
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Olá! Sou da área de RH da empresa Grupo Alfa e preciso de uma proposta de treinamento.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Olá! Que bom falar com você! 😊
+
+Sou a Renata, da Impacta, e vou te ajudar com a proposta de treinamento para o Grupo Alfa.
+
+Para montar a proposta ideal, preciso de algumas informações. Pode me passar seu nome completo?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Precisamos de um programa de liderança para 25 gestores, turma exclusiva para nossa empresa.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Perfeito! Com 25 alunos, recomendamos uma turma exclusiva para a sua empresa, que permite total customização de horário, conteúdo e carga horária.
+
+Para montar a proposta de programa de liderança, preciso primeiro do seu nome completo para dar continuidade ao atendimento.</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Queremos que seja presencial, nas nossas instalações aqui em São Paulo.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Ótimo! Presencial na sua empresa em São Paulo funciona perfeitamente. 👍
+
+Mas antes de tudo, para que eu possa registrar corretamente a demanda, pode me confirmar seu *nome completo*?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">O tema principal é liderança situacional e gestão de conflitos.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Excelente! Liderança situacional e gestão de conflitos são temas muito relevantes para desenvolvimento de gestores. 👍
+
+Agora, para eu seguir com sua proposta, preciso do seu *nome completo* para registrar tudo certinho.</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Qual o prazo para receber uma proposta? Precisamos fechar até o final do mês.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Entendo a urgência! Vou registrar como prioridade. O prazo padrão é 24h úteis - faremos o possível para priorizar o seu atendimento.
+
+Para agilizar sua proposta, preciso do seu *nome completo* agora para registrar sua solicitação prioritária.</span>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-left:4px solid #16a34a;border-radius:8px;margin-bottom:16px;overflow:hidden">
+            <div style="background:#f8fafc;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e5e7eb;cursor:pointer"
+                 onclick="toggle('B2')">
+              <span style="font-weight:700;color:#1e293b">[B2] Gerente de fábrica — NR segurança in company</span>
+              <span style="font-size:12px;color:#64748b">— Carlos Mendes</span>
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <span style="font-size:11px;color:#64748b">Escalação: ✅</span>
+                <span style="font-size:11px;color:#64748b">Keywords: 100%</span>
+                <span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">✅ 100/100</span>
+                <span style="color:#94a3b8;font-size:14px" id="arr-B2">▼</span>
+              </div>
+            </div>
+            <div id="body-B2" style="display:none;padding:16px 20px">
+              <p style="font-size:13px;color:#64748b;margin-bottom:12px">Lead quer treinamento obrigatório de NR para toda a equipe operacional</p>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Esperado escalar:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Escalou:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Keywords encontradas:</strong> proposta, in company, certificado, consultor
+                </div>
+                
+              </div>
+              <div style="background:#f8fafc;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto">
+                
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Boa tarde, preciso de treinamento de NR para minha equipe de produção.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Boa tarde! 😊
+
+Entendi que você precisa de treinamento de NR (Normas Regulamentadoras) para sua equipe de produção. 
+
+Vou verificar a disponibilidade desse treinamento com um especialista e retorno em breve com mais informações sobre essa capacitação específica.
+
+Enquanto isso, para eu já adiantar sua solicitação, pode me informar seu nome completo?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Sou gerente de uma fábrica de autopeças, temos 80 operadores.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Ótimo! Vejo que você é gerente de uma fábrica de autopeças com 80 operadores — isso é uma excelente oportunidade para capacitação em segurança! 👷
+
+Com 80 operadores, recomendamos uma turma exclusiva para sua empresa, com horário e conteúdo customizados conforme suas necessidades.
+
+Antes de eu avançar, preciso de algumas informações:
+
+1. *Qual é seu nome completo?*
+2. *Qual o nome da empresa e o CNPJ?*
+
+Depois vou confirmar alguns detalhes sobre o treinamento de NR com nosso especialista.</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Preciso de NR-10 e NR-35, para todos eles. Tem que ser in company aqui na fábrica.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Perfeito! NR-10 (Segurança em Instalações e Serviços em Eletricidade) e NR-35 (Trabalho em Altura) são treinamentos muito importantes para operadores industriais.
+
+Para in company, o cliente precisa providenciar a infraestrutura: 1 computador por aluno com o software instalado (mesma versão), computador para o instrutor, projetor/telão e internet estável.
+
+Agora preciso dos seus dados para encaminhar sua solicitação:
+
+*Qual é seu nome completo?*</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Precisamos emitir certificado para todos. Vocês emitem?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Sim, com certeza! 😊
+
+A Impacta emite certificado digital reconhecido pelo MEC como extensão universitária. Esse certificado é válido para currículo, processos seletivos em órgãos governamentais e fins profissionais — perfeito para a documentação de segurança da sua equipe.
+
+Todos os 80 operadores receberão seus certificados digitais após conclusão dos treinamentos de NR-10 e NR-35.
+
+Agora, para eu continuar e encaminhar sua solicitação ao consultor, pode me informar:
+
+*Qual é seu nome completo?*</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Qual a disponibilidade para o próximo mês? E como funciona o orçamento?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Não tenho acesso às informações de disponibilidade de agenda e valores específicos para os treinamentos de NR-10 e NR-35, mas nosso consultor poderá te ajudar com essas informações detalhadas.
+
+O prazo padrão para envio da proposta é de até 24 horas úteis após recebermos todos os dados.
+
+Para eu encaminhar sua solicitação ao consultor especializado, preciso dos seus dados:
+
+*Qual é seu nome completo?*</span> <span style="color:#f59e0b;font-size:11px">🚨 escalado</span>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-left:4px solid #16a34a;border-radius:8px;margin-bottom:16px;overflow:hidden">
+            <div style="background:#f8fafc;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e5e7eb;cursor:pointer"
+                 onclick="toggle('B3')">
+              <span style="font-weight:700;color:#1e293b">[B3] Empresa grande — programa customizado para 50 líderes</span>
+              <span style="font-size:12px;color:#64748b">— Patricia Lima</span>
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <span style="font-size:11px;color:#64748b">Escalação: ✅</span>
+                <span style="font-size:11px;color:#64748b">Keywords: 100%</span>
+                <span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">✅ 100/100</span>
+                <span style="color:#94a3b8;font-size:14px" id="arr-B3">▼</span>
+              </div>
+            </div>
+            <div id="body-B3" style="display:none;padding:16px 20px">
+              <p style="font-size:13px;color:#64748b;margin-bottom:12px">Diretora de T&D quer montar um programa completo de desenvolvimento</p>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Esperado escalar:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Escalou:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Keywords encontradas:</strong> customizado, proposta, programa, consultor
+                </div>
+                
+              </div>
+              <div style="background:#f8fafc;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto">
+                
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Olá! Sou diretora de T&D da Construtora Nova Era e estou montando um PDL para 2025.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Oi! 👋 Que legal! Estou aqui para ajudar a Construtora Nova Era com soluções de treinamento para seu plano de desenvolvimento de lideranças e equipes em 2025.
+
+A Impacta oferece programas corporativos em áreas como tecnologia, inovação, liderança, soft skills, dados, BI e muito mais — com 37 anos de mercado e mais de 30 mil empresas já treinadas.
+
+Para montar um PDL alinhado aos seus objetivos, preciso entender melhor: *quais são as principais competências ou áreas que você quer desenvolver nas suas equipes em 2025?* (por exemplo: liderança, gestão digital, habilidades técnicas, transformação digital, etc.)</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Preciso de um programa completo de desenvolvimento de líderes, cerca de 50 pessoas.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Perfeito! 👍 Um programa completo para 50 líderes é exatamente o nosso foco corporativo.
+
+Com 50 pessoas, você tem a oportunidade de uma *turma exclusiva* — customizada para a Construtora Nova Era, com horários e conteúdo alinhados aos seus objetivos estratégicos.
+
+Antes de montar a proposta, preciso de alguns dados:
+
+*1. Qual a modalidade preferida para o programa?*
+• *Presencial* (Rua Cubatão, 726 — Vila Mariana, SP, próximo ao metrô Paraíso)
+• *Online ao vivo* (interação em tempo real com instrutor, gravações disponíveis por 90 dias)
+• *In company* (na sede da Nova Era — você providencia infraestrutura)
+
+Qual delas faz mais sentido para seu cronograma? 🎯</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">São gerentes e coordenadores. Queremos módulos de liderança, comunicação e gestão de pessoas.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Excelente! 🎯 Liderança, comunicação e gestão de pessoas é um combo estratégico perfeito para gerentes e coordenadores.
+
+A Impacta tem expertise nessas áreas com módulos estruturados, e para 50 líderes vamos montar uma turma exclusiva bem pensada — pode ser em sequência, paralelo ou conforme seu calendário de 2025.
+
+Agora, sobre a *modalidade* — qual funciona melhor para sua equipe?
+
+• *Presencial* na unidade da Impacta em São Paulo
+• *Online ao vivo* (com instrutor em tempo real + gravações por 90 dias)
+• *In company* (aqui na Nova Era, vocês providenciam os computadores e infraestrutura)
+
+Qual você prefere? 📍</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Tem como customizar o conteúdo para o contexto da construção civil?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Perfeito! 👌 Com certeza conseguimos customizar o conteúdo para o setor da construção civil.
+
+Com turma exclusiva para a Nova Era, podemos adaptar os casos práticos, exemplos e dinâmicas para desafios específicos do setor: gestão de obras, coordenação de equipes em campo, comunicação com diferentes níveis hierárquicos, liderança de colaboradores técnicos, cronogramas, segurança do trabalho e outros contextos próprios da construção.
+
+Essa é uma das grandes vantagens da turma exclusiva — conteúdo sob medida! 🏗️
+
+Voltando à modalidade, qual faz mais sentido para seus 50 líderes:
+
+• *Presencial* (São Paulo)
+• *Online ao vivo* (com gravações por 90 dias)  
+• *In company* (na sede da Nova Era)
+
+E qual seria o *prazo desejado* para começar o programa em 2025?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Qual seria o processo para desenvolver esse programa conosco?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Excelente pergunta! 🎯 O processo da Impacta para desenvolver seu programa customizado é bem estruturado:
+
+*1. Diagnóstico e Mapeamento*
+• Análise das necessidades específicas da Nova Era
+• Levantamento do perfil dos 50 líderes
+• Identificação dos desafios do setor de construção civil
+
+*2. Desenho Pedagógico*
+• Customização dos módulos (liderança, comunicação, gestão de pessoas)
+• Adaptação de casos práticos para construção civil
+• Definição de cronograma e metodologia
+
+*3. Proposta Técnica e Comercial*
+• Apresentação do programa completo
+• Valores, prazos e condições
+
+Para iniciarmos esse processo, vou encaminhar para um consultor especializado que poderá fazer um diagnóstico detalhado e desenhar o programa ideal para vocês.
+
+Só preciso confirmar: seu *nome completo*, *e-mail* e o *CNPJ* da Construtora Nova Era para que ele possa entrar em contato em breve! 📋</span> <span style="color:#f59e0b;font-size:11px">🚨 escalado</span>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-left:4px solid #16a34a;border-radius:8px;margin-bottom:16px;overflow:hidden">
+            <div style="background:#f8fafc;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e5e7eb;cursor:pointer"
+                 onclick="toggle('B4')">
+              <span style="font-weight:700;color:#1e293b">[B4] Startup — team building para 15 pessoas</span>
+              <span style="font-size:12px;color:#64748b">— Rafael Souza</span>
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <span style="font-size:11px;color:#64748b">Escalação: ✅</span>
+                <span style="font-size:11px;color:#64748b">Keywords: 100%</span>
+                <span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">✅ 100/100</span>
+                <span style="color:#94a3b8;font-size:14px" id="arr-B4">▼</span>
+              </div>
+            </div>
+            <div id="body-B4" style="display:none;padding:16px 20px">
+              <p style="font-size:13px;color:#64748b;margin-bottom:12px">Fundador de startup quer dinâmica de team building para equipe pequena</p>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Esperado escalar:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Escalou:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Keywords encontradas:</strong> proposta, team building, consultor
+                </div>
+                
+              </div>
+              <div style="background:#f8fafc;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto">
+                
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Oi! Sou fundador de uma startup de tecnologia e quero fazer um team building pra minha equipe.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Olá! Que legal, trabalhar com startup é sempre empolgante! 😊
+
+Para te ajudar com o melhor team building para sua equipe, preciso entender um pouco melhor suas necessidades.
+
+Pode me informar seu nome completo e quantos alunos da equipe participariam dessa capacitação?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Somos 15 pessoas, equipe jovem, muito do time é remoto mas vamos reunir todo mundo.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Perfeito! Com 15 alunos, recomendamos uma turma exclusiva para a sua startup - assim vocês terão total flexibilidade para customizar horário, conteúdo e formato do team building.
+
+Para montar a melhor proposta, preciso de mais algumas informações:
+
+Qual seu nome completo e o nome da sua startup?
+
+E qual o foco que vocês gostariam para esse team building - seria mais voltado para desenvolvimento técnico da equipe, liderança e gestão, ou algum tema específico de tecnologia/inovação?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Quero algo de 1 dia, focado em integração e comunicação. Tem?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Ótimo! Integração e comunicação são fundamentais para equipes remotas e em crescimento. 😊
+
+A gente tem soluções focadas em desenvolvimento de equipes, liderança e comunicação que podem ser customizadas para um formato de 1 dia (intensivo) como turma exclusiva.
+
+Para eu montar a proposta ideal para vocês, preciso confirmar alguns dados:
+
+*Seu nome completo* e *o nome da startup* (com CNPJ)?
+
+E sobre a *modalidade*: vocês preferem presencial (aqui em São Paulo, na Rua Cubatão, 726 — Vila Mariana, perto do metrô Paraíso), *online ao vivo* (com instrutor em tempo real, interação e gravação disponível por 90 dias) ou outra preferência?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Pode ser aqui no nosso escritório ou num espaço que vocês indiquem.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Entendi! Vocês têm duas opções:
+
+*1. In company* — a gente vai até o escritório de vocês. Nesse caso, precisamos que vocês providenciem: 1 computador por aluno com software instalado (mesma versão), computador para o instrutor, projetor/telão e internet estável.
+
+*2. Aqui na Impacta* — Rua Cubatão, 726 — Vila Mariana, São Paulo (perto do metrô Paraíso, linhas 2-verde e 4-amarela). Já tem toda a infraestrutura pronta.
+
+Qual opção faz mais sentido para vocês? 😊
+
+E aproveito para coletar seus dados: *qual seu nome completo* e *o nome da startup com CNPJ*?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Qual o valor aproximado para esse tipo de ação?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Não tenho acesso aos valores específicos, mas nosso consultor poderá apresentar as opções e investimento detalhado para esse tipo de ação de team building.
+
+Para ele montar a proposta personalizada para vocês, preciso apenas dos seus dados:
+
+*Nome completo* e *nome da startup com CNPJ*?
+
+Também seria útil saber qual *modalidade* vocês preferem - in company no escritório de vocês ou aqui na Impacta?
+
+O prazo padrão para envio da proposta é de até 24 horas úteis após recebermos todos os dados. Em breve um consultor entrará em contato para apresentar as opções e valores! 😊</span> <span style="color:#f59e0b;font-size:11px">🚨 escalado</span>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div></div>
+        <div style="margin-bottom:32px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+            <div style="background:#f59e0b;color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:13px">Trilha C</div>
+            <div style="font-size:15px;font-weight:600;color:#1e293b">Consultoria / Descoberta</div>
+            <div style="margin-left:auto"><span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">✅ 87/100</span></div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-left:4px solid #16a34a;border-radius:8px;margin-bottom:16px;overflow:hidden">
+            <div style="background:#f8fafc;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e5e7eb;cursor:pointer"
+                 onclick="toggle('C1')">
+              <span style="font-weight:700;color:#1e293b">[C1] Lead vago — problema na equipe sem saber o quê</span>
+              <span style="font-size:12px;color:#64748b">— Fernanda Rocha</span>
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <span style="font-size:11px;color:#64748b">Escalação: ✅</span>
+                <span style="font-size:11px;color:#64748b">Keywords: 100%</span>
+                <span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">✅ 100/100</span>
+                <span style="color:#94a3b8;font-size:14px" id="arr-C1">▼</span>
+              </div>
+            </div>
+            <div id="body-C1" style="display:none;padding:16px 20px">
+              <p style="font-size:13px;color:#64748b;margin-bottom:12px">Lead percebe problema mas não consegue articular a necessidade de treinamento</p>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Esperado escalar:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Escalou:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Keywords encontradas:</strong> consultoria, diagnóstico, entender, necessidade, consultor
+                </div>
+                
+              </div>
+              <div style="background:#f8fafc;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto">
+                
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Olá, vim pelo site. Preciso de ajuda com minha equipe.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Olá! Fico feliz em ajudar com sua equipe! 😊
+
+Para eu entender melhor sua necessidade e indicar a melhor solução, pode me contar um pouco mais sobre o contexto?
+
+Essa necessidade está relacionada a algum tema específico de capacitação ou vocês ainda estão mapeando as possibilidades de desenvolvimento?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">A gente tem tido muitos problemas de comunicação interna e as entregas estão atrasando.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Entendo perfeitamente — comunicação interna e alinhamento de equipe são fundamentais para melhorar as entregas! 😊
+
+A Impacta tem soluções focadas exatamente nisso: desenvolvimento de líderes, gestão ágil, trabalho em equipe e processos mais eficientes.
+
+Para eu montar a melhor proposta para vocês, preciso entender um pouco mais:
+
+*Vocês já têm alguma ideia de qual tipo de treinamento poderia ajudar* (como liderança, comunicação, gestão de projetos, metodologias ágeis) *ou gostariam que um especialista fizesse um diagnóstico e recomendasse o caminho ideal?*</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Não sei bem o que seria necessário. Talvez um treinamento? Ou uma consultoria?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Perfeito! Essa é uma situação bem comum e é exatamente para isso que temos especialistas — para fazer esse diagnóstico e encontrar a solução ideal para sua equipe.
+
+Problemas de comunicação e atrasos nas entregas podem ter várias origens, e o importante é identificar a causa raiz para aplicar a solução mais efetiva.
+
+Pode me passar seu nome completo e da empresa para eu registrar sua necessidade? Vou encaminhar para um consultor especializado que poderá fazer um diagnóstico e recomendar se seria melhor um treinamento específico, uma consultoria ou até uma combinação de soluções.</span> <span style="color:#f59e0b;font-size:11px">🚨 escalado</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Somos uma empresa de 45 pessoas, área de marketing digital.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">🔇 [Modo teste] Bot pausado — atendente humano ativo.
+Clique em '🔄 Reativar Bot' para reiniciar.</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Não sei por onde começar.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">🔇 [Modo teste] Bot pausado — atendente humano ativo.
+Clique em '🔄 Reativar Bot' para reiniciar.</span>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-left:4px solid #16a34a;border-radius:8px;margin-bottom:16px;overflow:hidden">
+            <div style="background:#f8fafc;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e5e7eb;cursor:pointer"
+                 onclick="toggle('C2')">
+              <span style="font-weight:700;color:#1e293b">[C2] Lead indicado — sem clareza sobre produtos</span>
+              <span style="font-size:12px;color:#64748b">— Bruno Tavares</span>
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <span style="font-size:11px;color:#64748b">Escalação: ✅</span>
+                <span style="font-size:11px;color:#64748b">Keywords: 75%</span>
+                <span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">✅ 87/100</span>
+                <span style="color:#94a3b8;font-size:14px" id="arr-C2">▼</span>
+              </div>
+            </div>
+            <div id="body-C2" style="display:none;padding:16px 20px">
+              <p style="font-size:13px;color:#64748b;margin-bottom:12px">Lead veio por indicação, não conhece os produtos, precisa de orientação</p>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Esperado escalar:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Escalou:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Keywords encontradas:</strong> diagnóstico, consultor, entender
+                </div>
+                
+              </div>
+              <div style="background:#f8fafc;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto">
+                
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Oi! Meu colega me indicou a empresa de vocês, mas não sei bem o que vocês fazem.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Olá! Que bom ter você aqui! 😊
+
+A Impacta é referência em educação, tecnologia e inovação, com 37 anos de mercado. Somos especializados em treinamentos corporativos para capacitação de líderes, equipes e organizações, com foco em transformação digital.
+
+Já atendemos mais de 30 mil empresas como Bradesco, Capgemini, Porto Seguro, Serasa e Globo, oferecendo cursos nas modalidades presencial, online ao vivo, EAD e in company.
+
+Para eu entender melhor como podemos te ajudar, pode me contar qual seria o interesse? É para você mesmo ou para capacitar uma equipe na empresa?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Trabalho como gerente de operações num hospital particular, 200 funcionários.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Perfeito! Como gerente de operações em um hospital de grande porte, imagino que vocês tenham necessidades específicas de capacitação para otimizar processos e melhorar a eficiência operacional.
+
+Atendemos muitas empresas da área da saúde com treinamentos que ajudam a:
+• Automatizar relatórios e análises de dados
+• Otimizar controles operacionais 
+• Melhorar gestão de equipes e processos
+• Desenvolver lideranças
+
+Para eu entender melhor suas necessidades, qual seria o principal desafio ou área que vocês gostariam de desenvolver na equipe? E quantos funcionários participariam desse treinamento?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">A diretoria pediu para eu buscar algo para desenvolver os supervisores.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Ótimo! Então a diretoria quer investir no desenvolvimento dos supervisores — isso é estratégico 💡
+
+Para eu montar uma proposta bem alinhada, preciso entender melhor:
+
+*Quantos supervisores vocês têm?* E em relação ao desenvolvimento, qual seria o foco principal? Por exemplo: liderança e gestão de pessoas, processos operacionais, análise de dados, ou algo mais abrangente?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Não sei se seria curso, palestra, workshop... Qual a diferença?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Ótima pergunta! Vou explicar as diferenças para você escolher o formato ideal:
+
+*CURSO:* Mais completo e aprofundado (8h a 40h), com conteúdo estruturado, exercícios práticos e certificado. Ideal para desenvolver competências sólidas.
+
+*WORKSHOP:* Formato prático e participativo (4h a 8h), focado em resolver problemas específicos com dinâmicas e aplicação imediata.
+
+*PALESTRA:* Mais inspiracional (1h a 3h), para sensibilizar, motivar e apresentar conceitos. Ótima para kick-off de projetos.
+
+Para supervisores, geralmente recomendamos:
+• *Curso* se querem desenvolver liderança de forma estruturada
+• *Workshop* se há desafios específicos para resolver
+• *Palestra* para sensibilizar sobre mudanças ou novos processos
+
+Considerando que a diretoria quer desenvolver os supervisores, qual seria o objetivo principal? Desenvolver habilidades de liderança, resolver algum desafio específico ou sensibilizar sobre alguma mudança?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Como vocês poderiam me ajudar a entender o que faz mais sentido pra gente?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Excelente pergunta! Esse é exatamente o tipo de situação onde um consultor especializado faz toda a diferença 😊
+
+Vou encaminhar para um consultor especializado que poderá fazer um diagnóstico com você. Ele vai:
+• Entender melhor o contexto do hospital e dos supervisores
+• Identificar os principais desafios operacionais e de liderança
+• Recomendar se faz mais sentido curso, workshop ou palestra
+• Sugerir o formato e prazo mais adequado
+
+Para eu encaminhar isso da forma correta, preciso de alguns dados:
+
+1. Qual seu *nome completo*?
+2. Qual o *nome do hospital*?
+3. Quantos *supervisores* vocês têm aproximadamente?
+4. Qual seu *e-mail* para contato?
+
+Em breve um consultor entrará em contato com você para montar a melhor solução! 👍</span> <span style="color:#f59e0b;font-size:11px">🚨 escalado</span>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-left:4px solid #16a34a;border-radius:8px;margin-bottom:16px;overflow:hidden">
+            <div style="background:#f8fafc;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e5e7eb;cursor:pointer"
+                 onclick="toggle('C3')">
+              <span style="font-weight:700;color:#1e293b">[C3] Lead com problema de produtividade</span>
+              <span style="font-size:12px;color:#64748b">— Luciana Faria</span>
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <span style="font-size:11px;color:#64748b">Escalação: ✅</span>
+                <span style="font-size:11px;color:#64748b">Keywords: 50%</span>
+                <span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">✅ 75/100</span>
+                <span style="color:#94a3b8;font-size:14px" id="arr-C3">▼</span>
+              </div>
+            </div>
+            <div id="body-C3" style="display:none;padding:16px 20px">
+              <p style="font-size:13px;color:#64748b;margin-bottom:12px">Empresa com baixa produtividade, líder não sabe se é treinamento ou processo</p>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Esperado escalar:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Escalou:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Keywords encontradas:</strong> diagnóstico, consultor
+                </div>
+                
+              </div>
+              <div style="background:#f8fafc;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto">
+                
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Bom dia! Preciso resolver um problema sério de produtividade na minha equipe.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Bom dia! Entendo sua preocupação. Questões de produtividade realmente impactam muito os resultados da empresa.
+
+Para eu te ajudar melhor, pode me contar um pouco mais sobre o que está acontecendo? É uma equipe técnica, administrativa, ou qual área específicamente?
+
+E quantas pessoas fazem parte dessa equipe? 😊</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Somos um escritório de advocacia com 30 advogados. Os sócios estão preocupados.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Entendo perfeitamente! Coordenar uma equipe de 30 advogados realmente exige muito. Os sócios estão certos em buscar soluções.
+
+Para eu entender melhor o que vocês precisam, me responde: qual é o principal desafio de produtividade que estão enfrentando?
+
+É mais sobre:
+• Organização e gestão de projetos/processos?
+• Desenvolvimento de lideranças e gestores?
+• Ferramentas e automação de tarefas?
+• Algo específico em outra área?
+
+Isso vai me ajudar a indicar a melhor solução! 📋</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Não sei se é falta de treinamento, gestão ruim ou ferramentas inadequadas.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Perfeito! Essa é uma situação muito comum e vocês estão no caminho certo buscando identificar a causa raiz.
+
+Com esse cenário, o ideal seria fazer um diagnóstico estruturado para identificar exatamente onde estão os gargalos - se é capacitação da equipe, processos de gestão, ferramentas ou uma combinação desses fatores.
+
+Vou encaminhar para um consultor especializado que poderá fazer um diagnóstico e desenhar uma solução adequada para o escritório de vocês.
+
+Para isso, preciso apenas do seu nome completo e qual o melhor e-mail para contato? 
+
+O consultor poderá entender melhor a dinâmica do escritório e propor as melhores soluções de treinamento! 😊</span> <span style="color:#f59e0b;font-size:11px">🚨 escalado</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Os sócios querem uma solução rápida mas também sustentável.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">🔇 [Modo teste] Bot pausado — atendente humano ativo.
+Clique em '🔄 Reativar Bot' para reiniciar.</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Vocês conseguem fazer um diagnóstico antes de recomendar algo?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">🔇 [Modo teste] Bot pausado — atendente humano ativo.
+Clique em '🔄 Reativar Bot' para reiniciar.</span>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div></div>
+        <div style="margin-bottom:32px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+            <div style="background:#10b981;color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:13px">Trilha D</div>
+            <div style="font-size:15px;font-weight:600;color:#1e293b">Locação de Espaço</div>
+            <div style="margin-left:auto"><span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">✅ 94/100</span></div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-left:4px solid #16a34a;border-radius:8px;margin-bottom:16px;overflow:hidden">
+            <div style="background:#f8fafc;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e5e7eb;cursor:pointer"
+                 onclick="toggle('D1')">
+              <span style="font-weight:700;color:#1e293b">[D1] Empresa quer sala para treinamento próprio</span>
+              <span style="font-size:12px;color:#64748b">— Silvia Nunes</span>
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <span style="font-size:11px;color:#64748b">Escalação: ✅</span>
+                <span style="font-size:11px;color:#64748b">Keywords: 80%</span>
+                <span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">✅ 90/100</span>
+                <span style="color:#94a3b8;font-size:14px" id="arr-D1">▼</span>
+              </div>
+            </div>
+            <div id="body-D1" style="display:none;padding:16px 20px">
+              <p style="font-size:13px;color:#64748b;margin-bottom:12px">RH quer alugar sala para aplicar treinamento que já tem internamente</p>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Esperado escalar:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Escalou:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Keywords encontradas:</strong> locação, sala, espaço, consultor
+                </div>
+                
+              </div>
+              <div style="background:#f8fafc;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto">
+                
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Olá! Gostaria de informações sobre locação de salas.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Olá! 👋 Que ótimo!
+
+A Impacta tem espaços disponíveis para locação: salas de aula, laboratórios de informática, auditório (até 100 pessoas) e salas de reunião. 
+
+Para eu entender melhor sua necessidade e passar as informações corretas, preciso de alguns detalhes:
+
+*Qual é o tipo de evento que você planeja realizar?* (por exemplo: treinamento, workshop, reunião, palestra, etc.)</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Precisamos de uma sala para um treinamento que vamos ministrar internamente.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Perfeito! Entendi que vocês precisam de espaço para ministrar um treinamento interno da empresa.
+
+Para verificar a disponibilidade e montar um orçamento adequado, preciso saber:
+
+*Qual a data e horário que vocês precisam da sala?*</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Seriam 20 pessoas, 1 dia inteiro, com coffee break.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Ótimo! Anotei: 20 pessoas, 1 dia inteiro com coffee break. 👍
+
+Agora preciso de dois detalhes importantes:
+
+*Qual é a data desejada para o evento?* E *qual layout vocês preferem?* (por exemplo: laboratório com computadores, mesas e cadeiras, auditório, mesas redondas, etc.)</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Precisamos de projetor, flipchart e ar condicionado.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Perfeito! Anotei os recursos: projetor, flipchart e ar condicionado. Temos tudo isso disponível! 😊
+
+Só me faltam dois detalhes essenciais:
+
+*Qual é a data do evento?* E *qual layout você prefere para as 20 pessoas?* (laboratório com computadores, mesas e cadeiras, ou outro formato?)</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Qual a disponibilidade para a segunda quinzena de maio e quais os valores?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Ótima pergunta! Entendo que vocês têm interesse na segunda quinzena de maio. 📅
+
+Infelizmente, não tenho acesso a essa informação de disponibilidade e valores em tempo real. Mas nosso consultor poderá confirmar disponibilidade e valores — em breve entrará em contato com você!
+
+Para eu localizar sua solicitação rapidinho, pode me informar:
+
+*Qual é o nome completo e a empresa de vocês?*</span> <span style="color:#f59e0b;font-size:11px">🚨 escalado</span>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-left:4px solid #16a34a;border-radius:8px;margin-bottom:16px;overflow:hidden">
+            <div style="background:#f8fafc;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e5e7eb;cursor:pointer"
+                 onclick="toggle('D2')">
+              <span style="font-weight:700;color:#1e293b">[D2] ONG quer auditório para congresso</span>
+              <span style="font-size:12px;color:#64748b">— Eduardo Pires</span>
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <span style="font-size:11px;color:#64748b">Escalação: ✅</span>
+                <span style="font-size:11px;color:#64748b">Keywords: 100%</span>
+                <span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">✅ 100/100</span>
+                <span style="color:#94a3b8;font-size:14px" id="arr-D2">▼</span>
+              </div>
+            </div>
+            <div id="body-D2" style="display:none;padding:16px 20px">
+              <p style="font-size:13px;color:#64748b;margin-bottom:12px">ONG precisa de auditório grande para evento de 1 dia com palestrantes</p>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Esperado escalar:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Escalou:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Keywords encontradas:</strong> auditório, locação, espaço, consultor
+                </div>
+                
+              </div>
+              <div style="background:#f8fafc;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto">
+                
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Boa tarde! Sou de uma ONG e preciso de um auditório para um evento.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Boa tarde! 😊
+
+Que ótimo! A Impacta tem auditórios disponíveis para locação, perfeitos para eventos, palestras e apresentações. Nossos auditórios comportam mais de 100 pessoas e contam com sistema multimídia e iluminação adequada.
+
+Para eu te ajudar melhor, pode me contar:
+• Que tipo de evento vocês vão realizar?
+• Qual a data e horário desejados?
+
+Temos unidades na Paulista e no Paraíso, ambas com fácil acesso! 
+
+Qual seu nome completo para eu anotar?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Vamos fazer um congresso de sustentabilidade, esperamos 150 participantes.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Que bacana! Um congresso de sustentabilidade com 150 participantes é bem relevante. 🌱
+
+Perfeito, anotei:
+• Tipo de evento: Congresso de Sustentabilidade
+• Número de participantes: 150
+
+Agora preciso de alguns detalhes para nosso consultor confirmar disponibilidade:
+
+*Qual a data desejada para o congresso?* E qual o horário (período do dia)?
+
+Após isso, confirmo seu nome completo e e-mail para a gente poder avançar!</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Seria um dia inteiro com 4 palestrantes e uma sessão de perguntas.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Entendi perfeitamente! Um dia inteiro com 4 palestrantes e sessão de perguntas é um formato clássico de congresso. 👍
+
+Para eu registrar tudo certinho, faltam dois dados importantes:
+
+*Qual a data específica que vocês pretendem fazer o evento?*
+
+*E qual horário vocês gostariam de começar?* (por exemplo, 9h da manhã, 8h30, etc.)
+
+Depois confirmo seu nome completo e e-mail para que nosso consultor entre em contato com disponibilidade e valores!</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Precisamos de palco, microfones, projetor grande e área para coffee break.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Ótimo! Anotei todas as necessidades:
+• Palco
+• Microfones
+• Projetor grande
+• Área para coffee break
+
+A Impacta tem tudo isso disponível em nossos auditórios! Contamos com projetor/telão, som, microfone e espaço para coffee break. Para detalhes sobre o coffee break (se é serviço incluído ou extra), nosso consultor vai confirmar tudo com você. 😊
+
+Agora, para eu finalizar o registro, preciso de:
+
+*Qual a data específica do evento?* E *qual horário vocês pretendem começar?*
+
+Depois só confirmo seu *nome completo* e *e-mail* para que nosso consultor entre em contato!</span> <span style="color:#f59e0b;font-size:11px">🚨 escalado</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Têm esse tipo de espaço disponível? Quais são os valores?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">🔇 [Modo teste] Bot pausado — atendente humano ativo.
+Clique em '🔄 Reativar Bot' para reiniciar.</span>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-left:4px solid #16a34a;border-radius:8px;margin-bottom:16px;overflow:hidden">
+            <div style="background:#f8fafc;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e5e7eb;cursor:pointer"
+                 onclick="toggle('D3')">
+              <span style="font-weight:700;color:#1e293b">[D3] Escola técnica quer laboratório de informática</span>
+              <span style="font-size:12px;color:#64748b">— Roberto Campos</span>
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <span style="font-size:11px;color:#64748b">Escalação: ✅</span>
+                <span style="font-size:11px;color:#64748b">Keywords: 100%</span>
+                <span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">✅ 100/100</span>
+                <span style="color:#94a3b8;font-size:14px" id="arr-D3">▼</span>
+              </div>
+            </div>
+            <div id="body-D3" style="display:none;padding:16px 20px">
+              <p style="font-size:13px;color:#64748b;margin-bottom:12px">Escola precisa de laboratório com computadores para curso externo</p>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Esperado escalar:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Escalou:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Keywords encontradas:</strong> laboratório, locação, informática, consultor
+                </div>
+                
+              </div>
+              <div style="background:#f8fafc;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto">
+                
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Olá! Preciso saber se vocês têm laboratório de informática para locação.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Olá! 👋 Ótimo! Sim, a Impacta disponibiliza laboratórios de informática para locação! 
+
+Para te ajudar melhor, preciso de algumas informações:
+
+1️⃣ *Qual é o tipo de evento?* (treinamento, workshop, reunião, palestra, etc.)
+2️⃣ *Qual a data e horário desejados?*
+3️⃣ *Quantas pessoas* precisarão usar o laboratório?
+4️⃣ *Qual o layout ideal* para você? (computadores dispostos em laboratório, mesas e cadeiras, auditório, etc.)
+
+Com esses dados, nosso consultor poderá confirmar disponibilidade e enviar um orçamento para você em até 24 horas! 😊</span> <span style="color:#f59e0b;font-size:11px">🚨 escalado</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Somos uma escola técnica e vamos aplicar um curso de programação para turma externa.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">🔇 [Modo teste] Bot pausado — atendente humano ativo.
+Clique em '🔄 Reativar Bot' para reiniciar.</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Precisamos de 20 computadores com boa configuração, internet e ar condicionado.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">🔇 [Modo teste] Bot pausado — atendente humano ativo.
+Clique em '🔄 Reativar Bot' para reiniciar.</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Seria 3 dias consecutivos, com turno integral.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">🔇 [Modo teste] Bot pausado — atendente humano ativo.
+Clique em '🔄 Reativar Bot' para reiniciar.</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Qual a capacidade do laboratório e quais são as condições de locação?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">🔇 [Modo teste] Bot pausado — atendente humano ativo.
+Clique em '🔄 Reativar Bot' para reiniciar.</span>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-left:4px solid #16a34a;border-radius:8px;margin-bottom:16px;overflow:hidden">
+            <div style="background:#f8fafc;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e5e7eb;cursor:pointer"
+                 onclick="toggle('D4')">
+              <span style="font-weight:700;color:#1e293b">[D4] Empresa quer estúdio para gravação de conteúdo</span>
+              <span style="font-size:12px;color:#64748b">— Camila Vaz</span>
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <span style="font-size:11px;color:#64748b">Escalação: ✅</span>
+                <span style="font-size:11px;color:#64748b">Keywords: 75%</span>
+                <span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">✅ 87/100</span>
+                <span style="color:#94a3b8;font-size:14px" id="arr-D4">▼</span>
+              </div>
+            </div>
+            <div id="body-D4" style="display:none;padding:16px 20px">
+              <p style="font-size:13px;color:#64748b;margin-bottom:12px">Empresa quer gravar treinamentos EAD em estúdio profissional</p>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Esperado escalar:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Escalou:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Keywords encontradas:</strong> estúdio, gravação, consultor
+                </div>
+                
+              </div>
+              <div style="background:#f8fafc;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto">
+                
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Oi! Vocês têm estúdio para gravação de vídeos?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Olá! 😊
+
+Sim, temos estúdio de vídeo com estrutura profissional! Nosso estúdio é voltado para gravação de aulas, eventos, produção de conteúdo corporativo e projetos audiovisuais. 
+
+Ele conta com equipamentos completos para gravação, recursos para edição de áudio e vídeo, além do apoio de especialistas qualificados. É a mesma estrutura que utilizamos para produzir nossos próprios cursos online.
+
+Para qual tipo de evento ou gravação você precisa do estúdio?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Queremos gravar uma série de treinamentos para nosso EAD interno.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Ótimo! Entendi que vocês querem produzir conteúdo em vídeo para disponibilizar internamente na empresa. 🎬
+
+Para eu entender melhor a demanda e conectar você com o especialista certo, preciso de algumas informações:
+
+*Qual é o nome completo e qual empresa vocês representam?*
+
+Depois vou entender melhor sobre os temas dos treinamentos e o volume de produção que vocês imaginam.</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Seriam 10 vídeos de 10 a 15 minutos cada, com 2 dias de gravação.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Perfeito! Então vocês precisam de 2 dias de estúdio para gravar uma série de 10 vídeos, totalizando entre 100 a 150 minutos de conteúdo. 👍
+
+Agora, para eu encaminhar isso corretamente para um consultor especializado que possa confirmar disponibilidade, valores e detalhes técnicos, preciso de alguns dados:
+
+*Qual é o seu nome completo?*</span> <span style="color:#f59e0b;font-size:11px">🚨 escalado</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Precisamos de fundo verde ou cenário montado, iluminação e equipamento de áudio.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">🔇 [Modo teste] Bot pausado — atendente humano ativo.
+Clique em '🔄 Reativar Bot' para reiniciar.</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Vocês fornecem operador de câmera ou só o espaço?</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">🔇 [Modo teste] Bot pausado — atendente humano ativo.
+Clique em '🔄 Reativar Bot' para reiniciar.</span>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div></div>
+        <div style="margin-bottom:32px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+            <div style="background:#6b7280;color:#fff;padding:4px 14px;border-radius:999px;font-weight:700;font-size:13px">Trilha EDGE</div>
+            <div style="font-size:15px;font-weight:600;color:#1e293b">Casos Especiais</div>
+            <div style="margin-left:auto"><span style="background:#fef9c3;color:#ca8a04;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">⚠️ 58/100</span></div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-left:4px solid #dc2626;border-radius:8px;margin-bottom:16px;overflow:hidden">
+            <div style="background:#f8fafc;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e5e7eb;cursor:pointer"
+                 onclick="toggle('E1')">
+              <span style="font-weight:700;color:#1e293b">[E1] Mensagem curta e vaga no início</span>
+              <span style="font-size:12px;color:#64748b">— Teste Lead</span>
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <span style="font-size:11px;color:#64748b">Escalação: ❌</span>
+                <span style="font-size:11px;color:#64748b">Keywords: 67%</span>
+                <span style="background:#fee2e2;color:#dc2626;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">❌ 33/100</span>
+                <span style="color:#94a3b8;font-size:14px" id="arr-E1">▼</span>
+              </div>
+            </div>
+            <div id="body-E1" style="display:none;padding:16px 20px">
+              <p style="font-size:13px;color:#64748b;margin-bottom:12px">Lead inicia com mensagem mínima — bot deve perguntar e conduzir</p>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Esperado escalar:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Escalou:</strong> False
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Keywords encontradas:</strong> empresa, equipe
+                </div>
+                
+              </div>
+              <div style="background:#f8fafc;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto">
+                
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">oi</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Seja bem-vindo(a) ao Universo IMPACTA! 🎓 Sou o assistente de Treinamentos Corporativos PJ. Para começar, qual é o seu nome?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">quero treinamento</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Oi! Que legal que você quer fazer um treinamento conosco! 😊
+
+Para eu te ajudar melhor, qual é o seu nome completo?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">pra minha empresa</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Ótimo! Vou te ajudar a estruturar um treinamento para sua empresa. 
+
+Qual é o seu nome completo?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">são 30 pessoas</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Perfeito! Com 30 pessoas, vamos montar uma turma exclusiva para sua empresa! 👍
+
+Antes de continuar, pode me confirmar seu nome completo?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">liderança e comunicação</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Excelente! Liderança e comunicação são temas muito relevantes para desenvolver equipes de alto desempenho.
+
+Mas primeiro, preciso do seu nome completo para eu registrar sua solicitação. Qual é?</span>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-left:4px solid #16a34a;border-radius:8px;margin-bottom:16px;overflow:hidden">
+            <div style="background:#f8fafc;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e5e7eb;cursor:pointer"
+                 onclick="toggle('E2')">
+              <span style="font-weight:700;color:#1e293b">[E2] Lead fora do escopo — pede algo que não é oferecido</span>
+              <span style="font-size:12px;color:#64748b">— Gustavo Lima</span>
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <span style="font-size:11px;color:#64748b">Escalação: ✅</span>
+                <span style="font-size:11px;color:#64748b">Keywords: 67%</span>
+                <span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px">✅ 83/100</span>
+                <span style="color:#94a3b8;font-size:14px" id="arr-E2">▼</span>
+              </div>
+            </div>
+            <div id="body-E2" style="display:none;padding:16px 20px">
+              <p style="font-size:13px;color:#64748b;margin-bottom:12px">Lead pede coaching individual de carreira — bot deve tratar com elegância</p>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Esperado escalar:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Escalou:</strong> True
+                </div>
+                <div style="background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:12px">
+                  <strong>Keywords encontradas:</strong> consultor, entender
+                </div>
+                
+              </div>
+              <div style="background:#f8fafc;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto">
+                
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Olá! Gostaria de fazer um coaching individual de carreira com um coach executivo.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Olá! 😊
+
+Obrigado pelo interesse! Vejo que você está buscando um coaching individual de carreira com um coach executivo.
+
+Deixa eu ser transparente com você: este canal é exclusivo para treinamentos corporativos e soluções de capacitação em tecnologia e transformação digital. Coaching executivo individual é um serviço especializado que está fora do nosso escopo de atendimento por aqui.
+
+Para consultar sobre disponibilidade de coaching executivo, recomendo entrar em contato diretamente com a nossa equipe pelo e-mail *solicitacao.secretaria@impacta.com.br*. Eles terão informações completas sobre esse tipo de serviço e poderão ajudá-lo melhor! 💼
+
+Há algo relacionado a treinamentos corporativos ou turmas que eu possa ajudar você?</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Sou diretor e quero sessões 1:1 de desenvolvimento pessoal.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">Ótimo, entendi! 😊
+
+Você está buscando sessões individuais de desenvolvimento pessoal. Esse tipo de serviço especializado (coaching 1:1 ou mentoria executiva) está um pouco fora do escopo deste canal, que é focado em *treinamentos corporativos em grupo* e *soluções de capacitação para equipes*.
+
+No entanto, a Impacta oferece excelentes programas de *desenvolvimento de líderes e gestores* — alguns podem ser adaptados para necessidades específicas. Seria interessante conversar com um consultor especializado que possa entender melhor sua demanda e avaliar as melhores opções disponíveis.
+
+Posso coletar seus dados para que um consultor entre em contato e avalie a melhor solução para você?
+
+Precisaria de:
+• *Seu nome completo*
+• *Empresa e CNPJ*
+• *E-mail ou WhatsApp para contato*
+
+Assim conseguimos encaminhar sua solicitação de forma prioritária! 👍</span> <span style="color:#f59e0b;font-size:11px">🚨 escalado</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Não é para equipe, é só para mim mesmo.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">🔇 [Modo teste] Bot pausado — atendente humano ativo.
+Clique em '🔄 Reativar Bot' para reiniciar.</span>
+                </div>
+              </div>
+              <div style="margin-bottom:10px">
+                <div style="text-align:right;margin-bottom:4px">
+                  <span style="background:#dcf8c6;padding:6px 12px;border-radius:12px 12px 4px 12px;font-size:13px;display:inline-block;max-width:80%">Tenho orçamento de R$ 5.000 para 3 meses.</span>
+                </div>
+                <div style="text-align:left">
+                  <span style="background:#fff;border:1px solid #e5e7eb;padding:6px 12px;border-radius:4px 12px 12px 12px;font-size:13px;display:inline-block;max-width:80%;white-space:pre-wrap">🔇 [Modo teste] Bot pausado — atendente humano ativo.
+Clique em '🔄 Reativar Bot' para reiniciar.</span>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div></div>
+</div>
+<script>
+function toggle(id) {
+  const body = document.getElementById('body-' + id);
+  const arr  = document.getElementById('arr-' + id);
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  arr.textContent = open ? '▼' : '▲';
+}
+</script>
+</body>
+</html>

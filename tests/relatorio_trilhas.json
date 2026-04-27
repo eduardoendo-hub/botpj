@@ -1,0 +1,1055 @@
+[
+  {
+    "id": "A1",
+    "trilha": "A",
+    "nome": "Pessoa física — curso de liderança",
+    "descricao": "Lead individual quer fazer um curso de liderança para si mesmo",
+    "lead_name": "João Almeida",
+    "phone": "5511900000001",
+    "conversation": [
+      {
+        "turn": 1,
+        "user": "Olá! Quero fazer um curso de liderança.",
+        "bot": "Olá! 👋 Ótimo, temos excelentes soluções em liderança e gestão.\n\nPara entender melhor sua necessidade, preciso de alguns detalhes: esse treinamento seria para você mesmo, ou para uma equipe/empresa? 😊",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 2,
+        "user": "Sou coordenador em uma empresa de logística, quero me desenvolver pessoalmente.",
+        "bot": "Ótimo! Para cursos individuais em turma aberta, vou te encaminhar para um consultor que poderá informar as opções, datas e condições de matrícula. \n\nAntes, pode me confirmar seu nome completo e e-mail?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 3,
+        "user": "Quero fazer eu mesmo, não preciso para minha equipe.",
+        "bot": "Perfeito! Entendi que é para seu desenvolvimento pessoal mesmo.\n\nPara te ajudar melhor com as opções de cursos de liderança, pode me confirmar seu nome completo e e-mail?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 4,
+        "user": "Tem cursos presenciais? Moro em São Paulo.",
+        "bot": "Sim! 🎯 Temos cursos presenciais em São Paulo, na Rua Cubatão, 726 — Vila Mariana, bem perto do metrô Paraíso (linhas 2-verde e 4-amarela).\n\nAgora, para eu seguir com seu cadastro, pode me confirmar seu nome completo e e-mail?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 5,
+        "user": "Quais são os valores e datas das próximas turmas?",
+        "bot": "Ótima pergunta! 📅 Os valores e datas das próximas turmas de liderança estão disponíveis no nosso site ou um consultor pode te enviar com todas as opções assim que eu tiver seus dados.\n\nPara isso, preciso apenas do seu nome completo e e-mail. Pode compartilhar comigo?",
+        "escalated": false,
+        "status": "ok"
+      }
+    ],
+    "escalated": false,
+    "esperado": {
+      "trilha_detectada": "A",
+      "deve_escalar": false,
+      "keywords_resposta": [
+        "turma aberta",
+        "liderança",
+        "inscrição",
+        "data",
+        "individual"
+      ]
+    },
+    "keywords_encontradas": [
+      "turma aberta",
+      "liderança",
+      "data"
+    ],
+    "keywords_pct": 60,
+    "escalation_ok": true,
+    "score": 80,
+    "status_label": "✅ APROVADO",
+    "error": null
+  },
+  {
+    "id": "A2",
+    "trilha": "A",
+    "nome": "RH — inscrever 2 pessoas em turma existente",
+    "descricao": "RH de empresa pequena quer inscrever dois funcionários em curso da grade",
+    "lead_name": "Ana Ferreira",
+    "phone": "5511900000002",
+    "conversation": [
+      {
+        "turn": 1,
+        "user": "Boa tarde! Trabalho no RH de uma empresa e quero inscrever dois funcionários num curso.",
+        "bot": "Boa tarde! 😊\n\nQue ótimo! Vou te ajudar com a inscrição dos dois funcionários da sua empresa.\n\nPara começar, preciso de algumas informações:\n\nQual seu nome completo?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 2,
+        "user": "Somos uma empresa de contabilidade com 12 funcionários.",
+        "bot": "Perfeito! Uma empresa de contabilidade com 12 funcionários tem um ótimo perfil para nossos treinamentos corporativos.\n\nPara eu te ajudar da melhor forma, preciso conhecer você melhor:\n\nQual seu nome completo?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 3,
+        "user": "Eles precisam de um curso de Excel avançado ou Power BI. Vocês têm isso?",
+        "bot": "Ótimo! Sim, temos ambos os cursos! 🎯\n\n*Excel Avançado* — ideal para quem já domina o básico e quer evoluir com funções complexas, análises mais sofisticadas e automação.\n\n*Power BI* — perfeito para quem quer dar um salto e aprender Business Intelligence, criando relatórios e dashboards interativos que transformam dados em insights estratégicos. É muito procurado na área contábil e financeira!\n\nAntes de eu recomendar qual é mais adequado para os dois, me diz:\n\n*Qual é o nível de Excel que eles têm hoje?* Eles já dominam PROCV, SE e tabelas dinâmicas, ou ainda estão em um nível intermediário?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 4,
+        "user": "Seriam 2 pessoas, queríamos turma aberta mesmo. Tem opção online?",
+        "bot": "Perfeito! Com 2 pessoas em turma aberta, temos excelentes opções online para vocês! 💻\n\nSobre a modalidade online, você prefere:\n\n*Online ao vivo* — aulas em tempo real com instrutor, interação, dúvidas diretas. A gravação fica disponível por 90 dias, liberada em até 48 horas após cada sessão.\n\nOu\n\n*EAD gravado* — conteúdo em aulas gravadas, 100% autodidata, você estuda no seu próprio ritmo, sem horário fixo.\n\nQual faz mais sentido para os dois?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 5,
+        "user": "Como funciona o pagamento para empresa?",
+        "bot": "Ótima pergunta! Para turmas abertas em modalidade online, a forma de pagamento é definida no momento da inscrição no site.\n\nComo vocês são uma empresa, vou precisar de alguns dados para que um consultor possa enviar uma proposta completa com as melhores opções de pagamento para PJ:\n\n*Qual seu nome completo?*\n\nE depois vou precisar do seu e-mail para a gente continuar! 😊",
+        "escalated": false,
+        "status": "ok"
+      }
+    ],
+    "escalated": false,
+    "esperado": {
+      "trilha_detectada": "A",
+      "deve_escalar": false,
+      "keywords_resposta": [
+        "turma aberta",
+        "inscrição",
+        "online",
+        "pagamento"
+      ]
+    },
+    "keywords_encontradas": [
+      "turma aberta",
+      "inscrição",
+      "online",
+      "pagamento"
+    ],
+    "keywords_pct": 100,
+    "escalation_ok": true,
+    "score": 100,
+    "status_label": "✅ APROVADO",
+    "error": null
+  },
+  {
+    "id": "A3",
+    "trilha": "A",
+    "nome": "Lead pergunta sobre grade de cursos",
+    "descricao": "Lead quer conhecer o catálogo completo antes de decidir",
+    "lead_name": "Marcos Oliveira",
+    "phone": "5511900000003",
+    "conversation": [
+      {
+        "turn": 1,
+        "user": "Oi, quais cursos vocês oferecem?",
+        "bot": "Oi! 👋 Tudo bem?\n\nA Impacta oferece uma variedade grande de cursos corporativos nas principais áreas de tecnologia e desenvolvimento. Temos desde *Excel, Power BI e dados*, passando por *Cloud (Azure, AWS)*, *Scrum e gestão ágil*, até *Liderança, Vendas e soft skills*.\n\nTambém temos soluções customizadas para necessidades específicas! \n\n*Para te ajudar melhor:* você está buscando um curso para si mesmo, ou é para sua equipe/empresa? E tem alguma área que você está mais interessado?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 2,
+        "user": "Sou gerente de projetos e quero me atualizar. Pode me mandar um catálogo?",
+        "bot": "Ótimo! 👍 Como gerente de projetos, você tem excelentes opções para se atualizar!\n\nTemos o curso *Planejamento e Gerência de Projetos com Ênfase no PMI* — 40 horas, com foco em práticas do PMBOK®, abordagem teórica + prática, e desenvolvimento de projetos reais. Perfeito para estruturar melhor seus projetos com controle de escopo, tempo, custos e riscos.\n\nSobre o catálogo: prefiro já começar a qualificar sua necessidade para encaminhar exatamente o que você precisa! 😊\n\n*Me diga:*\n• Você busca esse treinamento *para você mesmo* (como profissional individual) ou *para sua equipe/empresa*?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 3,
+        "user": "Tem algum curso de gestão de projetos ou PMP?",
+        "bot": "Ótimo! Temos sim! 🎯\n\nA Impacta oferece o curso *Planejamento e Gerência de Projetos com Ênfase no PMI*, que é completo para quem quer dominar gestão de projetos com as melhores práticas do PMBOK®. É uma formação sólida em conceitos, ferramentas e aplicação prática.\n\nAgora, para eu te encaminhar da melhor forma:\n\n*Essa formação é para você mesmo* (como profissional individual buscando se atualizar) *ou para sua equipe/empresa*?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 4,
+        "user": "E de comunicação e apresentação?",
+        "bot": "Ótima pergunta! 👌 Temos cursos nessa área também!\n\nA Impacta oferece formações em *Comunicação Executiva* e *Apresentações Impactantes* — cursos práticos focados em desenvolver habilidades de comunicação clara, persuasão, técnicas de apresentação e impacto profissional. Perfeito para gerentes que precisam comunicar bem com stakeholders e lideranças.\n\nMas antes de detalhar mais, preciso entender melhor sua necessidade:\n\n*Você está buscando esses cursos para você mesmo* (como profissional individual) *ou para sua equipe/empresa?*",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 5,
+        "user": "Qual a duração e o valor médio dos cursos?",
+        "bot": "Boa pergunta! 📊\n\nOs cursos de gestão e soft skills variam bastante em duração e investimento — alguns têm 20h, outros 40h ou mais, dependendo da profundidade e modalidade.\n\nPara te passar *valores e durações exatos*, preciso entender melhor sua situação:\n\n*Você está buscando esses cursos para você mesmo* (como profissional individual em turma aberta) *ou para sua equipe/empresa?*\n\nEssa informação é importante porque:\n• Se for *individual em turma aberta*, as datas e valores estão disponíveis no nosso site — posso te direcionar lá.\n• Se for *para sua equipe*, podemos montar uma *turma exclusiva* com cronograma e investimento personalizados.\n\nQual é o seu caso? 😊",
+        "escalated": false,
+        "status": "ok"
+      }
+    ],
+    "escalated": false,
+    "esperado": {
+      "trilha_detectada": "A",
+      "deve_escalar": false,
+      "keywords_resposta": [
+        "catálogo",
+        "curso",
+        "gestão",
+        "duração"
+      ]
+    },
+    "keywords_encontradas": [
+      "catálogo",
+      "curso",
+      "gestão",
+      "duração"
+    ],
+    "keywords_pct": 100,
+    "escalation_ok": true,
+    "score": 100,
+    "status_label": "✅ APROVADO",
+    "error": null
+  },
+  {
+    "id": "B1",
+    "trilha": "B",
+    "nome": "RH — treinamento exclusivo de liderança para 25 pessoas",
+    "descricao": "RH de empresa grande quer turma exclusiva, customizada, in company",
+    "lead_name": "Renata Costa",
+    "phone": "5511900000004",
+    "conversation": [
+      {
+        "turn": 1,
+        "user": "Olá! Sou da área de RH da empresa Grupo Alfa e preciso de uma proposta de treinamento.",
+        "bot": "Olá! Que bom falar com você! 😊\n\nSou a Renata, da Impacta, e vou te ajudar com a proposta de treinamento para o Grupo Alfa.\n\nPara montar a proposta ideal, preciso de algumas informações. Pode me passar seu nome completo?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 2,
+        "user": "Precisamos de um programa de liderança para 25 gestores, turma exclusiva para nossa empresa.",
+        "bot": "Perfeito! Com 25 alunos, recomendamos uma turma exclusiva para a sua empresa, que permite total customização de horário, conteúdo e carga horária.\n\nPara montar a proposta de programa de liderança, preciso primeiro do seu nome completo para dar continuidade ao atendimento.",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 3,
+        "user": "Queremos que seja presencial, nas nossas instalações aqui em São Paulo.",
+        "bot": "Ótimo! Presencial na sua empresa em São Paulo funciona perfeitamente. 👍\n\nMas antes de tudo, para que eu possa registrar corretamente a demanda, pode me confirmar seu *nome completo*?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 4,
+        "user": "O tema principal é liderança situacional e gestão de conflitos.",
+        "bot": "Excelente! Liderança situacional e gestão de conflitos são temas muito relevantes para desenvolvimento de gestores. 👍\n\nAgora, para eu seguir com sua proposta, preciso do seu *nome completo* para registrar tudo certinho.",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 5,
+        "user": "Qual o prazo para receber uma proposta? Precisamos fechar até o final do mês.",
+        "bot": "Entendo a urgência! Vou registrar como prioridade. O prazo padrão é 24h úteis - faremos o possível para priorizar o seu atendimento.\n\nPara agilizar sua proposta, preciso do seu *nome completo* agora para registrar sua solicitação prioritária.",
+        "escalated": false,
+        "status": "ok"
+      }
+    ],
+    "escalated": false,
+    "esperado": {
+      "trilha_detectada": "B",
+      "deve_escalar": true,
+      "keywords_resposta": [
+        "proposta",
+        "in company",
+        "exclusivo",
+        "consultor"
+      ]
+    },
+    "keywords_encontradas": [
+      "proposta"
+    ],
+    "keywords_pct": 25,
+    "escalation_ok": false,
+    "score": 12,
+    "status_label": "❌ REPROVADO",
+    "error": null
+  },
+  {
+    "id": "B2",
+    "trilha": "B",
+    "nome": "Gerente de fábrica — NR segurança in company",
+    "descricao": "Lead quer treinamento obrigatório de NR para toda a equipe operacional",
+    "lead_name": "Carlos Mendes",
+    "phone": "5511900000005",
+    "conversation": [
+      {
+        "turn": 1,
+        "user": "Boa tarde, preciso de treinamento de NR para minha equipe de produção.",
+        "bot": "Boa tarde! 😊\n\nEntendi que você precisa de treinamento de NR (Normas Regulamentadoras) para sua equipe de produção. \n\nVou verificar a disponibilidade desse treinamento com um especialista e retorno em breve com mais informações sobre essa capacitação específica.\n\nEnquanto isso, para eu já adiantar sua solicitação, pode me informar seu nome completo?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 2,
+        "user": "Sou gerente de uma fábrica de autopeças, temos 80 operadores.",
+        "bot": "Ótimo! Vejo que você é gerente de uma fábrica de autopeças com 80 operadores — isso é uma excelente oportunidade para capacitação em segurança! 👷\n\nCom 80 operadores, recomendamos uma turma exclusiva para sua empresa, com horário e conteúdo customizados conforme suas necessidades.\n\nAntes de eu avançar, preciso de algumas informações:\n\n1. *Qual é seu nome completo?*\n2. *Qual o nome da empresa e o CNPJ?*\n\nDepois vou confirmar alguns detalhes sobre o treinamento de NR com nosso especialista.",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 3,
+        "user": "Preciso de NR-10 e NR-35, para todos eles. Tem que ser in company aqui na fábrica.",
+        "bot": "Perfeito! NR-10 (Segurança em Instalações e Serviços em Eletricidade) e NR-35 (Trabalho em Altura) são treinamentos muito importantes para operadores industriais.\n\nPara in company, o cliente precisa providenciar a infraestrutura: 1 computador por aluno com o software instalado (mesma versão), computador para o instrutor, projetor/telão e internet estável.\n\nAgora preciso dos seus dados para encaminhar sua solicitação:\n\n*Qual é seu nome completo?*",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 4,
+        "user": "Precisamos emitir certificado para todos. Vocês emitem?",
+        "bot": "Sim, com certeza! 😊\n\nA Impacta emite certificado digital reconhecido pelo MEC como extensão universitária. Esse certificado é válido para currículo, processos seletivos em órgãos governamentais e fins profissionais — perfeito para a documentação de segurança da sua equipe.\n\nTodos os 80 operadores receberão seus certificados digitais após conclusão dos treinamentos de NR-10 e NR-35.\n\nAgora, para eu continuar e encaminhar sua solicitação ao consultor, pode me informar:\n\n*Qual é seu nome completo?*",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 5,
+        "user": "Qual a disponibilidade para o próximo mês? E como funciona o orçamento?",
+        "bot": "Não tenho acesso às informações de disponibilidade de agenda e valores específicos para os treinamentos de NR-10 e NR-35, mas nosso consultor poderá te ajudar com essas informações detalhadas.\n\nO prazo padrão para envio da proposta é de até 24 horas úteis após recebermos todos os dados.\n\nPara eu encaminhar sua solicitação ao consultor especializado, preciso dos seus dados:\n\n*Qual é seu nome completo?*",
+        "escalated": true,
+        "status": "escalated"
+      }
+    ],
+    "escalated": true,
+    "esperado": {
+      "trilha_detectada": "B",
+      "deve_escalar": true,
+      "keywords_resposta": [
+        "proposta",
+        "in company",
+        "certificado",
+        "consultor"
+      ]
+    },
+    "keywords_encontradas": [
+      "proposta",
+      "in company",
+      "certificado",
+      "consultor"
+    ],
+    "keywords_pct": 100,
+    "escalation_ok": true,
+    "score": 100,
+    "status_label": "✅ APROVADO",
+    "error": null
+  },
+  {
+    "id": "B3",
+    "trilha": "B",
+    "nome": "Empresa grande — programa customizado para 50 líderes",
+    "descricao": "Diretora de T&D quer montar um programa completo de desenvolvimento",
+    "lead_name": "Patricia Lima",
+    "phone": "5511900000006",
+    "conversation": [
+      {
+        "turn": 1,
+        "user": "Olá! Sou diretora de T&D da Construtora Nova Era e estou montando um PDL para 2025.",
+        "bot": "Oi! 👋 Que legal! Estou aqui para ajudar a Construtora Nova Era com soluções de treinamento para seu plano de desenvolvimento de lideranças e equipes em 2025.\n\nA Impacta oferece programas corporativos em áreas como tecnologia, inovação, liderança, soft skills, dados, BI e muito mais — com 37 anos de mercado e mais de 30 mil empresas já treinadas.\n\nPara montar um PDL alinhado aos seus objetivos, preciso entender melhor: *quais são as principais competências ou áreas que você quer desenvolver nas suas equipes em 2025?* (por exemplo: liderança, gestão digital, habilidades técnicas, transformação digital, etc.)",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 2,
+        "user": "Preciso de um programa completo de desenvolvimento de líderes, cerca de 50 pessoas.",
+        "bot": "Perfeito! 👍 Um programa completo para 50 líderes é exatamente o nosso foco corporativo.\n\nCom 50 pessoas, você tem a oportunidade de uma *turma exclusiva* — customizada para a Construtora Nova Era, com horários e conteúdo alinhados aos seus objetivos estratégicos.\n\nAntes de montar a proposta, preciso de alguns dados:\n\n*1. Qual a modalidade preferida para o programa?*\n• *Presencial* (Rua Cubatão, 726 — Vila Mariana, SP, próximo ao metrô Paraíso)\n• *Online ao vivo* (interação em tempo real com instrutor, gravações disponíveis por 90 dias)\n• *In company* (na sede da Nova Era — você providencia infraestrutura)\n\nQual delas faz mais sentido para seu cronograma? 🎯",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 3,
+        "user": "São gerentes e coordenadores. Queremos módulos de liderança, comunicação e gestão de pessoas.",
+        "bot": "Excelente! 🎯 Liderança, comunicação e gestão de pessoas é um combo estratégico perfeito para gerentes e coordenadores.\n\nA Impacta tem expertise nessas áreas com módulos estruturados, e para 50 líderes vamos montar uma turma exclusiva bem pensada — pode ser em sequência, paralelo ou conforme seu calendário de 2025.\n\nAgora, sobre a *modalidade* — qual funciona melhor para sua equipe?\n\n• *Presencial* na unidade da Impacta em São Paulo\n• *Online ao vivo* (com instrutor em tempo real + gravações por 90 dias)\n• *In company* (aqui na Nova Era, vocês providenciam os computadores e infraestrutura)\n\nQual você prefere? 📍",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 4,
+        "user": "Tem como customizar o conteúdo para o contexto da construção civil?",
+        "bot": "Perfeito! 👌 Com certeza conseguimos customizar o conteúdo para o setor da construção civil.\n\nCom turma exclusiva para a Nova Era, podemos adaptar os casos práticos, exemplos e dinâmicas para desafios específicos do setor: gestão de obras, coordenação de equipes em campo, comunicação com diferentes níveis hierárquicos, liderança de colaboradores técnicos, cronogramas, segurança do trabalho e outros contextos próprios da construção.\n\nEssa é uma das grandes vantagens da turma exclusiva — conteúdo sob medida! 🏗️\n\nVoltando à modalidade, qual faz mais sentido para seus 50 líderes:\n\n• *Presencial* (São Paulo)\n• *Online ao vivo* (com gravações por 90 dias)  \n• *In company* (na sede da Nova Era)\n\nE qual seria o *prazo desejado* para começar o programa em 2025?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 5,
+        "user": "Qual seria o processo para desenvolver esse programa conosco?",
+        "bot": "Excelente pergunta! 🎯 O processo da Impacta para desenvolver seu programa customizado é bem estruturado:\n\n*1. Diagnóstico e Mapeamento*\n• Análise das necessidades específicas da Nova Era\n• Levantamento do perfil dos 50 líderes\n• Identificação dos desafios do setor de construção civil\n\n*2. Desenho Pedagógico*\n• Customização dos módulos (liderança, comunicação, gestão de pessoas)\n• Adaptação de casos práticos para construção civil\n• Definição de cronograma e metodologia\n\n*3. Proposta Técnica e Comercial*\n• Apresentação do programa completo\n• Valores, prazos e condições\n\nPara iniciarmos esse processo, vou encaminhar para um consultor especializado que poderá fazer um diagnóstico detalhado e desenhar o programa ideal para vocês.\n\nSó preciso confirmar: seu *nome completo*, *e-mail* e o *CNPJ* da Construtora Nova Era para que ele possa entrar em contato em breve! 📋",
+        "escalated": true,
+        "status": "escalated"
+      }
+    ],
+    "escalated": true,
+    "esperado": {
+      "trilha_detectada": "B",
+      "deve_escalar": true,
+      "keywords_resposta": [
+        "customizado",
+        "proposta",
+        "programa",
+        "consultor"
+      ]
+    },
+    "keywords_encontradas": [
+      "customizado",
+      "proposta",
+      "programa",
+      "consultor"
+    ],
+    "keywords_pct": 100,
+    "escalation_ok": true,
+    "score": 100,
+    "status_label": "✅ APROVADO",
+    "error": null
+  },
+  {
+    "id": "B4",
+    "trilha": "B",
+    "nome": "Startup — team building para 15 pessoas",
+    "descricao": "Fundador de startup quer dinâmica de team building para equipe pequena",
+    "lead_name": "Rafael Souza",
+    "phone": "5511900000007",
+    "conversation": [
+      {
+        "turn": 1,
+        "user": "Oi! Sou fundador de uma startup de tecnologia e quero fazer um team building pra minha equipe.",
+        "bot": "Olá! Que legal, trabalhar com startup é sempre empolgante! 😊\n\nPara te ajudar com o melhor team building para sua equipe, preciso entender um pouco melhor suas necessidades.\n\nPode me informar seu nome completo e quantos alunos da equipe participariam dessa capacitação?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 2,
+        "user": "Somos 15 pessoas, equipe jovem, muito do time é remoto mas vamos reunir todo mundo.",
+        "bot": "Perfeito! Com 15 alunos, recomendamos uma turma exclusiva para a sua startup - assim vocês terão total flexibilidade para customizar horário, conteúdo e formato do team building.\n\nPara montar a melhor proposta, preciso de mais algumas informações:\n\nQual seu nome completo e o nome da sua startup?\n\nE qual o foco que vocês gostariam para esse team building - seria mais voltado para desenvolvimento técnico da equipe, liderança e gestão, ou algum tema específico de tecnologia/inovação?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 3,
+        "user": "Quero algo de 1 dia, focado em integração e comunicação. Tem?",
+        "bot": "Ótimo! Integração e comunicação são fundamentais para equipes remotas e em crescimento. 😊\n\nA gente tem soluções focadas em desenvolvimento de equipes, liderança e comunicação que podem ser customizadas para um formato de 1 dia (intensivo) como turma exclusiva.\n\nPara eu montar a proposta ideal para vocês, preciso confirmar alguns dados:\n\n*Seu nome completo* e *o nome da startup* (com CNPJ)?\n\nE sobre a *modalidade*: vocês preferem presencial (aqui em São Paulo, na Rua Cubatão, 726 — Vila Mariana, perto do metrô Paraíso), *online ao vivo* (com instrutor em tempo real, interação e gravação disponível por 90 dias) ou outra preferência?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 4,
+        "user": "Pode ser aqui no nosso escritório ou num espaço que vocês indiquem.",
+        "bot": "Entendi! Vocês têm duas opções:\n\n*1. In company* — a gente vai até o escritório de vocês. Nesse caso, precisamos que vocês providenciem: 1 computador por aluno com software instalado (mesma versão), computador para o instrutor, projetor/telão e internet estável.\n\n*2. Aqui na Impacta* — Rua Cubatão, 726 — Vila Mariana, São Paulo (perto do metrô Paraíso, linhas 2-verde e 4-amarela). Já tem toda a infraestrutura pronta.\n\nQual opção faz mais sentido para vocês? 😊\n\nE aproveito para coletar seus dados: *qual seu nome completo* e *o nome da startup com CNPJ*?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 5,
+        "user": "Qual o valor aproximado para esse tipo de ação?",
+        "bot": "Não tenho acesso aos valores específicos, mas nosso consultor poderá apresentar as opções e investimento detalhado para esse tipo de ação de team building.\n\nPara ele montar a proposta personalizada para vocês, preciso apenas dos seus dados:\n\n*Nome completo* e *nome da startup com CNPJ*?\n\nTambém seria útil saber qual *modalidade* vocês preferem - in company no escritório de vocês ou aqui na Impacta?\n\nO prazo padrão para envio da proposta é de até 24 horas úteis após recebermos todos os dados. Em breve um consultor entrará em contato para apresentar as opções e valores! 😊",
+        "escalated": true,
+        "status": "escalated"
+      }
+    ],
+    "escalated": true,
+    "esperado": {
+      "trilha_detectada": "B",
+      "deve_escalar": true,
+      "keywords_resposta": [
+        "proposta",
+        "team building",
+        "consultor"
+      ]
+    },
+    "keywords_encontradas": [
+      "proposta",
+      "team building",
+      "consultor"
+    ],
+    "keywords_pct": 100,
+    "escalation_ok": true,
+    "score": 100,
+    "status_label": "✅ APROVADO",
+    "error": null
+  },
+  {
+    "id": "C1",
+    "trilha": "C",
+    "nome": "Lead vago — problema na equipe sem saber o quê",
+    "descricao": "Lead percebe problema mas não consegue articular a necessidade de treinamento",
+    "lead_name": "Fernanda Rocha",
+    "phone": "5511900000008",
+    "conversation": [
+      {
+        "turn": 1,
+        "user": "Olá, vim pelo site. Preciso de ajuda com minha equipe.",
+        "bot": "Olá! Fico feliz em ajudar com sua equipe! 😊\n\nPara eu entender melhor sua necessidade e indicar a melhor solução, pode me contar um pouco mais sobre o contexto?\n\nEssa necessidade está relacionada a algum tema específico de capacitação ou vocês ainda estão mapeando as possibilidades de desenvolvimento?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 2,
+        "user": "A gente tem tido muitos problemas de comunicação interna e as entregas estão atrasando.",
+        "bot": "Entendo perfeitamente — comunicação interna e alinhamento de equipe são fundamentais para melhorar as entregas! 😊\n\nA Impacta tem soluções focadas exatamente nisso: desenvolvimento de líderes, gestão ágil, trabalho em equipe e processos mais eficientes.\n\nPara eu montar a melhor proposta para vocês, preciso entender um pouco mais:\n\n*Vocês já têm alguma ideia de qual tipo de treinamento poderia ajudar* (como liderança, comunicação, gestão de projetos, metodologias ágeis) *ou gostariam que um especialista fizesse um diagnóstico e recomendasse o caminho ideal?*",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 3,
+        "user": "Não sei bem o que seria necessário. Talvez um treinamento? Ou uma consultoria?",
+        "bot": "Perfeito! Essa é uma situação bem comum e é exatamente para isso que temos especialistas — para fazer esse diagnóstico e encontrar a solução ideal para sua equipe.\n\nProblemas de comunicação e atrasos nas entregas podem ter várias origens, e o importante é identificar a causa raiz para aplicar a solução mais efetiva.\n\nPode me passar seu nome completo e da empresa para eu registrar sua necessidade? Vou encaminhar para um consultor especializado que poderá fazer um diagnóstico e recomendar se seria melhor um treinamento específico, uma consultoria ou até uma combinação de soluções.",
+        "escalated": true,
+        "status": "escalated"
+      },
+      {
+        "turn": 4,
+        "user": "Somos uma empresa de 45 pessoas, área de marketing digital.",
+        "bot": "🔇 [Modo teste] Bot pausado — atendente humano ativo.\nClique em '🔄 Reativar Bot' para reiniciar.",
+        "escalated": false,
+        "status": "agent_active"
+      },
+      {
+        "turn": 5,
+        "user": "Não sei por onde começar.",
+        "bot": "🔇 [Modo teste] Bot pausado — atendente humano ativo.\nClique em '🔄 Reativar Bot' para reiniciar.",
+        "escalated": false,
+        "status": "agent_active"
+      }
+    ],
+    "escalated": true,
+    "esperado": {
+      "trilha_detectada": "C",
+      "deve_escalar": true,
+      "keywords_resposta": [
+        "consultoria",
+        "diagnóstico",
+        "entender",
+        "necessidade",
+        "consultor"
+      ]
+    },
+    "keywords_encontradas": [
+      "consultoria",
+      "diagnóstico",
+      "entender",
+      "necessidade",
+      "consultor"
+    ],
+    "keywords_pct": 100,
+    "escalation_ok": true,
+    "score": 100,
+    "status_label": "✅ APROVADO",
+    "error": null
+  },
+  {
+    "id": "C2",
+    "trilha": "C",
+    "nome": "Lead indicado — sem clareza sobre produtos",
+    "descricao": "Lead veio por indicação, não conhece os produtos, precisa de orientação",
+    "lead_name": "Bruno Tavares",
+    "phone": "5511900000009",
+    "conversation": [
+      {
+        "turn": 1,
+        "user": "Oi! Meu colega me indicou a empresa de vocês, mas não sei bem o que vocês fazem.",
+        "bot": "Olá! Que bom ter você aqui! 😊\n\nA Impacta é referência em educação, tecnologia e inovação, com 37 anos de mercado. Somos especializados em treinamentos corporativos para capacitação de líderes, equipes e organizações, com foco em transformação digital.\n\nJá atendemos mais de 30 mil empresas como Bradesco, Capgemini, Porto Seguro, Serasa e Globo, oferecendo cursos nas modalidades presencial, online ao vivo, EAD e in company.\n\nPara eu entender melhor como podemos te ajudar, pode me contar qual seria o interesse? É para você mesmo ou para capacitar uma equipe na empresa?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 2,
+        "user": "Trabalho como gerente de operações num hospital particular, 200 funcionários.",
+        "bot": "Perfeito! Como gerente de operações em um hospital de grande porte, imagino que vocês tenham necessidades específicas de capacitação para otimizar processos e melhorar a eficiência operacional.\n\nAtendemos muitas empresas da área da saúde com treinamentos que ajudam a:\n• Automatizar relatórios e análises de dados\n• Otimizar controles operacionais \n• Melhorar gestão de equipes e processos\n• Desenvolver lideranças\n\nPara eu entender melhor suas necessidades, qual seria o principal desafio ou área que vocês gostariam de desenvolver na equipe? E quantos funcionários participariam desse treinamento?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 3,
+        "user": "A diretoria pediu para eu buscar algo para desenvolver os supervisores.",
+        "bot": "Ótimo! Então a diretoria quer investir no desenvolvimento dos supervisores — isso é estratégico 💡\n\nPara eu montar uma proposta bem alinhada, preciso entender melhor:\n\n*Quantos supervisores vocês têm?* E em relação ao desenvolvimento, qual seria o foco principal? Por exemplo: liderança e gestão de pessoas, processos operacionais, análise de dados, ou algo mais abrangente?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 4,
+        "user": "Não sei se seria curso, palestra, workshop... Qual a diferença?",
+        "bot": "Ótima pergunta! Vou explicar as diferenças para você escolher o formato ideal:\n\n*CURSO:* Mais completo e aprofundado (8h a 40h), com conteúdo estruturado, exercícios práticos e certificado. Ideal para desenvolver competências sólidas.\n\n*WORKSHOP:* Formato prático e participativo (4h a 8h), focado em resolver problemas específicos com dinâmicas e aplicação imediata.\n\n*PALESTRA:* Mais inspiracional (1h a 3h), para sensibilizar, motivar e apresentar conceitos. Ótima para kick-off de projetos.\n\nPara supervisores, geralmente recomendamos:\n• *Curso* se querem desenvolver liderança de forma estruturada\n• *Workshop* se há desafios específicos para resolver\n• *Palestra* para sensibilizar sobre mudanças ou novos processos\n\nConsiderando que a diretoria quer desenvolver os supervisores, qual seria o objetivo principal? Desenvolver habilidades de liderança, resolver algum desafio específico ou sensibilizar sobre alguma mudança?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 5,
+        "user": "Como vocês poderiam me ajudar a entender o que faz mais sentido pra gente?",
+        "bot": "Excelente pergunta! Esse é exatamente o tipo de situação onde um consultor especializado faz toda a diferença 😊\n\nVou encaminhar para um consultor especializado que poderá fazer um diagnóstico com você. Ele vai:\n• Entender melhor o contexto do hospital e dos supervisores\n• Identificar os principais desafios operacionais e de liderança\n• Recomendar se faz mais sentido curso, workshop ou palestra\n• Sugerir o formato e prazo mais adequado\n\nPara eu encaminhar isso da forma correta, preciso de alguns dados:\n\n1. Qual seu *nome completo*?\n2. Qual o *nome do hospital*?\n3. Quantos *supervisores* vocês têm aproximadamente?\n4. Qual seu *e-mail* para contato?\n\nEm breve um consultor entrará em contato com você para montar a melhor solução! 👍",
+        "escalated": true,
+        "status": "escalated"
+      }
+    ],
+    "escalated": true,
+    "esperado": {
+      "trilha_detectada": "C",
+      "deve_escalar": true,
+      "keywords_resposta": [
+        "consultoria",
+        "diagnóstico",
+        "consultor",
+        "entender"
+      ]
+    },
+    "keywords_encontradas": [
+      "diagnóstico",
+      "consultor",
+      "entender"
+    ],
+    "keywords_pct": 75,
+    "escalation_ok": true,
+    "score": 87,
+    "status_label": "✅ APROVADO",
+    "error": null
+  },
+  {
+    "id": "C3",
+    "trilha": "C",
+    "nome": "Lead com problema de produtividade",
+    "descricao": "Empresa com baixa produtividade, líder não sabe se é treinamento ou processo",
+    "lead_name": "Luciana Faria",
+    "phone": "5511900000010",
+    "conversation": [
+      {
+        "turn": 1,
+        "user": "Bom dia! Preciso resolver um problema sério de produtividade na minha equipe.",
+        "bot": "Bom dia! Entendo sua preocupação. Questões de produtividade realmente impactam muito os resultados da empresa.\n\nPara eu te ajudar melhor, pode me contar um pouco mais sobre o que está acontecendo? É uma equipe técnica, administrativa, ou qual área específicamente?\n\nE quantas pessoas fazem parte dessa equipe? 😊",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 2,
+        "user": "Somos um escritório de advocacia com 30 advogados. Os sócios estão preocupados.",
+        "bot": "Entendo perfeitamente! Coordenar uma equipe de 30 advogados realmente exige muito. Os sócios estão certos em buscar soluções.\n\nPara eu entender melhor o que vocês precisam, me responde: qual é o principal desafio de produtividade que estão enfrentando?\n\nÉ mais sobre:\n• Organização e gestão de projetos/processos?\n• Desenvolvimento de lideranças e gestores?\n• Ferramentas e automação de tarefas?\n• Algo específico em outra área?\n\nIsso vai me ajudar a indicar a melhor solução! 📋",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 3,
+        "user": "Não sei se é falta de treinamento, gestão ruim ou ferramentas inadequadas.",
+        "bot": "Perfeito! Essa é uma situação muito comum e vocês estão no caminho certo buscando identificar a causa raiz.\n\nCom esse cenário, o ideal seria fazer um diagnóstico estruturado para identificar exatamente onde estão os gargalos - se é capacitação da equipe, processos de gestão, ferramentas ou uma combinação desses fatores.\n\nVou encaminhar para um consultor especializado que poderá fazer um diagnóstico e desenhar uma solução adequada para o escritório de vocês.\n\nPara isso, preciso apenas do seu nome completo e qual o melhor e-mail para contato? \n\nO consultor poderá entender melhor a dinâmica do escritório e propor as melhores soluções de treinamento! 😊",
+        "escalated": true,
+        "status": "escalated"
+      },
+      {
+        "turn": 4,
+        "user": "Os sócios querem uma solução rápida mas também sustentável.",
+        "bot": "🔇 [Modo teste] Bot pausado — atendente humano ativo.\nClique em '🔄 Reativar Bot' para reiniciar.",
+        "escalated": false,
+        "status": "agent_active"
+      },
+      {
+        "turn": 5,
+        "user": "Vocês conseguem fazer um diagnóstico antes de recomendar algo?",
+        "bot": "🔇 [Modo teste] Bot pausado — atendente humano ativo.\nClique em '🔄 Reativar Bot' para reiniciar.",
+        "escalated": false,
+        "status": "agent_active"
+      }
+    ],
+    "escalated": true,
+    "esperado": {
+      "trilha_detectada": "C",
+      "deve_escalar": true,
+      "keywords_resposta": [
+        "diagnóstico",
+        "consultoria",
+        "consultor",
+        "análise"
+      ]
+    },
+    "keywords_encontradas": [
+      "diagnóstico",
+      "consultor"
+    ],
+    "keywords_pct": 50,
+    "escalation_ok": true,
+    "score": 75,
+    "status_label": "✅ APROVADO",
+    "error": null
+  },
+  {
+    "id": "D1",
+    "trilha": "D",
+    "nome": "Empresa quer sala para treinamento próprio",
+    "descricao": "RH quer alugar sala para aplicar treinamento que já tem internamente",
+    "lead_name": "Silvia Nunes",
+    "phone": "5511900000011",
+    "conversation": [
+      {
+        "turn": 1,
+        "user": "Olá! Gostaria de informações sobre locação de salas.",
+        "bot": "Olá! 👋 Que ótimo!\n\nA Impacta tem espaços disponíveis para locação: salas de aula, laboratórios de informática, auditório (até 100 pessoas) e salas de reunião. \n\nPara eu entender melhor sua necessidade e passar as informações corretas, preciso de alguns detalhes:\n\n*Qual é o tipo de evento que você planeja realizar?* (por exemplo: treinamento, workshop, reunião, palestra, etc.)",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 2,
+        "user": "Precisamos de uma sala para um treinamento que vamos ministrar internamente.",
+        "bot": "Perfeito! Entendi que vocês precisam de espaço para ministrar um treinamento interno da empresa.\n\nPara verificar a disponibilidade e montar um orçamento adequado, preciso saber:\n\n*Qual a data e horário que vocês precisam da sala?*",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 3,
+        "user": "Seriam 20 pessoas, 1 dia inteiro, com coffee break.",
+        "bot": "Ótimo! Anotei: 20 pessoas, 1 dia inteiro com coffee break. 👍\n\nAgora preciso de dois detalhes importantes:\n\n*Qual é a data desejada para o evento?* E *qual layout vocês preferem?* (por exemplo: laboratório com computadores, mesas e cadeiras, auditório, mesas redondas, etc.)",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 4,
+        "user": "Precisamos de projetor, flipchart e ar condicionado.",
+        "bot": "Perfeito! Anotei os recursos: projetor, flipchart e ar condicionado. Temos tudo isso disponível! 😊\n\nSó me faltam dois detalhes essenciais:\n\n*Qual é a data do evento?* E *qual layout você prefere para as 20 pessoas?* (laboratório com computadores, mesas e cadeiras, ou outro formato?)",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 5,
+        "user": "Qual a disponibilidade para a segunda quinzena de maio e quais os valores?",
+        "bot": "Ótima pergunta! Entendo que vocês têm interesse na segunda quinzena de maio. 📅\n\nInfelizmente, não tenho acesso a essa informação de disponibilidade e valores em tempo real. Mas nosso consultor poderá confirmar disponibilidade e valores — em breve entrará em contato com você!\n\nPara eu localizar sua solicitação rapidinho, pode me informar:\n\n*Qual é o nome completo e a empresa de vocês?*",
+        "escalated": true,
+        "status": "escalated"
+      }
+    ],
+    "escalated": true,
+    "esperado": {
+      "trilha_detectada": "D",
+      "deve_escalar": true,
+      "keywords_resposta": [
+        "locação",
+        "sala",
+        "espaço",
+        "diária",
+        "consultor"
+      ]
+    },
+    "keywords_encontradas": [
+      "locação",
+      "sala",
+      "espaço",
+      "consultor"
+    ],
+    "keywords_pct": 80,
+    "escalation_ok": true,
+    "score": 90,
+    "status_label": "✅ APROVADO",
+    "error": null
+  },
+  {
+    "id": "D2",
+    "trilha": "D",
+    "nome": "ONG quer auditório para congresso",
+    "descricao": "ONG precisa de auditório grande para evento de 1 dia com palestrantes",
+    "lead_name": "Eduardo Pires",
+    "phone": "5511900000012",
+    "conversation": [
+      {
+        "turn": 1,
+        "user": "Boa tarde! Sou de uma ONG e preciso de um auditório para um evento.",
+        "bot": "Boa tarde! 😊\n\nQue ótimo! A Impacta tem auditórios disponíveis para locação, perfeitos para eventos, palestras e apresentações. Nossos auditórios comportam mais de 100 pessoas e contam com sistema multimídia e iluminação adequada.\n\nPara eu te ajudar melhor, pode me contar:\n• Que tipo de evento vocês vão realizar?\n• Qual a data e horário desejados?\n\nTemos unidades na Paulista e no Paraíso, ambas com fácil acesso! \n\nQual seu nome completo para eu anotar?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 2,
+        "user": "Vamos fazer um congresso de sustentabilidade, esperamos 150 participantes.",
+        "bot": "Que bacana! Um congresso de sustentabilidade com 150 participantes é bem relevante. 🌱\n\nPerfeito, anotei:\n• Tipo de evento: Congresso de Sustentabilidade\n• Número de participantes: 150\n\nAgora preciso de alguns detalhes para nosso consultor confirmar disponibilidade:\n\n*Qual a data desejada para o congresso?* E qual o horário (período do dia)?\n\nApós isso, confirmo seu nome completo e e-mail para a gente poder avançar!",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 3,
+        "user": "Seria um dia inteiro com 4 palestrantes e uma sessão de perguntas.",
+        "bot": "Entendi perfeitamente! Um dia inteiro com 4 palestrantes e sessão de perguntas é um formato clássico de congresso. 👍\n\nPara eu registrar tudo certinho, faltam dois dados importantes:\n\n*Qual a data específica que vocês pretendem fazer o evento?*\n\n*E qual horário vocês gostariam de começar?* (por exemplo, 9h da manhã, 8h30, etc.)\n\nDepois confirmo seu nome completo e e-mail para que nosso consultor entre em contato com disponibilidade e valores!",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 4,
+        "user": "Precisamos de palco, microfones, projetor grande e área para coffee break.",
+        "bot": "Ótimo! Anotei todas as necessidades:\n• Palco\n• Microfones\n• Projetor grande\n• Área para coffee break\n\nA Impacta tem tudo isso disponível em nossos auditórios! Contamos com projetor/telão, som, microfone e espaço para coffee break. Para detalhes sobre o coffee break (se é serviço incluído ou extra), nosso consultor vai confirmar tudo com você. 😊\n\nAgora, para eu finalizar o registro, preciso de:\n\n*Qual a data específica do evento?* E *qual horário vocês pretendem começar?*\n\nDepois só confirmo seu *nome completo* e *e-mail* para que nosso consultor entre em contato!",
+        "escalated": true,
+        "status": "escalated"
+      },
+      {
+        "turn": 5,
+        "user": "Têm esse tipo de espaço disponível? Quais são os valores?",
+        "bot": "🔇 [Modo teste] Bot pausado — atendente humano ativo.\nClique em '🔄 Reativar Bot' para reiniciar.",
+        "escalated": false,
+        "status": "agent_active"
+      }
+    ],
+    "escalated": true,
+    "esperado": {
+      "trilha_detectada": "D",
+      "deve_escalar": true,
+      "keywords_resposta": [
+        "auditório",
+        "locação",
+        "espaço",
+        "consultor"
+      ]
+    },
+    "keywords_encontradas": [
+      "auditório",
+      "locação",
+      "espaço",
+      "consultor"
+    ],
+    "keywords_pct": 100,
+    "escalation_ok": true,
+    "score": 100,
+    "status_label": "✅ APROVADO",
+    "error": null
+  },
+  {
+    "id": "D3",
+    "trilha": "D",
+    "nome": "Escola técnica quer laboratório de informática",
+    "descricao": "Escola precisa de laboratório com computadores para curso externo",
+    "lead_name": "Roberto Campos",
+    "phone": "5511900000013",
+    "conversation": [
+      {
+        "turn": 1,
+        "user": "Olá! Preciso saber se vocês têm laboratório de informática para locação.",
+        "bot": "Olá! 👋 Ótimo! Sim, a Impacta disponibiliza laboratórios de informática para locação! \n\nPara te ajudar melhor, preciso de algumas informações:\n\n1️⃣ *Qual é o tipo de evento?* (treinamento, workshop, reunião, palestra, etc.)\n2️⃣ *Qual a data e horário desejados?*\n3️⃣ *Quantas pessoas* precisarão usar o laboratório?\n4️⃣ *Qual o layout ideal* para você? (computadores dispostos em laboratório, mesas e cadeiras, auditório, etc.)\n\nCom esses dados, nosso consultor poderá confirmar disponibilidade e enviar um orçamento para você em até 24 horas! 😊",
+        "escalated": true,
+        "status": "escalated"
+      },
+      {
+        "turn": 2,
+        "user": "Somos uma escola técnica e vamos aplicar um curso de programação para turma externa.",
+        "bot": "🔇 [Modo teste] Bot pausado — atendente humano ativo.\nClique em '🔄 Reativar Bot' para reiniciar.",
+        "escalated": false,
+        "status": "agent_active"
+      },
+      {
+        "turn": 3,
+        "user": "Precisamos de 20 computadores com boa configuração, internet e ar condicionado.",
+        "bot": "🔇 [Modo teste] Bot pausado — atendente humano ativo.\nClique em '🔄 Reativar Bot' para reiniciar.",
+        "escalated": false,
+        "status": "agent_active"
+      },
+      {
+        "turn": 4,
+        "user": "Seria 3 dias consecutivos, com turno integral.",
+        "bot": "🔇 [Modo teste] Bot pausado — atendente humano ativo.\nClique em '🔄 Reativar Bot' para reiniciar.",
+        "escalated": false,
+        "status": "agent_active"
+      },
+      {
+        "turn": 5,
+        "user": "Qual a capacidade do laboratório e quais são as condições de locação?",
+        "bot": "🔇 [Modo teste] Bot pausado — atendente humano ativo.\nClique em '🔄 Reativar Bot' para reiniciar.",
+        "escalated": false,
+        "status": "agent_active"
+      }
+    ],
+    "escalated": true,
+    "esperado": {
+      "trilha_detectada": "D",
+      "deve_escalar": true,
+      "keywords_resposta": [
+        "laboratório",
+        "locação",
+        "informática",
+        "consultor"
+      ]
+    },
+    "keywords_encontradas": [
+      "laboratório",
+      "locação",
+      "informática",
+      "consultor"
+    ],
+    "keywords_pct": 100,
+    "escalation_ok": true,
+    "score": 100,
+    "status_label": "✅ APROVADO",
+    "error": null
+  },
+  {
+    "id": "D4",
+    "trilha": "D",
+    "nome": "Empresa quer estúdio para gravação de conteúdo",
+    "descricao": "Empresa quer gravar treinamentos EAD em estúdio profissional",
+    "lead_name": "Camila Vaz",
+    "phone": "5511900000014",
+    "conversation": [
+      {
+        "turn": 1,
+        "user": "Oi! Vocês têm estúdio para gravação de vídeos?",
+        "bot": "Olá! 😊\n\nSim, temos estúdio de vídeo com estrutura profissional! Nosso estúdio é voltado para gravação de aulas, eventos, produção de conteúdo corporativo e projetos audiovisuais. \n\nEle conta com equipamentos completos para gravação, recursos para edição de áudio e vídeo, além do apoio de especialistas qualificados. É a mesma estrutura que utilizamos para produzir nossos próprios cursos online.\n\nPara qual tipo de evento ou gravação você precisa do estúdio?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 2,
+        "user": "Queremos gravar uma série de treinamentos para nosso EAD interno.",
+        "bot": "Ótimo! Entendi que vocês querem produzir conteúdo em vídeo para disponibilizar internamente na empresa. 🎬\n\nPara eu entender melhor a demanda e conectar você com o especialista certo, preciso de algumas informações:\n\n*Qual é o nome completo e qual empresa vocês representam?*\n\nDepois vou entender melhor sobre os temas dos treinamentos e o volume de produção que vocês imaginam.",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 3,
+        "user": "Seriam 10 vídeos de 10 a 15 minutos cada, com 2 dias de gravação.",
+        "bot": "Perfeito! Então vocês precisam de 2 dias de estúdio para gravar uma série de 10 vídeos, totalizando entre 100 a 150 minutos de conteúdo. 👍\n\nAgora, para eu encaminhar isso corretamente para um consultor especializado que possa confirmar disponibilidade, valores e detalhes técnicos, preciso de alguns dados:\n\n*Qual é o seu nome completo?*",
+        "escalated": true,
+        "status": "escalated"
+      },
+      {
+        "turn": 4,
+        "user": "Precisamos de fundo verde ou cenário montado, iluminação e equipamento de áudio.",
+        "bot": "🔇 [Modo teste] Bot pausado — atendente humano ativo.\nClique em '🔄 Reativar Bot' para reiniciar.",
+        "escalated": false,
+        "status": "agent_active"
+      },
+      {
+        "turn": 5,
+        "user": "Vocês fornecem operador de câmera ou só o espaço?",
+        "bot": "🔇 [Modo teste] Bot pausado — atendente humano ativo.\nClique em '🔄 Reativar Bot' para reiniciar.",
+        "escalated": false,
+        "status": "agent_active"
+      }
+    ],
+    "escalated": true,
+    "esperado": {
+      "trilha_detectada": "D",
+      "deve_escalar": true,
+      "keywords_resposta": [
+        "estúdio",
+        "gravação",
+        "locação",
+        "consultor"
+      ]
+    },
+    "keywords_encontradas": [
+      "estúdio",
+      "gravação",
+      "consultor"
+    ],
+    "keywords_pct": 75,
+    "escalation_ok": true,
+    "score": 87,
+    "status_label": "✅ APROVADO",
+    "error": null
+  },
+  {
+    "id": "E1",
+    "trilha": "EDGE",
+    "nome": "Mensagem curta e vaga no início",
+    "descricao": "Lead inicia com mensagem mínima — bot deve perguntar e conduzir",
+    "lead_name": "Teste Lead",
+    "phone": "5511900000015",
+    "conversation": [
+      {
+        "turn": 1,
+        "user": "oi",
+        "bot": "Seja bem-vindo(a) ao Universo IMPACTA! 🎓 Sou o assistente de Treinamentos Corporativos PJ. Para começar, qual é o seu nome?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 2,
+        "user": "quero treinamento",
+        "bot": "Oi! Que legal que você quer fazer um treinamento conosco! 😊\n\nPara eu te ajudar melhor, qual é o seu nome completo?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 3,
+        "user": "pra minha empresa",
+        "bot": "Ótimo! Vou te ajudar a estruturar um treinamento para sua empresa. \n\nQual é o seu nome completo?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 4,
+        "user": "são 30 pessoas",
+        "bot": "Perfeito! Com 30 pessoas, vamos montar uma turma exclusiva para sua empresa! 👍\n\nAntes de continuar, pode me confirmar seu nome completo?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 5,
+        "user": "liderança e comunicação",
+        "bot": "Excelente! Liderança e comunicação são temas muito relevantes para desenvolver equipes de alto desempenho.\n\nMas primeiro, preciso do seu nome completo para eu registrar sua solicitação. Qual é?",
+        "escalated": false,
+        "status": "ok"
+      }
+    ],
+    "escalated": false,
+    "esperado": {
+      "trilha_detectada": "B",
+      "deve_escalar": true,
+      "keywords_resposta": [
+        "empresa",
+        "equipe",
+        "consultor"
+      ]
+    },
+    "keywords_encontradas": [
+      "empresa",
+      "equipe"
+    ],
+    "keywords_pct": 67,
+    "escalation_ok": false,
+    "score": 33,
+    "status_label": "❌ REPROVADO",
+    "error": null
+  },
+  {
+    "id": "E2",
+    "trilha": "EDGE",
+    "nome": "Lead fora do escopo — pede algo que não é oferecido",
+    "descricao": "Lead pede coaching individual de carreira — bot deve tratar com elegância",
+    "lead_name": "Gustavo Lima",
+    "phone": "5511900000016",
+    "conversation": [
+      {
+        "turn": 1,
+        "user": "Olá! Gostaria de fazer um coaching individual de carreira com um coach executivo.",
+        "bot": "Olá! 😊\n\nObrigado pelo interesse! Vejo que você está buscando um coaching individual de carreira com um coach executivo.\n\nDeixa eu ser transparente com você: este canal é exclusivo para treinamentos corporativos e soluções de capacitação em tecnologia e transformação digital. Coaching executivo individual é um serviço especializado que está fora do nosso escopo de atendimento por aqui.\n\nPara consultar sobre disponibilidade de coaching executivo, recomendo entrar em contato diretamente com a nossa equipe pelo e-mail *solicitacao.secretaria@impacta.com.br*. Eles terão informações completas sobre esse tipo de serviço e poderão ajudá-lo melhor! 💼\n\nHá algo relacionado a treinamentos corporativos ou turmas que eu possa ajudar você?",
+        "escalated": false,
+        "status": "ok"
+      },
+      {
+        "turn": 2,
+        "user": "Sou diretor e quero sessões 1:1 de desenvolvimento pessoal.",
+        "bot": "Ótimo, entendi! 😊\n\nVocê está buscando sessões individuais de desenvolvimento pessoal. Esse tipo de serviço especializado (coaching 1:1 ou mentoria executiva) está um pouco fora do escopo deste canal, que é focado em *treinamentos corporativos em grupo* e *soluções de capacitação para equipes*.\n\nNo entanto, a Impacta oferece excelentes programas de *desenvolvimento de líderes e gestores* — alguns podem ser adaptados para necessidades específicas. Seria interessante conversar com um consultor especializado que possa entender melhor sua demanda e avaliar as melhores opções disponíveis.\n\nPosso coletar seus dados para que um consultor entre em contato e avalie a melhor solução para você?\n\nPrecisaria de:\n• *Seu nome completo*\n• *Empresa e CNPJ*\n• *E-mail ou WhatsApp para contato*\n\nAssim conseguimos encaminhar sua solicitação de forma prioritária! 👍",
+        "escalated": true,
+        "status": "escalated"
+      },
+      {
+        "turn": 3,
+        "user": "Não é para equipe, é só para mim mesmo.",
+        "bot": "🔇 [Modo teste] Bot pausado — atendente humano ativo.\nClique em '🔄 Reativar Bot' para reiniciar.",
+        "escalated": false,
+        "status": "agent_active"
+      },
+      {
+        "turn": 4,
+        "user": "Tenho orçamento de R$ 5.000 para 3 meses.",
+        "bot": "🔇 [Modo teste] Bot pausado — atendente humano ativo.\nClique em '🔄 Reativar Bot' para reiniciar.",
+        "escalated": false,
+        "status": "agent_active"
+      }
+    ],
+    "escalated": true,
+    "esperado": {
+      "trilha_detectada": "C",
+      "deve_escalar": true,
+      "keywords_resposta": [
+        "consultor",
+        "entender",
+        "possibilidade"
+      ]
+    },
+    "keywords_encontradas": [
+      "consultor",
+      "entender"
+    ],
+    "keywords_pct": 67,
+    "escalation_ok": true,
+    "score": 83,
+    "status_label": "✅ APROVADO",
+    "error": null
+  }
+]

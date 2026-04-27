@@ -19,6 +19,7 @@ from app.core.config import settings
 BASE = "https://crm.rdstation.com/api/v1"
 TOKEN = settings.rd_crm_token
 PHONE = "5511996471803"
+SEARCH_DEAL_NAME = "Wesley"  # busca deals com este nome
 
 
 def p(extra=None):
@@ -138,10 +139,40 @@ async def main():
                 data = r.json()
                 conts = data.get("contacts", data) if isinstance(data, dict) else data
                 if isinstance(conts, list):
-                    for i, c in enumerate(conts[:2]):
-                        print(f"   [{i}] organization_name={c.get('organization_name')!r}  "
-                              f"company={c.get('company')!r}  "
-                              f"phones={c.get('phones')}")
+                    for i, c in enumerate(conts[:5]):
+                        phones = c.get("phones") or []
+                        phone_nums = [ph.get("phone","") for ph in phones if isinstance(ph, dict)]
+                        print(f"   [{i}] nome={c.get('name')!r}  phones={phone_nums}")
+
+        # ── 5. Busca deal pelo nome (Wesley) ──────────────────────────────────────
+        if SEARCH_DEAL_NAME:
+            print(f"\n\n{'='*60}")
+            print(f"  BUSCA DE DEAL POR NOME: '{SEARCH_DEAL_NAME}'")
+            print(f"{'='*60}")
+            r = await client.get(f"{BASE}/deals", params=p({"name": SEARCH_DEAL_NAME, "limit": 10}))
+            print(f"Status: {r.status_code}")
+            if r.status_code == 200:
+                data = r.json()
+                deals = data if isinstance(data, list) else data.get("deals", [])
+                print(f"Deals encontrados: {len(deals)}")
+                for d in deals[:5]:
+                    did = d.get("_id") or d.get("id")
+                    dname = d.get("name", "?")
+                    org = (d.get("organization") or {}).get("name", "") if isinstance(d.get("organization"), dict) else ""
+                    stage = (d.get("deal_stage") or {}).get("name", "") if isinstance(d.get("deal_stage"), dict) else ""
+                    print(f"\n  Deal: {dname!r}")
+                    print(f"    ID: {did}")
+                    print(f"    Empresa: {org!r}  |  Etapa: {stage!r}")
+                    # Contatos deste deal
+                    r2 = await client.get(f"{BASE}/contacts", params=p({"deal_id": did}))
+                    if r2.status_code == 200:
+                        data2 = r2.json()
+                        conts2 = data2.get("contacts", data2) if isinstance(data2, dict) else data2
+                        if isinstance(conts2, list):
+                            for i, c in enumerate(conts2[:5]):
+                                phones = c.get("phones") or []
+                                phone_nums = [ph.get("phone","") for ph in phones if isinstance(ph, dict)]
+                                print(f"    Contato [{i}]: nome={c.get('name')!r}  phones={phone_nums}")
 
 
 asyncio.run(main())
