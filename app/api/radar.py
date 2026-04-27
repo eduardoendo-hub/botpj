@@ -18,6 +18,7 @@ from starlette.status import HTTP_303_SEE_OTHER
 from app.core.config import settings
 from app.core.database import (
     get_all_leads, get_bot_session, get_db, get_full_conversation, get_lead_by_phone,
+    verify_radar_user, update_radar_user_password,
 )
 from app.services.tallos_history import get_conversation_history, extract_customer_id_from_notes
 from app.services.rd_crm import get_deal_info, get_deal_full_info, sync_pipeline_deals_to_leads
@@ -265,14 +266,23 @@ async def radar_login(
     username: str = Form(...),
     password: str = Form(...),
 ):
-    """Autentica e redireciona para /radar."""
+    """Autentica e redireciona para /radar.
+    Verifica primeiro credenciais hardcoded (.env), depois tabela radar_users.
+    """
+    uname = username.strip().lower()
     valid = (
-        (username == settings.admin_username and password == settings.admin_password)
-        or (username == "consultor" and password == settings.consultant_password)
+        (uname == settings.admin_username.lower() and password == settings.admin_password)
+        or (uname == "consultor" and password == settings.consultant_password)
     )
+    if not valid:
+        # Verifica na tabela de usuários do banco
+        role = await verify_radar_user(uname, password)
+        valid = bool(role)
+        if valid:
+            uname = username.strip()  # usa o username como informado
     if valid:
         sid = secrets.token_hex(32)
-        await _radar_session_create(sid, username)
+        await _radar_session_create(sid, uname)
         response = RedirectResponse(url="/radar", status_code=HTTP_303_SEE_OTHER)
         response.set_cookie(_COOKIE, sid, httponly=True, max_age=7 * 86400)
         return response
@@ -296,8 +306,65 @@ async def radar_logout(request: Request):
 @router.get("", response_class=HTMLResponse)
 async def radar_page(request: Request):
     """Página principal do Radar — SPA React carregada via CDN."""
-    await _require_auth(request)
-    return templates.TemplateResponse("radar.html", {"request": request})
+    username = await _require_auth(request)
+    return templates.TemplateResponse("radar.html", {"request": request, "radar_username": username})
+
+
+# ── Troca de senha (usuário logado no radar) ──────────────────────────────────
+
+@router.get("/change-password", response_class=HTMLResponse)
+async def radar_change_password_page(request: Request):
+    """Página de troca de senha do radar."""
+    username = await _require_auth(request)
+    return templates.TemplateResponse(
+        "radar_change_password.html",
+        {"request": request, "radar_username": username},
+    )
+
+
+@router.post("/change-password")
+async def radar_change_password(
+    request: Request,
+    current_password: str = Form(...),
+    new_password: str = Form(...),
+    confirm_password: str = Form(...),
+):
+    """Processa troca de senha do usuário logado no radar."""
+    username = await _require_auth(request)
+
+    def _error(msg: str):
+        return templates.TemplateResponse(
+            "radar_change_password.html",
+            {"request": request, "radar_username": username, "error": msg},
+            status_code=400,
+        )
+
+    if new_password != confirm_password:
+        return _error("A nova senha e a confirmação não coincidem.")
+    if len(new_password) < 6:
+        return _error("A nova senha deve ter pelo menos 6 caracteres.")
+
+    # Usuários hardcoded (.env) não podem trocar senha aqui
+    is_hardcoded = (
+        (username == settings.admin_username and current_password == settings.admin_password)
+        or (username == "consultor" and current_password == settings.consultant_password)
+    )
+    if is_hardcoded:
+        return _error("Usuários do sistema (admin/consultor) devem trocar a senha no arquivo .env do servidor.")
+
+    # Verifica senha atual na tabela
+    role = await verify_radar_user(username, current_password)
+    if not role:
+        return _error("Senha atual incorreta.")
+
+    ok = await update_radar_user_password(username, new_password)
+    if not ok:
+        return _error("Não foi possível atualizar a senha. Tente novamente.")
+
+    return templates.TemplateResponse(
+        "radar_change_password.html",
+        {"request": request, "radar_username": username, "success": True},
+    )
 
 
 def _lead_date_brt(lead: dict) -> str:

@@ -20,6 +20,7 @@ from app.core.database import (
     get_webhook_logs, get_db, get_lead_by_phone,
     get_token_usage_daily, get_token_usage_by_service,
     get_token_usage_by_model, get_token_usage_totals,
+    get_all_radar_users, create_radar_user, delete_radar_user,
 )
 from app.services.tallos import tallos_service
 from app.services.url_fetcher import fetch_url_content
@@ -670,4 +671,61 @@ async def admin_tokens(request: Request):
         "by_service":  by_svc,
         "by_model":    by_mdl,
         "usd_to_brl":  USD_TO_BRL,
+    })
+
+
+# ── Gerenciamento de Usuários do Radar ────────────────────────────────────────
+
+@router.get("/radar-users", response_class=HTMLResponse)
+async def admin_radar_users(request: Request):
+    """Lista os usuários com acesso ao Radar PJ."""
+    await _check_auth(request)
+    users = await get_all_radar_users()
+    return _r(request, "radar_users.html", {
+        "active_page": "radar_users",
+        "users": users,
+    })
+
+
+@router.post("/radar-users/create")
+async def admin_radar_users_create(
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...),
+    role: str = Form(default="viewer"),
+):
+    """Cria um novo usuário do Radar."""
+    await _check_auth(request)
+    if not username.strip() or not password:
+        users = await get_all_radar_users()
+        return _r(request, "radar_users.html", {
+            "active_page": "radar_users",
+            "users": users,
+            "error": "Usuário e senha são obrigatórios.",
+        })
+    ok = await create_radar_user(username.strip(), password, role)
+    users = await get_all_radar_users()
+    if ok:
+        return _r(request, "radar_users.html", {
+            "active_page": "radar_users",
+            "users": users,
+            "success": f"Usuário '{username.strip()}' criado com sucesso.",
+        })
+    return _r(request, "radar_users.html", {
+        "active_page": "radar_users",
+        "users": users,
+        "error": f"Não foi possível criar o usuário. O nome '{username.strip()}' pode já estar em uso.",
+    })
+
+
+@router.post("/radar-users/delete/{user_id}")
+async def admin_radar_users_delete(request: Request, user_id: int):
+    """Apaga um usuário do Radar."""
+    await _check_auth(request)
+    await delete_radar_user(user_id)
+    users = await get_all_radar_users()
+    return _r(request, "radar_users.html", {
+        "active_page": "radar_users",
+        "users": users,
+        "success": "Usuário removido com sucesso.",
     })

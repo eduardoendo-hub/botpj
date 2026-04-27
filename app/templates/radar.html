@@ -1280,6 +1280,13 @@ function Radar() {
             }}>
               <Icon name="settings" size={12} /> Admin
             </a>
+            <a href={basePath.replace(/\/radar.*$/, "/radar/change-password")} style={{
+              display:"flex",alignItems:"center",gap:5,fontSize:11,color:C.txt2,
+              background:"rgba(148,163,184,.07)",border:`1px solid ${C.border}`,
+              padding:"6px 12px",borderRadius:8,textDecoration:"none",
+            }} title={`Logado como: {{ radar_username }}`}>
+              <Icon name="lock" size={12} /> Senha
+            </a>
             <a href={basePath.replace(/\/radar.*$/, "/radar/logout")} style={{
               display:"flex",alignItems:"center",gap:5,fontSize:11,color:C.txt2,
               background:"rgba(148,163,184,.07)",border:`1px solid ${C.border}`,

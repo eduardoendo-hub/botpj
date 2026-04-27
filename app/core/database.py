@@ -289,7 +289,111 @@ async def init_db():
             ON token_usage(created_at DESC)
         """)
 
+        # Usuários do Radar (gestão na tela de ADM)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS radar_users (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                username     TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                role         TEXT NOT NULL DEFAULT 'viewer',
+                created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         await db.commit()
+    finally:
+        await db.close()
+
+
+# ==================== Radar Users ====================
+
+import hashlib, secrets as _secrets_mod
+
+
+def _hash_password(password: str, salt: str = "") -> str:
+    """Gera hash PBKDF2-HMAC-SHA256 da senha com salt."""
+    if not salt:
+        salt = _secrets_mod.token_hex(16)
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 200_000)
+    return f"{salt}${dk.hex()}"
+
+
+def _verify_password(password: str, stored_hash: str) -> bool:
+    """Verifica senha contra hash armazenado."""
+    try:
+        salt, _ = stored_hash.split("$", 1)
+        return _hash_password(password, salt) == stored_hash
+    except Exception:
+        return False
+
+
+async def get_all_radar_users() -> list:
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "SELECT id, username, role, created_at FROM radar_users ORDER BY created_at DESC"
+        )
+        rows = await cursor.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        await db.close()
+
+
+async def create_radar_user(username: str, password: str, role: str = "viewer") -> bool:
+    """Cria um usuário do radar. Retorna False se username já existe."""
+    db = await get_db()
+    try:
+        await db.execute(
+            "INSERT INTO radar_users (username, password_hash, role) VALUES (?, ?, ?)",
+            (username.strip().lower(), _hash_password(password), role)
+        )
+        await db.commit()
+        return True
+    except Exception:
+        return False
+    finally:
+        await db.close()
+
+
+async def delete_radar_user(user_id: int) -> bool:
+    db = await get_db()
+    try:
+        await db.execute("DELETE FROM radar_users WHERE id=?", (user_id,))
+        await db.commit()
+        return True
+    except Exception:
+        return False
+    finally:
+        await db.close()
+
+
+async def verify_radar_user(username: str, password: str) -> str:
+    """Verifica credenciais. Retorna role se válido, '' caso contrário."""
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "SELECT password_hash, role FROM radar_users WHERE username=?",
+            (username.strip().lower(),)
+        )
+        row = await cursor.fetchone()
+        if row and _verify_password(password, row["password_hash"]):
+            return row["role"]
+        return ""
+    finally:
+        await db.close()
+
+
+async def update_radar_user_password(username: str, new_password: str) -> bool:
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "UPDATE radar_users SET password_hash=? WHERE username=?",
+            (_hash_password(new_password), username.strip().lower())
+        )
+        await db.commit()
+        return cursor.rowcount > 0
+    except Exception:
+        return False
     finally:
         await db.close()
 

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Usuários do Radar — Bot SDR PJ{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>👥 Usuários do Radar</h1>
+</div>
+
+{% if error %}
+<div class="alert alert-error">{{ error }}</div>
+{% endif %}
+{% if success %}
+<div class="alert alert-success">{{ success }}</div>
+{% endif %}
+
+<!-- Formulário de criação -->
+<div class="card" style="margin-bottom: 24px;">
+    <h3 style="font-size:16px; font-weight:600; margin-bottom:16px; color:#1a1a2e;">Adicionar novo usuário</h3>
+    <form method="POST" action="{{ prefix }}/admin/radar-users/create">
+        <div style="display:grid; grid-template-columns:1fr 1fr 160px 120px; gap:12px; align-items:end;">
+            <div class="field" style="margin-bottom:0">
+                <label>Usuário</label>
+                <input type="text" name="username" placeholder="ex: diretoria" required autocomplete="off" />
+            </div>
+            <div class="field" style="margin-bottom:0">
+                <label>Senha inicial</label>
+                <input type="password" name="password" placeholder="mínimo 6 caracteres" required autocomplete="new-password" minlength="6" />
+            </div>
+            <div class="field" style="margin-bottom:0">
+                <label>Perfil</label>
+                <select name="role">
+                    <option value="viewer">Visualizador</option>
+                    <option value="manager">Gestor</option>
+                </select>
+            </div>
+            <div style="padding-bottom:1px">
+                <button type="submit" class="btn btn-primary" style="width:100%">+ Criar</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Lista de usuários -->
+<div class="card">
+    <h3 style="font-size:16px; font-weight:600; margin-bottom:16px; color:#1a1a2e;">Usuários cadastrados</h3>
+
+    {% if users %}
+    <table>
+        <thead>
+            <tr>
+                <th>Usuário</th>
+                <th>Perfil</th>
+                <th>Criado em</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>
+                    <span style="font-weight:600; color:#1a1a2e;">{{ user.username }}</span>
+                </td>
+                <td>
+                    {% if user.role == "manager" %}
+                    <span class="badge badge-indigo">Gestor</span>
+                    {% else %}
+                    <span class="badge badge-blue">Visualizador</span>
+                    {% endif %}
+                </td>
+                <td style="color:#6b7280; font-size:13px;">{{ user.created_at | brt }}</td>
+                <td>
+                    <form method="POST" action="{{ prefix }}/admin/radar-users/delete/{{ user.id }}"
+                          onsubmit="return confirm('Remover o usuário \'{{ user.username }}\'?')">
+                        <button type="submit" class="btn btn-danger" style="padding:6px 14px; font-size:13px;">Remover</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty">
+        <p>Nenhum usuário cadastrado ainda.</p>
+        <p style="font-size:12px; margin-top:8px; color:#9ca3af;">Os usuários criados aqui podem acessar o Radar PJ com login e senha próprios.</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card" style="background:#f8fafc; border:1px solid #e5e7eb;">
+    <p style="font-size:13px; color:#6b7280; line-height:1.6;">
+        <strong>ℹ️ Como funciona:</strong> Cada usuário cadastrado aqui pode acessar o
+        <a href="{{ prefix }}/radar/login" target="_blank" style="color:#4f46e5;">Radar PJ</a>
+        com seu próprio login e senha. Os usuários do sistema (<code>admin</code> e <code>consultor</code>)
+        configurados no arquivo <code>.env</code> continuam funcionando normalmente.
+        Cada usuário pode trocar a própria senha diretamente na tela do Radar.
+    </p>
+</div>
+{% endblock %}
