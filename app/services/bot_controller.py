@@ -28,6 +28,78 @@ from app.services.email_service import send_lead_notification
 logger = logging.getLogger(__name__)
 
 
+async def _check_tallos_agent_activity(phone_number: str) -> bool:
+    """
+    Consulta o histórico do Tallos para detectar se um operador humano respondeu
+    nas últimas 12h nesta conversa.
+
+    Chamado como salvaguarda quando agent_active=0 mas o Tallos não enviou
+    o evento de agente via webhook (caso de leads que o humano atende diretamente).
+
+    Retorna True e seta agent_active=1 se operador recente for encontrado.
+    """
+    try:
+        from app.services.tallos_history import (
+            get_conversation_history,
+            extract_customer_id_from_notes,
+        )
+
+        lead = await get_lead_by_phone(phone_number)
+        if not lead:
+            return False
+
+        notes = lead.get("notes", "") or ""
+        customer_id = extract_customer_id_from_notes(notes)
+        if not customer_id:
+            logger.debug(f"[{phone_number}] Sem tallos_contact_id — verificação de agente pulada.")
+            return False
+
+        result = await get_conversation_history(
+            customer_id, page=1, limit=20, sent_by=["operator"]
+        )
+        operator_messages = result.get("messages", [])
+
+        if not operator_messages:
+            return False
+
+        # Mensagem de operador mais recente
+        latest_op = max(operator_messages, key=lambda m: m.get("created_at", ""))
+        op_time_str = latest_op.get("created_at", "")
+        if not op_time_str:
+            return False
+
+        try:
+            op_time = datetime.fromisoformat(op_time_str)
+            if op_time.tzinfo is None:
+                op_time = op_time.replace(tzinfo=timezone.utc)
+        except (ValueError, TypeError):
+            return False
+
+        hours_since = (datetime.now(timezone.utc) - op_time).total_seconds() / 3600
+        if hours_since >= 12:
+            logger.debug(
+                f"[{phone_number}] Operador respondeu há {hours_since:.1f}h — fora da janela de 12h."
+            )
+            return False
+
+        # Operador respondeu recentemente — pausa o bot
+        op_name = latest_op.get("operator_name", "") or "Consultor"
+        await upsert_bot_session(
+            phone_number,
+            agent_active=1,
+            last_agent_msg_at=op_time_str,
+        )
+        logger.info(
+            f"[{phone_number}] 🛑 Operador '{op_name}' detectado via histórico Tallos "
+            f"({hours_since:.1f}h atrás) — bot silenciado."
+        )
+        return True
+
+    except Exception as e:
+        logger.error(f"[{phone_number}] Erro ao verificar agente no Tallos: {e}")
+        return False
+
+
 async def _cfg() -> dict:
     return await get_bot_config()
 
@@ -175,6 +247,13 @@ async def handle_incoming_message(
 
         if agent_active:
             logger.info(f"[{phone_number}] Atendente ativo — bot silenciado.")
+            return
+
+    # Salvaguarda: mesmo com agent_active=0, verifica no Tallos se um humano
+    # respondeu recentemente (cobre casos em que o webhook não enviou o evento).
+    if not agent_active:
+        if await _check_tallos_agent_activity(phone_number):
+            logger.info(f"[{phone_number}] Agente detectado via Tallos — bot silenciado.")
             return
 
     if bot_active:
