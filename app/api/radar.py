@@ -20,6 +20,7 @@ from app.core.database import (
     get_all_leads, get_bot_session, get_db, get_full_conversation, get_lead_by_phone,
     verify_radar_user, update_radar_user_password,
 )
+from app.core.security import verify_password_setting
 from app.services.tallos_history import get_conversation_history, extract_customer_id_from_notes
 from app.services.rd_crm import get_deal_info, get_deal_full_info, sync_pipeline_deals_to_leads
 from app.services.product_classifier import classify_product
@@ -271,8 +272,10 @@ async def radar_login(
     """
     uname = username.strip().lower()
     valid = (
-        (uname == settings.admin_username.lower() and password == settings.admin_password)
-        or (uname == "consultor" and password == settings.consultant_password)
+        (uname == settings.admin_username.lower()
+         and verify_password_setting(password, settings.admin_password_hash, settings.admin_password))
+        or (uname == "consultor"
+            and verify_password_setting(password, settings.consultant_password_hash, settings.consultant_password))
     )
     if not valid:
         # Verifica na tabela de usuários do banco
@@ -346,8 +349,10 @@ async def radar_change_password(
 
     # Usuários hardcoded (.env) não podem trocar senha aqui
     is_hardcoded = (
-        (username == settings.admin_username and current_password == settings.admin_password)
-        or (username == "consultor" and current_password == settings.consultant_password)
+        (username == settings.admin_username
+         and verify_password_setting(current_password, settings.admin_password_hash, settings.admin_password))
+        or (username == "consultor"
+            and verify_password_setting(current_password, settings.consultant_password_hash, settings.consultant_password))
     )
     if is_hardcoded:
         return _error("Usuários do sistema (admin/consultor) devem trocar a senha no arquivo .env do servidor.")

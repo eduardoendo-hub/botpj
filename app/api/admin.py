@@ -22,6 +22,7 @@ from app.core.database import (
     get_token_usage_by_model, get_token_usage_totals,
     get_all_radar_users, create_radar_user, delete_radar_user,
 )
+from app.core.security import verify_password_setting
 from app.services.tallos import tallos_service
 from app.services.url_fetcher import fetch_url_content
 from app.services.report_service import build_daily_report, send_report_whatsapp, list_waba_templates
@@ -154,13 +155,17 @@ async def login_page(request: Request):
 
 @router.post("/login")
 async def login(request: Request, username: str = Form(...), password: str = Form(...)):
-    if username == settings.admin_username and password == settings.admin_password:
+    if username == settings.admin_username and verify_password_setting(
+        password, settings.admin_password_hash, settings.admin_password
+    ):
         session_id = secrets.token_hex(32)
         await _session_create(session_id, settings.admin_username)
         response = RedirectResponse(url="/admin", status_code=HTTP_303_SEE_OTHER)
         response.set_cookie(_ADMIN_COOKIE, session_id, httponly=True, max_age=86400, path="/pj")
         return response
-    if username == "consultor" and password == settings.consultant_password:
+    if username == "consultor" and verify_password_setting(
+        password, settings.consultant_password_hash, settings.consultant_password
+    ):
         session_id = secrets.token_hex(32)
         await _session_create(session_id, "consultor")
         response = RedirectResponse(url="/admin/conversations", status_code=HTTP_303_SEE_OTHER)

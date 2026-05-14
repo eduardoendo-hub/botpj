@@ -22,8 +22,10 @@ class Settings(BaseSettings):
     app_port: int = 8001                   # Porta diferente do BOT MBA (8000)
     app_secret_key: str = "change-me"
     admin_username: str = "admin"
-    admin_password: str = "change-me"
-    consultant_password: str = "change-me"
+    admin_password: str = "change-me"               # legado — preferir admin_password_hash
+    consultant_password: str = "change-me"          # legado — preferir consultant_password_hash
+    admin_password_hash: str = ""                   # hash PBKDF2 (formato "{salt}${dk_hex}")
+    consultant_password_hash: str = ""              # hash PBKDF2 (formato "{salt}${dk_hex}")
 
     # Horário SDRs
     sdr_start_hour: int = 8
