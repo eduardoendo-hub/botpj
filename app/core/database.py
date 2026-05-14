@@ -307,24 +307,7 @@ async def init_db():
 
 # ==================== Radar Users ====================
 
-import hashlib, secrets as _secrets_mod
-
-
-def _hash_password(password: str, salt: str = "") -> str:
-    """Gera hash PBKDF2-HMAC-SHA256 da senha com salt."""
-    if not salt:
-        salt = _secrets_mod.token_hex(16)
-    dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 200_000)
-    return f"{salt}${dk.hex()}"
-
-
-def _verify_password(password: str, stored_hash: str) -> bool:
-    """Verifica senha contra hash armazenado."""
-    try:
-        salt, _ = stored_hash.split("$", 1)
-        return _hash_password(password, salt) == stored_hash
-    except Exception:
-        return False
+from app.core.security import hash_password as _hash_password, verify_password as _verify_password
 
 
 async def get_all_radar_users() -> list:
