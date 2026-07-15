@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     app_host: str = "0.0.0.0"
     app_port: int = 8001                   # Porta diferente do BOT MBA (8000)
     app_secret_key: str = "change-me"
+    # Prefixo de URL. Vazio = servido na raiz do domínio (ex.: botpj.technowhub.ai).
+    # Use "/pj" apenas se estiver atrás de um proxy que sirva o app sob /pj (setup nginx antigo).
+    app_url_prefix: str = ""
     admin_username: str = "admin"
     admin_password: str = "change-me"               # legado — preferir admin_password_hash
     consultant_password: str = "change-me"          # legado — preferir consultant_password_hash

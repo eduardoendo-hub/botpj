@@ -3,7 +3,7 @@
 import logging
 import uvicorn
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request as StarletteRequest
 
@@ -95,13 +95,16 @@ async def lifespan(app: FastAPI):
 
 
 class PrefixRedirectMiddleware(BaseHTTPMiddleware):
-    """Garante que redirects internos mantenham o prefixo /pj quando servido via nginx."""
+    """Mantém o prefixo configurado nos redirects internos quando servido atrás de um
+    proxy que expõe o app sob esse prefixo (ex.: nginx antigo em /pj).
+    Só é registrado quando settings.app_url_prefix não está vazio."""
     async def dispatch(self, request: StarletteRequest, call_next):
         response = await call_next(request)
-        if response.status_code in (301, 302, 303, 307, 308):
+        prefix = settings.app_url_prefix
+        if prefix and response.status_code in (301, 302, 303, 307, 308):
             location = response.headers.get("location", "")
-            if location.startswith("/") and not location.startswith("/pj/"):
-                response.headers["location"] = "/pj" + location
+            if location.startswith("/") and not location.startswith(prefix + "/"):
+                response.headers["location"] = prefix + location
         return response
 
 
@@ -112,7 +115,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.add_middleware(PrefixRedirectMiddleware)
+# Só necessário atrás de um proxy que sirva o app sob um prefixo (setup nginx antigo).
+if settings.app_url_prefix:
+    app.add_middleware(PrefixRedirectMiddleware)
 
 # ── Rotas ─────────────────────────────────────────────────────────────
 # Canal RD Conversas (Tallos) — webhook de monitoramento e registro PJ
@@ -125,7 +130,12 @@ app.include_router(radar_router,          tags=["Radar"])
 
 
 @app.get("/")
-async def root():
+async def root(request: Request):
+    # No subdomínio radar.technowhub.ai a raiz leva direto ao login do Radar.
+    host = request.headers.get("host", "").split(":")[0].lower()
+    if host.startswith("radar."):
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/radar/login", status_code=307)
     return {"status": "ok", "app": "Bot SDR PJ", "version": "1.0.0"}
 
 

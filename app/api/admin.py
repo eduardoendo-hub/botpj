@@ -67,7 +67,7 @@ _jinja_env = Environment(
     auto_reload=True,
 )
 _jinja_env.filters["brt"] = _to_brt
-_jinja_env.globals["prefix"] = "/pj"   # prefixo nginx — garante links corretos em todos os templates
+_jinja_env.globals["prefix"] = settings.app_url_prefix   # "" na raiz (subdomínio) ou "/pj" (proxy antigo)
 templates = Jinja2Templates(env=_jinja_env)
 
 
@@ -161,7 +161,7 @@ async def login(request: Request, username: str = Form(...), password: str = For
         session_id = secrets.token_hex(32)
         await _session_create(session_id, settings.admin_username)
         response = RedirectResponse(url="/admin", status_code=HTTP_303_SEE_OTHER)
-        response.set_cookie(_ADMIN_COOKIE, session_id, httponly=True, max_age=86400, path="/pj")
+        response.set_cookie(_ADMIN_COOKIE, session_id, httponly=True, max_age=86400, path=(settings.app_url_prefix or "/"))
         return response
     if username == "consultor" and verify_password_setting(
         password, settings.consultant_password_hash, settings.consultant_password
@@ -169,7 +169,7 @@ async def login(request: Request, username: str = Form(...), password: str = For
         session_id = secrets.token_hex(32)
         await _session_create(session_id, "consultor")
         response = RedirectResponse(url="/admin/conversations", status_code=HTTP_303_SEE_OTHER)
-        response.set_cookie(_ADMIN_COOKIE, session_id, httponly=True, max_age=86400, path="/pj")
+        response.set_cookie(_ADMIN_COOKIE, session_id, httponly=True, max_age=86400, path=(settings.app_url_prefix or "/"))
         return response
     return _r(request, "login.html", {"error": "Credenciais inválidas"})
 
@@ -180,7 +180,7 @@ async def logout(request: Request):
     if session_id:
         await _session_delete(session_id)
     response = RedirectResponse(url="/admin/login", status_code=HTTP_303_SEE_OTHER)
-    response.delete_cookie(_ADMIN_COOKIE, path="/pj")
+    response.delete_cookie(_ADMIN_COOKIE, path=(settings.app_url_prefix or "/"))
     return response
 
 
