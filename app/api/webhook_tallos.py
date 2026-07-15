@@ -33,6 +33,7 @@ import re
 import json
 import time
 import logging
+from datetime import datetime, timezone
 from fastapi import APIRouter, Request, BackgroundTasks, Header
 from typing import Optional
 
@@ -47,7 +48,7 @@ from app.services.tallos import (
 )
 from app.services.email_service import send_lead_notification
 from app.core.config import settings
-from app.core.database import log_webhook_event, upsert_lead, upsert_bot_session, is_pj_lead, get_lead_by_phone, get_bot_config
+from app.core.database import log_webhook_event, upsert_lead, upsert_bot_session, is_pj_lead, get_lead_by_phone, get_bot_config, save_message
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -269,6 +270,25 @@ async def _process_monitor(body: dict):
             logger.debug(f"[Tallos PJ Monitor] Duplicata ignorada | message_id={message_id}")
             return
 
+        # ── Consultor humano assumiu a conversa ─────────────────────────────
+        # No RD Conversas, content.action == "on_attendance" ("em atendimento")
+        # significa que um operador humano está cuidando desta conversa. O RD NÃO
+        # envia as mensagens do operador nem qualquer campo de remetente — este é o
+        # único sinal disponível. Registra a mensagem do cliente para o histórico,
+        # mas silencia o bot (mesma janela de 12h do agent_active) para não
+        # atropelar o consultor.
+        if action == "on_attendance":
+            await save_message(phone_number, "user", message_text, contact_name, channel="tallos")
+            await upsert_bot_session(
+                phone_number,
+                agent_active=1,
+                last_agent_msg_at=datetime.now(timezone.utc).isoformat(),
+            )
+            logger.info(
+                f"[{phone_number}] 🛑 on_attendance — consultor no atendimento; bot silenciado 12h."
+            )
+            return
+
         logger.info(
             f"✅ TALLOS PJ MONITOR → BOT | Lead PJ confirmado | "
             f"phone={phone_number} | msg={message_text[:60]!r}"
@@ -378,7 +398,7 @@ async def _register_pj_lead(body: dict):
         except Exception as e:
             logger.error(f"[Tallos PJ] Erro ao enviar notificação de email: {e}")
 
-        if message_text and not (event in _LOG_ONLY_EVENTS or is_agent_message(data)):
+        if message_text and not (event in _LOG_ONLY_EVENTS or is_agent_message(data) or action == "on_attendance"):
             if not (message_id and _is_duplicate(message_id)):
                 await _send_to_bot(phone_number, message_text, contact_name, message_id, contact_id)
 
