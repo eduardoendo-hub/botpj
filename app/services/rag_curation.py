@@ -196,13 +196,24 @@ def _set_status_sync(pid, status):
         db.close()
 
 
+def _update_text_sync(pid, pergunta, resposta):
+    db = sqlite3.connect(DB_PATH)
+    try:
+        db.execute("UPDATE rag_proposals SET pergunta=?, resposta=? WHERE id=?", (pergunta, resposta, pid))
+        db.commit()
+    finally:
+        db.close()
+
+
 async def list_pending(limit: int = 100):
     await asyncio.to_thread(_init_sync)
     return await asyncio.to_thread(_list_sync, "pending", limit)
 
 
-async def approve(pid: int) -> bool:
-    """Aprova a proposta e a indexa no vetor (RAG)."""
+async def approve(pid: int, pergunta: str = None, resposta: str = None) -> bool:
+    """Aprova a proposta e a indexa no vetor (RAG). Aceita texto editado."""
+    if pergunta is not None and resposta is not None:
+        await asyncio.to_thread(_update_text_sync, pid, _strip_pii(pergunta.strip()), _strip_pii(resposta.strip()))
     prop = await asyncio.to_thread(_get_sync, pid)
     if not prop or prop["status"] != "pending":
         return False

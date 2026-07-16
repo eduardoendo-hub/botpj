@@ -246,10 +246,11 @@ async def curadoria_run(request: Request):
 
 
 @router.post("/curadoria/{pid}/approve")
-async def curadoria_approve(request: Request, pid: int):
+async def curadoria_approve(request: Request, pid: int,
+                            pergunta: str = Form(None), resposta: str = Form(None)):
     await _check_auth(request)
     from app.services import rag_curation
-    await rag_curation.approve(pid)
+    await rag_curation.approve(pid, pergunta, resposta)
     return RedirectResponse(url="/admin/curadoria", status_code=HTTP_303_SEE_OTHER)
 
 
