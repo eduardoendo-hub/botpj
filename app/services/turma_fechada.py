@@ -129,7 +129,7 @@ async def maybe_alert(phone_number: str, lead: dict = None) -> bool:
 
 # ── Scan periódico (cobre conversas do vendedor) ───────────────────────────
 def _recent_b2b_phones_sync(days: int, limit: int):
-    """Telefones com atividade de consultor recente, ainda não alertados, com pista B2B."""
+    """Telefones com atividade recente na tabela de conversas, com pista B2B."""
     db = sqlite3.connect(DB_PATH)
     try:
         rows = db.execute(
@@ -139,34 +139,92 @@ def _recent_b2b_phones_sync(days: int, limit: int):
             "AND c.phone_number NOT IN (SELECT phone_number FROM tf_alerts) LIMIT ?",
             (f"-{days} day", limit * 4),
         ).fetchall()
-        phones = []
+        out = []
         for (ph,) in rows:
             txt = " ".join(
                 (m[0] or "").lower()
                 for m in db.execute("SELECT message FROM conversations WHERE phone_number=? LIMIT 40", (ph,)).fetchall()
             )
             if any(h in txt for h in _B2B_HINTS):
-                phones.append(ph)
-            if len(phones) >= limit:
+                out.append((ph, ""))  # contact_id vem do lead depois
+            if len(out) >= limit:
                 break
-        return phones
+        return out
     finally:
         db.close()
 
 
-async def scan_recent(days: int = 2, max_leads: int = 25) -> int:
-    """Classifica conversas recentes (bot + vendedor) e alerta as turmas fechadas."""
+def _b2b_from_logs_sync(days: int, limit: int):
+    """Candidatos (phone, contact_id) do webhook_logs CRU — cobre TODAS as conversas
+    que passaram no monitor, mesmo as que o bot nunca atuou / não viraram lead."""
+    import json
+    db = sqlite3.connect(DB_PATH)
+    try:
+        alerted = {r[0] for r in db.execute("SELECT phone_number FROM tf_alerts").fetchall()}
+        rows = db.execute(
+            "SELECT raw_payload FROM webhook_logs WHERE created_at >= datetime('now', ?) "
+            "ORDER BY id DESC LIMIT 4000", (f"-{days} day",),
+        ).fetchall()
+        seen = {}
+        for (raw,) in rows:
+            if not raw:
+                continue
+            try:
+                body = json.loads(raw)
+            except Exception:
+                continue
+            data = body.get("data", body) if isinstance(body, dict) else {}
+            contact = data.get("contact", {}) if isinstance(data, dict) else {}
+            content = data.get("content", {}) if isinstance(data, dict) else {}
+            phone = (contact.get("phone") or "") if isinstance(contact, dict) else ""
+            cid = (contact.get("id") or contact.get("_id") or "") if isinstance(contact, dict) else ""
+            msg = (content.get("message") or "") if isinstance(content, dict) else ""
+            if not phone or phone in alerted or phone in seen:
+                continue
+            if any(h in msg.lower() for h in _B2B_HINTS):
+                seen[phone] = str(cid)
+            if len(seen) >= limit:
+                break
+        return list(seen.items())
+    finally:
+        db.close()
+
+
+async def scan_recent(days: int = 2, max_leads: int = 30) -> int:
+    """Classifica conversas B2B recentes e alerta as turmas fechadas.
+
+    Fontes: (a) tabela de conversas (leads engajados/ingeridos) e (b) webhook_logs CRU
+    — que cobre TODAS as conversas que passaram no monitor, mesmo as que o bot nunca
+    atuou ou que nem viraram lead. Para candidatos que só existem no log, ingere a
+    conversa (JWK) antes de classificar.
+    """
     from app.services.ai_engine import analyze_and_update_lead
     from app.core.database import get_conversation_history, upsert_lead, get_lead_by_phone
+    from app.services.ingestion import _sync_one
 
     await asyncio.to_thread(_init_sync)
-    phones = await asyncio.to_thread(_recent_b2b_phones_sync, days, max_leads)
+    # une candidatos das duas fontes (phone -> contact_id, preferindo o do log)
+    candidates = {}
+    for ph, cid in await asyncio.to_thread(_recent_b2b_phones_sync, days, max_leads):
+        candidates.setdefault(ph, cid)
+    for ph, cid in await asyncio.to_thread(_b2b_from_logs_sync, days, max_leads):
+        if cid or ph not in candidates:
+            candidates[ph] = candidates.get(ph) or cid
+
     alerted = 0
-    for phone in phones:
+    for phone, cid in list(candidates.items())[:max_leads]:
         try:
+            # candidato só do log (sem histórico local) → ingere a conversa primeiro
+            if cid:
+                try:
+                    await _sync_one(phone, cid, "", 50)
+                    await upsert_lead(phone, notes=f"tallos_contact_id:{cid}")
+                except Exception:
+                    pass
             history = await get_conversation_history(phone, limit=30)
+            if not history:
+                continue
             extracted = await analyze_and_update_lead(phone, history) or {}
-            # persiste tipo/trail/formato pra o lead ficar coerente
             upd = {k: extracted[k] for k in ("tipo_interesse", "trail", "formato", "qtd_participantes", "empresa")
                    if extracted.get(k)}
             if upd.get("empresa"):
@@ -179,5 +237,5 @@ async def scan_recent(days: int = 2, max_leads: int = 25) -> int:
         except Exception as e:
             logger.error(f"[TurmaFechada] Erro no scan de {phone}: {e}")
         await asyncio.sleep(0.4)
-    logger.info(f"[TurmaFechada] Scan: {alerted} alerta(s) de {len(phones)} conversa(s) B2B.")
+    logger.info(f"[TurmaFechada] Scan: {alerted} alerta(s) de {len(candidates)} conversa(s) B2B (conversas + logs).")
     return alerted
