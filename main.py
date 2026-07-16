@@ -84,18 +84,24 @@ async def lifespan(app: FastAPI):
     scheduler.add_job(_scheduled_report, CronTrigger(minute=0), id="daily_report")
 
     # Ingestor automático de conversas do RD Conversas (cliente + consultor)
-    from app.services.ingestion import run_full_sync
+    from app.services.ingestion import run_full_sync, acquire_singleton_lock
     scheduler.add_job(run_full_sync, CronTrigger(hour="1,7,13,19", minute=30), id="ingest_tallos")
 
-    scheduler.start()
-    logger.info("Scheduler iniciado (relatório diário + ingestor de conversas 01h30/07h30/13h30/19h30 BRT).")
+    # Trava de instância única: com vários workers, só um roda o scheduler
+    # (evita relatório diário e ingestor rodarem em dobro).
+    if acquire_singleton_lock("botpj_scheduler"):
+        scheduler.start()
+        logger.info("Scheduler iniciado (relatório diário + ingestor 01h30/07h30/13h30/19h30 BRT).")
+    else:
+        logger.info("Scheduler já ativo em outro worker — este worker não agenda.")
 
     logger.info("Bot SDR PJ pronto!")
     logger.info(f"Tela de teste: http://{settings.app_host}:{settings.app_port}/test")
     logger.info(f"Painel admin:  http://{settings.app_host}:{settings.app_port}/admin")
     logger.info(f"Radar:         http://{settings.app_host}:{settings.app_port}/radar")
     yield
-    scheduler.shutdown(wait=False)
+    if scheduler.running:
+        scheduler.shutdown(wait=False)
     logger.info("Encerrando Bot SDR PJ...")
 
 
