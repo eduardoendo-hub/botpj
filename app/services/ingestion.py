@@ -1,19 +1,20 @@
-"""Ingestor automático de conversas do RD Conversas (Tallos).
+"""Ingestor automático de conversas do RD Conversas (Tallos) — Bot SDR PJ.
 
-Puxa periodicamente o histórico completo (cliente + consultor) das conversas
-ATIVAS recentes para o banco local. Substitui o sync manual do cockpit por um
-job agendado — garante que as conversas dos vendedores sejam sempre capturadas,
-mesmo quando o bot não atua. Base para o histórico do bot e (futuro) o RAG.
+Puxa periodicamente o histórico completo (cliente + consultor + bot) das conversas
+ATIVAS recentes para o banco local, alimentando o histórico e (futuro) o RAG.
 
-Cuidados de produção:
-  • Throttle entre chamadas + limite de leads por rodada → não estoura o rate
-    limit da API do Tallos (429) nem atrapalha os envios do bot.
-  • Trava de instância única (flock) → o job roda em UM worker só, mesmo com
-    vários workers do gunicorn.
+IMPORTANTE (PJ): diferente do MBA, o histórico do PJ NÃO vem pela API
+`get_recent_messages` (retorna vazio) — vem pelo endpoint criptografado JWK
+(`tallos_history.get_conversation_history`, o mesmo que o Radar usa). Por isso
+este ingestor usa essa fonte e sintetiza um external_id estável para deduplicar.
+
+Cuidados de produção: throttle entre chamadas + limite por rodada (evita 429) e
+trava de instância única (flock) → roda em UM worker só.
 """
 
-import os
+import re
 import fcntl
+import hashlib
 import asyncio
 import logging
 from datetime import datetime, timezone, timedelta
@@ -22,10 +23,12 @@ logger = logging.getLogger(__name__)
 
 _singleton_locks = {}
 
+# papel do Tallos -> papel local
+_ROLE_MAP = {"customer": "user", "operator": "consultant", "bot": "assistant"}
+
 
 def acquire_singleton_lock(name: str) -> bool:
-    """Retorna True em exatamente um processo (worker). Usa flock não-bloqueante.
-    O file handle fica vivo em módulo para manter a trava durante a vida do processo."""
+    """Retorna True em exatamente um processo (worker). flock não-bloqueante."""
     try:
         fh = open(f"/tmp/{name}.lock", "w")
         fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -36,7 +39,7 @@ def acquire_singleton_lock(name: str) -> bool:
 
 
 def _extract_contact_id(notes: str) -> str:
-    for part in (notes or "").split("|"):
+    for part in re.split(r"[|;]", notes or ""):
         part = part.strip()
         if part.startswith("tallos_contact_id:"):
             return part.split(":", 1)[1].strip()
@@ -55,19 +58,48 @@ def _is_recent(updated_at: str, cutoff: datetime) -> bool:
         return True
 
 
+def _external_id(customer_id: str, msg: dict) -> str:
+    """ID estável para dedup (o histórico JWK não traz id de mensagem)."""
+    base = f"{customer_id}|{msg.get('created_at','')}|{msg.get('role','')}|{(msg.get('message','') or '')[:40]}"
+    return "jwk:" + hashlib.md5(base.encode("utf-8")).hexdigest()
+
+
+async def _sync_one(phone_number: str, contact_id: str, contact_name: str, limit_per: int) -> int:
+    """Importa o histórico JWK de um contato. Retorna nº de msgs novas."""
+    from app.services.tallos_history import get_conversation_history
+    from app.core.database import save_message_external
+
+    result = await get_conversation_history(contact_id, page=1, limit=limit_per)
+    messages = result.get("messages", []) if isinstance(result, dict) else []
+    imported = 0
+    for m in messages:
+        text = (m.get("message", "") or "").strip()
+        if not text:
+            continue
+        role = _ROLE_MAP.get(m.get("role", ""), "user")
+        name = m.get("operator_name") or contact_name
+        ok = await save_message_external(
+            phone_number=phone_number,
+            role=role,
+            message=text,
+            contact_name=name,
+            channel="tallos",
+            external_id=_external_id(contact_id, m),
+            created_at=m.get("created_at", ""),
+        )
+        if ok:
+            imported += 1
+    return imported
+
+
 async def run_full_sync(
     recent_days: int = 3,
     limit_per: int = 50,
     max_leads: int = 250,
     delay: float = 0.5,
 ) -> dict:
-    """Sincroniza o histórico das conversas ativas nos últimos `recent_days`.
-
-    Leads vêm ordenados por updated_at DESC → paramos ao cruzar o corte.
-    `delay` entre chamadas e `max_leads` por rodada protegem a API (429).
-    """
+    """Sincroniza o histórico (JWK) das conversas PJ ativas nos últimos `recent_days`."""
     from app.core.database import get_all_leads
-    from app.services.tallos import tallos_service
 
     cutoff = datetime.now(timezone.utc) - timedelta(days=recent_days)
     leads = await get_all_leads()
@@ -84,18 +116,12 @@ async def run_full_sync(
             skipped += 1
             continue
         try:
-            n = await tallos_service.sync_conversations(
-                phone_number=lead["phone_number"],
-                contact_id=cid,
-                contact_name=lead.get("contact_name", ""),
-                limit=limit_per,
-            )
-            imported += n
+            imported += await _sync_one(lead["phone_number"], cid, lead.get("contact_name", ""), limit_per)
             synced += 1
         except Exception as e:
             errors += 1
             logger.error(f"[Ingest] Erro ao sincronizar {lead.get('phone_number')}: {e}")
-        await asyncio.sleep(delay)  # throttle — respeita o rate limit do Tallos
+        await asyncio.sleep(delay)
 
     logger.info(
         f"[Ingest] ✅ {synced} conversas | {imported} msgs novas | "
