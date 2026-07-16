@@ -192,6 +192,78 @@ def _smtp_send(sender: str, password: str, recipients: List[str], msg: MIMEMulti
         server.sendmail(sender, recipients, msg.as_string())
 
 
+def _build_turma_fechada_html(lead: Dict) -> str:
+    """Email dedicado do alerta de turma fechada — foco no que o comercial precisa."""
+    def g(*keys):
+        for k in keys:
+            v = lead.get(k)
+            if v not in (None, "", "desconhecido"):
+                return str(v)
+        return ""
+
+    empresa   = g("company", "empresa") or "—"
+    contato   = g("contact_name", "nome") or "—"
+    cargo     = g("job_title", "cargo")
+    whatsapp  = g("phone_number", "whatsapp") or "—"
+    email_c   = g("email")
+    treino    = g("training_interest", "tema_interesse", "produto", "servico")
+    qtd       = g("qtd_participantes", "qtd_colaboradores")
+    formato   = g("formato")
+    cidade    = g("cidade")
+    prazo     = g("prazo")
+    urgencia  = g("urgencia")
+    objetivo  = g("objetivo_negocio")
+    temp      = g("lead_temperature")
+    score     = g("score")
+    atendido  = g("atendido_por")
+    resumo    = g("resumo")
+    ocorr     = g("ocorrencia") or datetime.now().strftime("%d/%m/%Y %H:%M")
+
+    def row(label, value):
+        return f'<tr><td>{label}</td><td>{value}</td></tr>' if value else ""
+
+    contato_full = contato + (f" — {cargo}" if cargo else "")
+    contato_line = whatsapp + (f"  ·  {email_c}" if email_c else "")
+
+    resumo_block = ""
+    if resumo:
+        resumo_block = f'<div class="resumo-box"><div class="resumo-title">📝 Resumo da Conversa</div><div class="resumo-text">{resumo}</div></div>'
+
+    return f"""<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>
+    body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#f3f4f6; margin:0; padding:20px; }}
+    .container {{ max-width:580px; margin:0 auto; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.08); }}
+    .header {{ background:#7c2d12; color:#fff; padding:24px 28px; }}
+    .header h1 {{ margin:0; font-size:20px; }}
+    .header p {{ margin:6px 0 0; font-size:13px; color:#fed7aa; }}
+    .body {{ padding:24px 28px; }}
+    .badge {{ display:inline-block; background:#ffedd5; color:#9a3412; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; margin-bottom:18px; }}
+    .section {{ font-size:12px; font-weight:700; color:#9a3412; text-transform:uppercase; letter-spacing:.5px; margin:18px 0 6px; }}
+    table {{ width:100%; border-collapse:collapse; }}
+    td {{ padding:9px 0; border-bottom:1px solid #f3f4f6; font-size:14px; vertical-align:top; }}
+    td:first-child {{ color:#6b7280; width:150px; font-weight:500; }}
+    td:last-child {{ color:#111827; font-weight:600; }}
+    .highlight td:last-child {{ color:#9a3412; font-size:16px; }}
+    .resumo-box {{ margin-top:20px; background:#fff7ed; border-left:4px solid #ea580c; border-radius:0 8px 8px 0; padding:16px 18px; }}
+    .resumo-title {{ font-size:13px; font-weight:700; color:#9a3412; margin-bottom:8px; }}
+    .resumo-text {{ font-size:14px; color:#374151; line-height:1.6; white-space:pre-wrap; }}
+    .footer {{ background:#f9fafb; padding:14px 28px; font-size:12px; color:#9ca3af; text-align:center; border-top:1px solid #f3f4f6; }}
+    </style></head><body><div class="container">
+    <div class="header"><h1>🎯 Alerta — Turma Fechada</h1><p>Lead corporativo / in company identificado no Bot SDR PJ.</p></div>
+    <div class="body">
+      <span class="badge">🏢 Oportunidade corporativa</span>
+      <div class="section">Empresa & contato</div>
+      <table>{row("🏢 Empresa", empresa)}{row("👤 Contato", contato_full)}{row("📱 WhatsApp / E-mail", contato_line)}</table>
+      <div class="section">Oportunidade</div>
+      <table class="highlight">{row("🎓 Treinamento", treino)}{row("👥 Participantes", qtd)}{row("🖥️ Formato", formato)}</table>
+      <table>{row("📍 Cidade", cidade)}{row("⏱️ Prazo", prazo)}{row("🔥 Urgência", urgencia)}{row("🎯 Objetivo", objetivo)}</table>
+      <div class="section">Qualificação</div>
+      <table>{row("🌡️ Temperatura", temp)}{row("⭐ Score", score)}{row("💬 Atendido por", atendido)}{row("🕐 Registrado em", ocorr)}</table>
+      {resumo_block}
+    </div>
+    <div class="footer">Bot SDR PJ · alerta automático de turma fechada</div>
+    </div></body></html>"""
+
+
 async def send_turma_fechada_alert(lead: Dict, config: Dict) -> bool:
     """Alerta de TURMA FECHADA (corporativo/in company) para um grupo separado.
 
@@ -220,7 +292,7 @@ async def send_turma_fechada_alert(lead: Dict, config: Dict) -> bool:
     msg["From"]    = f"Alerta Turma Fechada <{sender}>"
     msg["To"]      = ", ".join(recipients)
     msg.attach(MIMEText(_build_plain(lead), "plain", "utf-8"))
-    msg.attach(MIMEText(_build_html(lead),  "html",  "utf-8"))
+    msg.attach(MIMEText(_build_turma_fechada_html(lead), "html", "utf-8"))
 
     loop = asyncio.get_event_loop()
     try:

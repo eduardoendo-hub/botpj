@@ -63,6 +63,26 @@ def _mark_sync(phone: str):
         db.close()
 
 
+async def _contexto_conversa(phone_number: str):
+    """Retorna (atendido_por, resumo) — best-effort, não quebra o alerta se falhar."""
+    atendido, resumo = "", ""
+    try:
+        from app.core.database import get_conversation_history
+        history = await get_conversation_history(phone_number, limit=30)
+        roles = {(m.get("role") or "") for m in history}
+        tem_bot = "assistant" in roles
+        tem_vend = bool({"consultant", "operator", "agent"} & roles)
+        atendido = "Bot + Vendedor" if (tem_bot and tem_vend) else ("Vendedor" if tem_vend else ("Bot" if tem_bot else ""))
+        try:
+            from app.services.ai_engine import generate_conversation_summary
+            resumo = await generate_conversation_summary(phone_number, history) or ""
+        except Exception:
+            resumo = ""
+    except Exception as e:
+        logger.error(f"[TurmaFechada] contexto da conversa falhou: {e}")
+    return atendido, resumo
+
+
 async def maybe_alert(phone_number: str, lead: dict = None) -> bool:
     """Dispara o alerta se for turma fechada e ainda não alertado. Idempotente."""
     from app.core.database import get_lead_by_phone, get_bot_config
@@ -77,16 +97,27 @@ async def maybe_alert(phone_number: str, lead: dict = None) -> bool:
         return False
 
     cfg = await get_bot_config()
+
+    # "Atendido por" + resumo da conversa (best-effort)
+    atendido, resumo = await _contexto_conversa(phone_number)
+
     payload = {
         "contact_name":      lead.get("contact_name") or lead.get("nome") or "",
         "phone_number":      phone_number,
         "email":             lead.get("email") or "",
         "company":           lead.get("company") or lead.get("empresa") or "",
         "job_title":         lead.get("job_title") or "",
-        "training_interest": lead.get("training_interest") or lead.get("tema_interesse") or "",
-        "produto":           lead.get("training_interest") or lead.get("servico") or "",
+        "training_interest": lead.get("training_interest") or lead.get("tema_interesse") or lead.get("servico") or "",
         "qtd_participantes": lead.get("qtd_participantes") or lead.get("qtd_colaboradores") or "",
         "formato":           lead.get("formato") or "",
+        "cidade":            lead.get("cidade") or "",
+        "prazo":             lead.get("prazo") or "",
+        "urgencia":          lead.get("urgencia") or "",
+        "objetivo_negocio":  lead.get("objetivo_negocio") or "",
+        "lead_temperature":  lead.get("lead_temperature") or "",
+        "score":             lead.get("score") or "",
+        "atendido_por":      atendido,
+        "resumo":            resumo,
         "origem":            "Turma Fechada / Corporativo",
     }
     ok = await send_turma_fechada_alert(payload, cfg)
