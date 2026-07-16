@@ -143,6 +143,17 @@
                     placeholder="consultor.pj@empresa.com&#10;coordenador.treinamentos@empresa.com&#10;gerente.comercial@empresa.com">{{ config.email_recipients or '' }}</textarea>
         </div>
       </div>
+
+      <div class="config-row">
+        <div class="config-label">
+          <label>🎯 E-mails de alerta — Turma Fechada</label>
+          <span class="config-hint">Recebem um alerta quando um lead é identificado como turma fechada / corporativo (in company). Um por linha.</span>
+        </div>
+        <div class="config-control">
+          <textarea name="turma_fechada_recipients"
+                    placeholder="comercial.corporativo@empresa.com&#10;diretoria@empresa.com">{{ config.turma_fechada_recipients or '' }}</textarea>
+        </div>
+      </div>
     </div>
 
   </div><!-- /card -->

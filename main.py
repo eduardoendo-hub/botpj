@@ -86,8 +86,10 @@ async def lifespan(app: FastAPI):
     # Ingestor automático de conversas do RD Conversas (cliente + consultor)
     from app.services.ingestion import run_full_sync, acquire_singleton_lock
     from app.services.rag_curation import curate_recent
+    from app.services.turma_fechada import scan_recent as tf_scan
     scheduler.add_job(run_full_sync, CronTrigger(hour="1,7,13,19", minute=30), id="ingest_tallos")
     scheduler.add_job(curate_recent, CronTrigger(hour=3, minute=0), id="curate_knowledge")
+    scheduler.add_job(tf_scan, CronTrigger(hour="2,8,14,20", minute=0), id="turma_fechada_scan")
 
     # Trava de instância única: com vários workers, só um roda o scheduler
     # (evita relatório diário e ingestor rodarem em dobro).

@@ -543,7 +543,7 @@ async def email_config_save(request: Request):
         "true" if form.get("email_notifications_enabled") == "true" else "false"
     )
 
-    for key in ("gmail_sender", "gmail_app_password", "email_recipients"):
+    for key in ("gmail_sender", "gmail_app_password", "email_recipients", "turma_fechada_recipients"):
         if key in form:
             updates[key] = str(form[key]).strip()
 

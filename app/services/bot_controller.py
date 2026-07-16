@@ -417,6 +417,13 @@ async def _run_lead_analysis(phone_number: str, contact_name: str) -> None:
                 f"temp={extracted.get('lead_temperature')} score={extracted.get('score')}"
             )
 
+        # Alerta de turma fechada (corporativo/in company) — dispara 1x por lead
+        try:
+            from app.services.turma_fechada import maybe_alert
+            await maybe_alert(phone_number)
+        except Exception as e:
+            logger.error(f"[{phone_number}] [TurmaFechada] hook falhou: {e}")
+
     except Exception as e:
         logger.error(f"[{phone_number}] Erro na análise em background: {e}", exc_info=True)
 

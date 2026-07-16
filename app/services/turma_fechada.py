@@ -1,0 +1,152 @@
+"""Alerta de Turma Fechada (corporativo/in company) — Bot SDR PJ.
+
+Quando um lead é identificado como turma fechada / corporativo (trilha B),
+dispara UM alerta por email para um grupo configurável (turma_fechada_recipients).
+Monitora tanto conversas do bot quanto do vendedor: em tempo real no _run_lead_analysis
+e num scan periódico sobre as conversas ingeridas (que incluem consultor).
+"""
+
+import asyncio
+import logging
+import sqlite3
+
+from app.core.database import DB_PATH
+
+logger = logging.getLogger(__name__)
+
+# palavras que sugerem contexto B2B (pré-filtro barato antes de classificar via IA)
+_B2B_HINTS = (
+    "empresa", "equipe", "colaborador", "funcion", "in company", "in-company",
+    "turma fechada", "turma exclusiva", "exclusiva", "corporativ", "para minha", "somos",
+    "pessoas", "participantes", "rh", "treinar", "capacita",
+)
+
+
+def is_turma_fechada(lead: dict) -> bool:
+    """True se o lead é turma fechada / corporativo (trilha B)."""
+    ti = (lead.get("tipo_interesse") or "").lower()
+    fmt = (lead.get("formato") or "").lower()
+    trail = (lead.get("trail") or "").strip().upper()
+    if any(k in ti for k in ("fechada", "corporativ", "corporate", "in company", "in_company", "incompany")):
+        return True
+    if any(k in fmt for k in ("in company", "in_company", "incompany", "fechada", "exclusiva")):
+        return True
+    if trail == "B":
+        return True
+    return False
+
+
+# ── Dedup (uma vez por lead) ───────────────────────────────────────────────
+def _init_sync():
+    db = sqlite3.connect(DB_PATH)
+    try:
+        db.execute("CREATE TABLE IF NOT EXISTS tf_alerts(phone_number TEXT PRIMARY KEY, alerted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+        db.commit()
+    finally:
+        db.close()
+
+
+def _already_sync(phone: str) -> bool:
+    db = sqlite3.connect(DB_PATH)
+    try:
+        return bool(db.execute("SELECT 1 FROM tf_alerts WHERE phone_number=?", (phone,)).fetchone())
+    finally:
+        db.close()
+
+
+def _mark_sync(phone: str):
+    db = sqlite3.connect(DB_PATH)
+    try:
+        db.execute("INSERT OR IGNORE INTO tf_alerts(phone_number) VALUES (?)", (phone,))
+        db.commit()
+    finally:
+        db.close()
+
+
+async def maybe_alert(phone_number: str, lead: dict = None) -> bool:
+    """Dispara o alerta se for turma fechada e ainda não alertado. Idempotente."""
+    from app.core.database import get_lead_by_phone, get_bot_config
+    from app.services.email_service import send_turma_fechada_alert
+
+    await asyncio.to_thread(_init_sync)
+    if not lead:
+        lead = await get_lead_by_phone(phone_number) or {}
+    if not is_turma_fechada(lead):
+        return False
+    if await asyncio.to_thread(_already_sync, phone_number):
+        return False
+
+    cfg = await get_bot_config()
+    payload = {
+        "contact_name":      lead.get("contact_name") or lead.get("nome") or "",
+        "phone_number":      phone_number,
+        "email":             lead.get("email") or "",
+        "company":           lead.get("company") or lead.get("empresa") or "",
+        "job_title":         lead.get("job_title") or "",
+        "training_interest": lead.get("training_interest") or lead.get("tema_interesse") or "",
+        "produto":           lead.get("training_interest") or lead.get("servico") or "",
+        "qtd_participantes": lead.get("qtd_participantes") or lead.get("qtd_colaboradores") or "",
+        "formato":           lead.get("formato") or "",
+        "origem":            "Turma Fechada / Corporativo",
+    }
+    ok = await send_turma_fechada_alert(payload, cfg)
+    if ok:
+        await asyncio.to_thread(_mark_sync, phone_number)
+        logger.info(f"[TurmaFechada] Alerta disparado para {phone_number} (empresa={payload['company'] or '—'}).")
+    return ok
+
+
+# ── Scan periódico (cobre conversas do vendedor) ───────────────────────────
+def _recent_b2b_phones_sync(days: int, limit: int):
+    """Telefones com atividade de consultor recente, ainda não alertados, com pista B2B."""
+    db = sqlite3.connect(DB_PATH)
+    try:
+        rows = db.execute(
+            "SELECT DISTINCT c.phone_number FROM conversations c "
+            "WHERE c.role IN ('consultant','operator','agent','user') "
+            "AND c.created_at >= date('now', ?) "
+            "AND c.phone_number NOT IN (SELECT phone_number FROM tf_alerts) LIMIT ?",
+            (f"-{days} day", limit * 4),
+        ).fetchall()
+        phones = []
+        for (ph,) in rows:
+            txt = " ".join(
+                (m[0] or "").lower()
+                for m in db.execute("SELECT message FROM conversations WHERE phone_number=? LIMIT 40", (ph,)).fetchall()
+            )
+            if any(h in txt for h in _B2B_HINTS):
+                phones.append(ph)
+            if len(phones) >= limit:
+                break
+        return phones
+    finally:
+        db.close()
+
+
+async def scan_recent(days: int = 2, max_leads: int = 25) -> int:
+    """Classifica conversas recentes (bot + vendedor) e alerta as turmas fechadas."""
+    from app.services.ai_engine import analyze_and_update_lead
+    from app.core.database import get_conversation_history, upsert_lead, get_lead_by_phone
+
+    await asyncio.to_thread(_init_sync)
+    phones = await asyncio.to_thread(_recent_b2b_phones_sync, days, max_leads)
+    alerted = 0
+    for phone in phones:
+        try:
+            history = await get_conversation_history(phone, limit=30)
+            extracted = await analyze_and_update_lead(phone, history) or {}
+            # persiste tipo/trail/formato pra o lead ficar coerente
+            upd = {k: extracted[k] for k in ("tipo_interesse", "trail", "formato", "qtd_participantes", "empresa")
+                   if extracted.get(k)}
+            if upd.get("empresa"):
+                upd["company"] = upd.pop("empresa")
+            if upd:
+                await upsert_lead(phone, **upd)
+            lead = await get_lead_by_phone(phone) or {}
+            if await maybe_alert(phone, lead):
+                alerted += 1
+        except Exception as e:
+            logger.error(f"[TurmaFechada] Erro no scan de {phone}: {e}")
+        await asyncio.sleep(0.4)
+    logger.info(f"[TurmaFechada] Scan: {alerted} alerta(s) de {len(phones)} conversa(s) B2B.")
+    return alerted

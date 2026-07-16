@@ -190,3 +190,43 @@ def _smtp_send(sender: str, password: str, recipients: List[str], msg: MIMEMulti
         server.starttls()
         server.login(sender, password)
         server.sendmail(sender, recipients, msg.as_string())
+
+
+async def send_turma_fechada_alert(lead: Dict, config: Dict) -> bool:
+    """Alerta de TURMA FECHADA (corporativo/in company) para um grupo separado.
+
+    Destinatários: config['turma_fechada_recipients']. Respeita
+    email_notifications_enabled. Reusa o layout do email de lead.
+    """
+    import asyncio
+
+    enabled = str(config.get("email_notifications_enabled", "false")).lower()
+    if enabled not in ("true", "1", "yes", "sim"):
+        return False
+
+    sender   = (config.get("gmail_sender") or "").strip()
+    password = (config.get("gmail_app_password") or "").strip()
+    recipients = _parse_recipients(config.get("turma_fechada_recipients") or "")
+    if not sender or not password or not recipients:
+        logger.info("[TurmaFechada] Alerta não enviado: sender/senha/destinatários incompletos.")
+        return False
+
+    empresa = (lead.get("company") or lead.get("empresa") or "").strip()
+    contato = (lead.get("contact_name") or lead.get("nome") or lead.get("phone_number") or "Contato").strip()
+    origem  = (lead.get("origem") or "").strip()
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"🎯 ALERTA — Turma Fechada: {empresa or contato}" + (f" ({origem})" if origem else "")
+    msg["From"]    = f"Alerta Turma Fechada <{sender}>"
+    msg["To"]      = ", ".join(recipients)
+    msg.attach(MIMEText(_build_plain(lead), "plain", "utf-8"))
+    msg.attach(MIMEText(_build_html(lead),  "html",  "utf-8"))
+
+    loop = asyncio.get_event_loop()
+    try:
+        await loop.run_in_executor(None, _smtp_send, sender, password, recipients, msg)
+        logger.info(f"[TurmaFechada] 🎯 Alerta enviado para {recipients} (empresa: {empresa or '—'})")
+        return True
+    except Exception as e:
+        logger.error(f"[TurmaFechada] Falha ao enviar alerta: {e}")
+        return False
