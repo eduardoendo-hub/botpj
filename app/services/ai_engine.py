@@ -179,7 +179,7 @@ def _max_tokens(complexity: str) -> int:
 
 def _model(complexity: str) -> str:
     if complexity == "complex":
-        return "claude-sonnet-4-20250514"
+        return "claude-sonnet-4-5-20250929"
     return "claude-haiku-4-5-20251001"
 
 

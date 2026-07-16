@@ -150,7 +150,7 @@ async def get_company_intel(company_name: str) -> dict:
 
     try:
         response = await client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=500,
             tools=[{"type": "web_search_20250305", "name": "web_search"}],
             messages=[{"role": "user", "content": prompt}],
@@ -168,7 +168,7 @@ async def get_company_intel(company_name: str) -> dict:
             result = _EMPTY.copy()
             result["descricao"] = raw or "Não foram encontradas informações públicas suficientes."
 
-        asyncio.ensure_future(_track_tokens("company_intel", "get_company_intel_sonnet", response.usage, "claude-sonnet-4-20250514"))
+        asyncio.ensure_future(_track_tokens("company_intel", "get_company_intel_sonnet", response.usage, "claude-sonnet-4-5-20250929"))
         _mem_set(company_name, result)
         await set_company_intel_cached(company_name, result)
         logger.info(
