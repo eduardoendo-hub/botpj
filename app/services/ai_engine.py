@@ -373,7 +373,19 @@ async def generate_response(
             logger.info(f"[{phone_number}] E-mail inválido detectado → resposta fixa (0 tokens)")
             return email_error, False
 
-        knowledge = await get_relevant_knowledge_text(user_message, max_chars=7000)
+        # RAG semântico (sqlite-vec + embeddings) quando disponível; senão, o
+        # método por palavra-chave. Fallback também se o RAG não trouxer nada.
+        knowledge = ""
+        try:
+            from app.services import rag
+            if rag.is_enabled():
+                hits = await rag.search(user_message, k=6)
+                if hits:
+                    knowledge = "\n\n".join(h["text"] for h in hits)
+        except Exception as e:
+            logger.error(f"[RAG] Falha na recuperação, usando fallback: {e}")
+        if not knowledge:
+            knowledge = await get_relevant_knowledge_text(user_message, max_chars=7000)
         knowledge_hash = hashlib.md5(knowledge.encode()).hexdigest()[:8]
         cache_key = _cache_key(phone_number, user_message, knowledge_hash)
 
