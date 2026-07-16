@@ -82,8 +82,13 @@ async def lifespan(app: FastAPI):
 
     # Verifica a cada hora cheia se é o horário de envio
     scheduler.add_job(_scheduled_report, CronTrigger(minute=0), id="daily_report")
+
+    # Ingestor automático de conversas do RD Conversas (cliente + consultor)
+    from app.services.ingestion import run_full_sync
+    scheduler.add_job(run_full_sync, CronTrigger(hour="1,7,13,19", minute=30), id="ingest_tallos")
+
     scheduler.start()
-    logger.info("Scheduler do relatório diário iniciado (verifica a cada hora cheia).")
+    logger.info("Scheduler iniciado (relatório diário + ingestor de conversas 01h30/07h30/13h30/19h30 BRT).")
 
     logger.info("Bot SDR PJ pronto!")
     logger.info(f"Tela de teste: http://{settings.app_host}:{settings.app_port}/test")
