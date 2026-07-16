@@ -157,10 +157,11 @@ async def reindex_knowledge_base():
 def _search_sync(vec, k):
     db = _connect()
     try:
+        # KNN precisa do LIMIT direto na vec0 → subquery e depois o JOIN
         rows = db.execute(
-            "SELECT d.text, d.source, d.doc_type, d.ref_id, v.distance "
-            "FROM rag_vec v JOIN rag_docs d ON d.id = v.rowid "
-            "WHERE v.embedding MATCH ? ORDER BY v.distance LIMIT ?",
+            "SELECT d.text, d.source, d.doc_type, d.ref_id, knn.distance FROM "
+            "(SELECT rowid, distance FROM rag_vec WHERE embedding MATCH ? ORDER BY distance LIMIT ?) knn "
+            "JOIN rag_docs d ON d.id = knn.rowid ORDER BY knn.distance",
             (_serialize(vec), k),
         ).fetchall()
         return [{"text": r[0], "source": r[1], "doc_type": r[2], "ref_id": r[3], "distance": r[4]} for r in rows]
