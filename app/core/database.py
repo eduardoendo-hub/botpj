@@ -900,8 +900,9 @@ async def set_bot_config(key: str, value: str):
     db = await get_db()
     try:
         await db.execute(
-            "UPDATE bot_config SET value=?, updated_at=CURRENT_TIMESTAMP WHERE key=?",
-            (value, key)
+            "INSERT INTO bot_config (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=CURRENT_TIMESTAMP",
+            (key, value)
         )
         await db.commit()
     finally:
@@ -913,8 +914,9 @@ async def set_bot_config_bulk(updates: Dict[str, str]):
     try:
         for key, value in updates.items():
             await db.execute(
-                "UPDATE bot_config SET value=?, updated_at=CURRENT_TIMESTAMP WHERE key=?",
-                (value, key)
+                "INSERT INTO bot_config (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=CURRENT_TIMESTAMP",
+                (key, value)
             )
         await db.commit()
     finally:

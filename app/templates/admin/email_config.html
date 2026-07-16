@@ -161,6 +161,7 @@
   <div class="save-bar">
     <button type="submit" class="btn btn-primary">💾 Salvar configurações</button>
     <button type="button" class="btn btn-secondary" onclick="testEmail()">🧪 Enviar email de teste</button>
+    <button type="button" class="btn btn-secondary" onclick="testTurmaFechada()">🎯 Testar alerta Turma Fechada</button>
     <a href="{{ prefix }}/admin" class="btn btn-secondary">Cancelar</a>
   </div>
 
@@ -193,6 +194,27 @@ async function testEmail() {
   result.style.display = 'block';
   btn.disabled = false;
   btn.textContent = '🧪 Enviar email de teste';
+}
+
+async function testTurmaFechada() {
+  const btn = document.querySelector('button[onclick="testTurmaFechada()"]');
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando...';
+  const result = document.getElementById('testResult');
+  result.className = 'test-result';
+  result.style.display = 'none';
+  try {
+    const resp = await fetch(`${prefix}/admin/email-config/test-turma-fechada`, { method: 'POST' });
+    const data = await resp.json();
+    result.className = 'test-result ' + (data.ok ? 'ok' : 'err');
+    result.textContent = (data.ok ? '✅ ' : '❌ ') + data.message;
+  } catch (e) {
+    result.className = 'test-result err';
+    result.textContent = '❌ Erro de conexão: ' + e.message;
+  }
+  result.style.display = 'block';
+  btn.disabled = false;
+  btn.textContent = '🎯 Testar alerta Turma Fechada';
 }
 </script>
 {% endblock %}

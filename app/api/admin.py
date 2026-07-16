@@ -576,6 +576,28 @@ async def email_config_test(request: Request):
         return {"ok": False, "message": "Falha ao enviar. Verifique as configurações de Gmail e destinatários."}
 
 
+@router.post("/email-config/test-turma-fechada")
+async def email_config_test_turma_fechada(request: Request):
+    """Envia o alerta de turma fechada (com dados de exemplo) para o grupo configurado."""
+    await _check_auth(request)
+    from app.services.email_service import send_turma_fechada_alert
+    config = await get_bot_config()
+    sample = {
+        "company": "ACME Indústria Ltda (EXEMPLO)", "contact_name": "João Silva", "job_title": "Gerente de RH",
+        "phone_number": "5511981805098", "email": "joao.silva@acme.com.br",
+        "training_interest": "Excel Avançado e Power BI", "qtd_participantes": "25 colaboradores",
+        "formato": "In company (presencial)", "cidade": "São Paulo - SP", "prazo": "Próximo mês",
+        "urgencia": "Alta", "objetivo_negocio": "Capacitar a equipe financeira em análise de dados",
+        "lead_temperature": "Quente", "score": "85", "atendido_por": "Bot + Vendedor",
+        "resumo": "EXEMPLO — Cliente busca treinamento para 25 pessoas do financeiro, presencial em SP, com orçamento aprovado. Pediu proposta formal.",
+        "ocorrencia": __import__("datetime").datetime.now().strftime("%d/%m/%Y %H:%M"),
+    }
+    ok = await send_turma_fechada_alert(sample, config)
+    if ok:
+        return {"ok": True, "message": "Alerta de teste (turma fechada) enviado! Verifique a caixa de entrada do grupo."}
+    return {"ok": False, "message": "Não enviado. Preencha 'E-mails de alerta — Turma Fechada' e clique em Salvar antes de testar."}
+
+
 # ==================== Webhook Logs ====================
 
 @router.get("/webhook-logs", response_class=HTMLResponse)
