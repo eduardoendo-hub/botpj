@@ -38,6 +38,46 @@ from app.services.token_tracker import track as _track_tokens
 
 logger = logging.getLogger(__name__)
 
+
+# ─────────────────────────────────────────────────────────────
+# Trava determinística de política: o bot NUNCA envia preço/valor/
+# desconto nem data de início de turma — venha do histórico, da base
+# ou da geração do modelo. Se detectar, substitui por desvio ao consultor.
+# ─────────────────────────────────────────────────────────────
+_FORBID_PRICE = re.compile(
+    r"r\$\s*\d"
+    r"|\b\d{1,2}\s*x\s+de\b"
+    r"|\bparcel\w*"
+    r"|\bboleto\b"
+    r"|[àa]\s*vista"
+    r"|\b\d{2}\.\d{3}\b"
+    r"|desconto\s+de\s+\d"
+    r"|\b\d{1,3}\s*%\s*(?:de\s+)?desconto",
+    re.IGNORECASE,
+)
+_FORBID_DATE = re.compile(r"\b\d{1,2}/\d{1,2}(?:/\d{2,4})?\b")
+_DEFLECT_PRICE = (
+    "Sobre valores, formas de pagamento e descontos: essas condições são confirmadas "
+    "diretamente por um dos nossos consultores, porque mudam conforme as ofertas do momento. 😊 "
+    "Quer que eu te encaminhe para um consultor agora pra ele te passar todos os detalhes?"
+)
+_DEFLECT_DATE = (
+    "As datas de início das turmas mudam com frequência, então quem confirma a data certinha é "
+    "um dos nossos consultores. 😊 Quer que eu te conecte com um consultor pra ele te passar as "
+    "informações atualizadas?"
+)
+
+
+def _scrub_forbidden(text: str) -> str:
+    """Nunca deixa preço/valor/desconto nem data de turma sair na resposta ao lead."""
+    if not text:
+        return text
+    if _FORBID_PRICE.search(text):
+        return _DEFLECT_PRICE
+    if _FORBID_DATE.search(text):
+        return _DEFLECT_DATE
+    return text
+
 client = AsyncAnthropic(api_key=settings.anthropic_api_key)
 
 
@@ -378,6 +418,9 @@ async def generate_response(
         needs_escalation = _detect_escalation_needed(text)
         if needs_escalation:
             logger.info(f"[{phone_number}] 🚨 ESCALAÇÃO detectada")
+
+        # ── Trava de política: nunca envia preço/valor/desconto nem data ──
+        text = _scrub_forbidden(text)
 
         if complexity == "simple" and not needs_escalation:
             _cache_set(cache_key, text)
