@@ -9,6 +9,7 @@ Configuração:
   - TALLOS_JWK_KEY: chave JWK completa em JSON string (no .env)
 """
 
+import re
 import json
 import logging
 from datetime import datetime, timezone, timedelta
@@ -48,14 +49,69 @@ def _get_jwk_key() -> Optional[jwk.JWK]:
 
 # ── Descriptografia ───────────────────────────────────────────────────────────
 
+# O Tallos às vezes serializa JSON malformado: aspas (") e control chars não
+# escapados dentro do campo "content". Isso quebra json.loads e faz perder a
+# conversa inteira. O parser tolerante abaixo recupera registro-a-registro.
+_REC_SPLIT = re.compile(r"\}\s*,\s*\{")
+_F_SENT = re.compile(r'"sent_by"\s*:\s*"([^"]*)"')
+_F_TIME = re.compile(r'"created_at"\s*:\s*"([^"]*)"')
+_F_CHAN = re.compile(r'"channel"\s*:\s*"([^"]*)"')
+# content vai de "content":" até o próximo campo bem-formado ("chave":)
+_F_CONTENT = re.compile(r'"content"\s*:\s*"(.*?)"\s*,\s*"[a-z_]+"\s*:', re.DOTALL)
+
+
+def _unescape(s: str) -> str:
+    """Desfaz escapes JSON comuns de forma tolerante e remove control chars."""
+    s = (s.replace("\\n", "\n").replace("\\t", "\t").replace("\\r", "")
+           .replace('\\"', '"').replace("\\/", "/").replace("\\\\", "\\"))
+    return "".join(ch for ch in s if ch >= " " or ch in "\n\t")
+
+
+def _lenient_parse(s: str) -> List[Dict]:
+    """Extrai as mensagens de um payload JSON malformado, registro a registro."""
+    s = s.strip()
+    if s.startswith("["):
+        s = s[1:]
+    if s.endswith("]"):
+        s = s[:-1]
+    out = []
+    for rec in _REC_SPLIT.split(s):
+        sent = _F_SENT.search(rec)
+        if not sent:
+            continue
+        cont = _F_CONTENT.search(rec)
+        time = _F_TIME.search(rec)
+        chan = _F_CHAN.search(rec)
+        out.append({
+            "sent_by":    sent.group(1),
+            "content":    _unescape(cont.group(1)) if cont else "",
+            "created_at": time.group(1) if time else "",
+            "channel":    chan.group(1) if chan else "whatsapp",
+        })
+    return out
+
+
 def _decrypt(encrypted_str: str) -> List[Dict]:
-    """Descriptografa o campo messages retornado pela API Tallos."""
+    """Descriptografa o campo messages retornado pela API Tallos.
+
+    Tolera JSON malformado (aspas/control chars não escapados) recuperando
+    as mensagens uma a uma em vez de perder a conversa inteira.
+    """
     key = _get_jwk_key()
     if not key:
         return []
     token = jwe.JWE()
     token.deserialize(encrypted_str, key=key)
-    return json.loads(token.payload.decode("latin-1"), strict=False)
+    s = token.payload.decode("latin-1")
+    try:
+        return json.loads(s, strict=False)
+    except (json.JSONDecodeError, ValueError):
+        recs = _lenient_parse(s)
+        logger.warning(
+            f"[TallosHistory] JSON malformado do Tallos — recuperados {len(recs)} "
+            f"registro(s) via parser tolerante."
+        )
+        return recs
 
 
 # ── Formatação ────────────────────────────────────────────────────────────────
