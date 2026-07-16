@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% set active_page = "curadoria" %}
+
+{% block title %}Curadoria de Conhecimento{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>🧠 Curadoria de Conhecimento</h1>
+    <form method="post" action="/admin/curadoria/run" style="margin:0">
+        <button type="submit" class="btn btn-primary">🔄 Gerar propostas das conversas</button>
+    </form>
+</div>
+
+<div class="card" style="margin-bottom:16px">
+    <p style="color:#666;margin:0">
+        A IA lê as conversas recentes dos vendedores e propõe perguntas→respostas e objeções
+        reutilizáveis (sem preço, data ou dados pessoais). <b>Aprovar</b> adiciona ao conhecimento
+        do bot (RAG). <b>Rejeitar</b> descarta. Pendentes: <b>{{ pendentes|length }}</b>.
+    </p>
+</div>
+
+{% if saved %}<div class="card" style="border-left:4px solid #10b981">✅ {{ saved }}</div>{% endif %}
+
+{% if pendentes %}
+{% for p in pendentes %}
+<div class="card" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div style="flex:1">
+            <span style="font-size:11px;background:#eef;color:#33c;padding:2px 8px;border-radius:10px">{{ p.tipo }}</span>
+            <p style="margin:8px 0 4px"><b>P:</b> {{ p.pergunta }}</p>
+            <p style="margin:0;color:#333"><b>R:</b> {{ p.resposta }}</p>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+            <form method="post" action="/admin/curadoria/{{ p.id }}/approve" style="margin:0">
+                <button type="submit" class="btn btn-primary" style="background:#10b981">✔ Aprovar</button>
+            </form>
+            <form method="post" action="/admin/curadoria/{{ p.id }}/reject" style="margin:0">
+                <button type="submit" class="btn" style="background:#ef4444;color:#fff">✕ Rejeitar</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="card" style="text-align:center;color:#888;padding:40px">
+    Nenhuma proposta pendente. Clique em <b>“Gerar propostas das conversas”</b> para a IA analisar as conversas recentes.
+</div>
+{% endif %}
+{% endblock %}

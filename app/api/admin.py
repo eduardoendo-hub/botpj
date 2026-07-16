@@ -226,6 +226,41 @@ async def knowledge_edit(request: Request, item_id: int):
     return _r(request, "knowledge_form.html", {"item": item, "active_page": "knowledge"})
 
 
+# ==================== Curadoria de Conhecimento (RAG) ====================
+
+@router.get("/curadoria", response_class=HTMLResponse)
+async def curadoria_page(request: Request):
+    await _check_auth(request)
+    from app.services import rag_curation
+    pendentes = await rag_curation.list_pending(limit=100)
+    return _r(request, "curadoria.html", {"pendentes": pendentes})
+
+
+@router.post("/curadoria/run", response_class=HTMLResponse)
+async def curadoria_run(request: Request):
+    await _check_auth(request)
+    from app.services import rag_curation
+    n = await rag_curation.curate_recent(days=3, max_convos=15)
+    pendentes = await rag_curation.list_pending(limit=100)
+    return _r(request, "curadoria.html", {"pendentes": pendentes, "saved": f"{n} nova(s) proposta(s) geradas."})
+
+
+@router.post("/curadoria/{pid}/approve")
+async def curadoria_approve(request: Request, pid: int):
+    await _check_auth(request)
+    from app.services import rag_curation
+    await rag_curation.approve(pid)
+    return RedirectResponse(url="/admin/curadoria", status_code=HTTP_303_SEE_OTHER)
+
+
+@router.post("/curadoria/{pid}/reject")
+async def curadoria_reject(request: Request, pid: int):
+    await _check_auth(request)
+    from app.services import rag_curation
+    await rag_curation.reject(pid)
+    return RedirectResponse(url="/admin/curadoria", status_code=HTTP_303_SEE_OTHER)
+
+
 class _UrlRequest(BaseModel):
     url: str
 
