@@ -24,7 +24,7 @@ _B2B_HINTS = (
 # Áreas (contact.channel_label) que contam como corporativo/turma fechada.
 # O broker do RD recebe TUDO (Faculdade, Cobrança, Sites...), mas cada mensagem traz
 # de onde veio — então a varredura de logs filtra só o canal corporativo aqui.
-_CORP_CHANNELS = {"treinamentos"}
+_CORP_CHANNELS = {"treinamentos", "site 1", "site 2"}
 
 
 def is_turma_fechada(lead: dict) -> bool:
