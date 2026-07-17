@@ -378,6 +378,7 @@ def _op_scan_sync(day: str, phones: List[str]):
       abandono = mensagem do cliente sem resposta até o fim do dia.
     """
     demoras, abandonos = [], []
+    AG = ("consultant", "operator", "agent")
     db = sqlite3.connect(DB_PATH)
     try:
         for ph in phones:
@@ -386,33 +387,61 @@ def _op_scan_sync(day: str, phones: List[str]):
                 "WHERE phone_number=? AND date(datetime(created_at,'-3 hours'))=? ORDER BY id",
                 (ph, day),
             ).fetchall()
-            pending = None  # (ts, msg) — primeira mensagem do cliente ainda sem resposta
-            for role, msg, ts in rows:
-                t = _parse_brt(ts)
+            n = len(rows)
+            pending = None  # índice da 1ª mensagem do cliente ainda sem resposta
+            for idx in range(n):
+                role, msg, ts = rows[idx]
                 if role == "user":
                     if pending is None:
-                        pending = (t, msg or "")
-                else:
-                    if pending is not None and t and pending[0]:
-                        gap = (t - pending[0]).total_seconds()
-                        human = role in ("consultant", "operator", "agent")
-                        if human and gap >= _SLA_MIN * 60:
+                        pending = idx
+                elif role in AG:
+                    if pending is not None:
+                        t0 = _parse_brt(rows[pending][2])
+                        t1 = _parse_brt(ts)
+                        gap = (t1 - t0).total_seconds() if (t0 and t1) else 0
+                        if gap >= _SLA_MIN * 60:
+                            # 2 últimas falas do cliente (até a resposta) + 2 primeiras do consultor
+                            cli = [m for (r, m, _) in rows[:idx] if r == "user" and m][-2:]
+                            con, k = [], idx
+                            while k < n and rows[k][0] in AG and len(con) < 2:
+                                if rows[k][1]:
+                                    con.append(rows[k][1])
+                                k += 1
                             demoras.append({
-                                "phone": ph, "quando": pending[0], "espera_s": gap,
-                                "pergunta": pending[1], "resposta": msg or "",
-                                "exp": _is_expediente(pending[0]),
+                                "phone": ph, "quando": t0, "espera_s": gap,
+                                "cliente_msgs": cli or [rows[pending][1] or ""],
+                                "consultor_msgs": con or [msg or ""],
+                                "exp": _is_expediente(t0),
                             })
                     pending = None
-            if pending is not None and pending[0] is not None:
-                abandonos.append({
-                    "phone": ph, "quando": pending[0], "pergunta": pending[1],
-                    "exp": _is_expediente(pending[0]),
-                })
+            if pending is not None:
+                t0 = _parse_brt(rows[pending][2])
+                if t0 is not None:
+                    # janela de contexto: até 4 mensagens antes + a mensagem sem resposta
+                    ctx = [(r, m) for (r, m, _) in rows[max(0, pending - 3): pending + 1] if m]
+                    abandonos.append({
+                        "phone": ph, "quando": t0, "exp": _is_expediente(t0),
+                        "pergunta": rows[pending][1] or "", "contexto": ctx,
+                    })
     finally:
         db.close()
     demoras.sort(key=lambda e: e["espera_s"], reverse=True)
     abandonos.sort(key=lambda e: e["quando"], reverse=True)
     return demoras, abandonos
+
+
+def _pretty_consultor(s: str) -> str:
+    """Deixa o nome do consultor apresentável (o CRM às vezes guarda o e-mail)."""
+    import re
+    s = (s or "").strip()
+    if not s:
+        return ""
+    if "@" in s:  # e-mail → nome a partir do local-part (vivian@... → Vivian; joao.silva → João Silva)
+        local = s.split("@")[0]
+        parts = [p for p in re.split(r"[._-]+", local) if p and not p.isdigit()]
+        pretty = " ".join(p.capitalize() for p in parts)
+        return pretty or s
+    return s
 
 
 async def _consultores(phones: List[str]) -> Dict[str, str]:
@@ -424,7 +453,7 @@ async def _consultores(phones: List[str]) -> Dict[str, str]:
     out = {}
     for p, r in zip(phones, res):
         if not isinstance(r, Exception) and isinstance(r, dict):
-            out[p] = (r.get("consultor") or "").strip()
+            out[p] = _pretty_consultor(r.get("consultor") or "")
     return out
 
 
@@ -452,14 +481,16 @@ async def _analyze_operacional(casos: List[Dict], abandonos: List[Dict], resumo:
     from app.services.ai_engine import client
     def _linha(c):
         janela = "no expediente" if c.get("exp") else "FORA do expediente"
+        cli = " / ".join((c.get("cliente_msgs") or [])[-2:])
+        con = " / ".join((c.get("consultor_msgs") or [])[:2])
         return (f"- {c.get('data','')} {c.get('hora','')} ({janela}) | consultor: {c.get('consultor') or '—'} | "
                 f"espera: {c.get('espera','')} | lead: {c.get('label','')} | "
-                f"cliente: \"{(c.get('pergunta') or '')[:120]}\"")
+                f"cliente disse: \"{cli[:180]}\" | consultor respondeu: \"{con[:140]}\"")
     txt_dem = "\n".join(_linha(c) for c in casos) or "(nenhuma demora acima do SLA)"
     txt_ab = "\n".join(
         f"- {a.get('data','')} {a.get('hora','')} ({'no expediente' if a.get('exp') else 'FORA do expediente'}) | "
         f"consultor: {a.get('consultor') or '—'} | lead: {a.get('label','')} | "
-        f"cliente sem resposta: \"{(a.get('pergunta') or '')[:120]}\""
+        f"do que se tratava: \"{' / '.join(m for _, m in (a.get('contexto') or []))[:220]}\""
         for a in abandonos
     ) or "(nenhum abandono)"
     prompt = (f"RESUMO: {resumo}\nSLA considerado: {_SLA_MIN} min | Expediente: seg-sex {_EXP_INI}h-{_EXP_FIM}h\n\n"
@@ -500,12 +531,15 @@ async def build_operacional(day: str) -> Dict[str, Any]:
             "hora": dt.strftime("%H:%M") if dt else "",
             "data": dt.strftime("%d/%m") if dt else "",
             "exp": e.get("exp", False),
-            "pergunta": e.get("pergunta", ""),
         }
-        if not is_ab:
+        if is_ab:
+            d["pergunta"] = e.get("pergunta", "")
+            d["contexto"] = e.get("contexto", [])
+        else:
             d["espera"] = _fmt_dur(e["espera_s"])
             d["espera_s"] = e["espera_s"]
-            d["resposta"] = e.get("resposta", "")
+            d["cliente_msgs"] = e.get("cliente_msgs", [])
+            d["consultor_msgs"] = e.get("consultor_msgs", [])
         return d
 
     casos = [_mk(e) for e in top_dem]

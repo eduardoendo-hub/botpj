@@ -335,31 +335,50 @@ def _build_operacional_html(op: Dict) -> str:
              + opcard(f'{resumo.get("demoras_fora",0)+resumo.get("abandonos_fora",0)}', "Fora expediente", "#a78bfa")
              + "</tr></table>")
 
-    # Casos de demora
+    def _msg_lines(msgs, color, prefix):
+        return "".join(
+            f'<div style="font-size:12px;color:{color};margin-top:3px;line-height:1.45;">{prefix} “{esc((m or "")[:170])}”</div>'
+            for m in msgs if m
+        )
+
+    def _rotulo(txt):
+        return (f'<div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;'
+                f'margin-top:6px;">{txt}</div>')
+
+    # Casos de demora — com 2 falas do cliente + 2 do consultor
     casos_html = ""
     for c in casos[:10]:
+        cli = _msg_lines((c.get("cliente_msgs") or [])[-2:], "#cbd5e1", "🗣️")
+        con = _msg_lines((c.get("consultor_msgs") or [])[:2], "#93c5fd", "↩️")
+        cons_nome = esc(c.get("consultor")) or "consultor não identificado"
         casos_html += (
-            f'<div style="border-left:4px solid #f59e0b;background:#0f172a;border-radius:0 8px 8px 0;padding:10px 14px;margin:8px 0;">'
-            f'<div style="font-size:13.5px;color:#f1f5f9;font-weight:700;">'
-            f'🕐 {esc(c.get("hora"))} · <span style="color:#fbbf24;">esperou {esc(c.get("espera"))}</span> '
-            f'&nbsp;{exp_badge(c.get("exp"))}</div>'
-            f'<div style="font-size:12.5px;color:#cbd5e1;margin-top:4px;">'
-            f'👤 atendido por <b style="color:#e2e8f0;">({esc(c.get("consultor")) or "consultor não identificado"})</b> '
-            f'· {esc(c.get("label"))}</div>'
-            f'<div style="font-size:12.5px;color:#94a3b8;margin-top:4px;font-style:italic;">'
-            f'cliente: “{esc((c.get("pergunta") or "")[:130])}”</div></div>'
+            '<div style="border-left:4px solid #f59e0b;background:#0f172a;border-radius:0 8px 8px 0;padding:11px 14px;margin:9px 0;">'
+            f'<div style="font-size:13.5px;color:#f1f5f9;font-weight:700;">🕐 {esc(c.get("hora"))} · '
+            f'<span style="color:#fbbf24;">esperou {esc(c.get("espera"))}</span> &nbsp;{exp_badge(c.get("exp"))}</div>'
+            f'<div style="font-size:12.5px;color:#cbd5e1;margin-top:4px;">👤 atendido por '
+            f'<b style="color:#e2e8f0;">({cons_nome})</b> · {esc(c.get("label"))}</div>'
+            f'<div style="margin-top:8px;padding-top:8px;border-top:1px solid #1e293b;">'
+            f'{_rotulo("Cliente")}{cli}{_rotulo(f"Consultor ({cons_nome})")}{con}</div></div>'
         )
     if not casos_html:
         casos_html = '<div style="font-size:13px;color:#94a3b8;">Nenhuma demora acima do SLA. 👏</div>'
 
-    # Abandonos
+    # Abandonos — com contexto do que se tratava
     ab_html = ""
     for a in abandonos[:8]:
+        ctx = a.get("contexto") or []
+        ctx_html = "".join(
+            f'<div style="font-size:12px;color:{"#cbd5e1" if r == "user" else "#93c5fd"};margin-top:3px;line-height:1.45;">'
+            f'{"🗣️" if r == "user" else "↩️"} “{esc((m or "")[:160])}”</div>'
+            for r, m in ctx[-4:] if m
+        )
         ab_html += (
-            f'<div style="border-left:4px solid #ef4444;background:#0f172a;border-radius:0 8px 8px 0;padding:9px 14px;margin:7px 0;">'
+            '<div style="border-left:4px solid #ef4444;background:#0f172a;border-radius:0 8px 8px 0;padding:10px 14px;margin:8px 0;">'
             f'<div style="font-size:13px;color:#fecaca;font-weight:700;">🚪 {esc(a.get("hora"))} · sem resposta &nbsp;{exp_badge(a.get("exp"))}</div>'
-            f'<div style="font-size:12.5px;color:#cbd5e1;margin-top:3px;">👤 atendido por <b style="color:#e2e8f0;">({esc(a.get("consultor")) or "não identificado"})</b> · {esc(a.get("label"))}</div>'
-            f'<div style="font-size:12.5px;color:#94a3b8;margin-top:3px;font-style:italic;">cliente: “{esc((a.get("pergunta") or "")[:130])}”</div></div>'
+            f'<div style="font-size:12.5px;color:#cbd5e1;margin-top:3px;">👤 atendido por '
+            f'<b style="color:#e2e8f0;">({esc(a.get("consultor")) or "não identificado"})</b> · {esc(a.get("label"))}</div>'
+            f'<div style="margin-top:8px;padding-top:8px;border-top:1px solid #1e293b;">'
+            f'{_rotulo("Do que se tratava")}{ctx_html}</div></div>'
         )
     if not ab_html:
         ab_html = '<div style="font-size:13px;color:#94a3b8;">Nenhum abandono registrado. 👏</div>'
