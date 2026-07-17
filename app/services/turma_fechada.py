@@ -106,9 +106,13 @@ async def maybe_alert(phone_number: str, lead: dict = None) -> bool:
     # "Atendido por" + resumo da conversa (best-effort)
     atendido, resumo = await _contexto_conversa(phone_number)
 
+    # a chave pode ser um telefone (WhatsApp) ou um contact_id (webchat/site)
+    is_real_phone = bool(re.match(r"^\+?\d{10,15}$", (phone_number or "").strip()))
+    origem = "Turma Fechada / Corporativo" if is_real_phone else "Turma Fechada / Webchat (Site)"
+
     payload = {
         "contact_name":      lead.get("contact_name") or lead.get("nome") or "",
-        "phone_number":      phone_number,
+        "phone_number":      phone_number if is_real_phone else "",
         "email":             lead.get("email") or "",
         "company":           lead.get("company") or lead.get("empresa") or "",
         "job_title":         lead.get("job_title") or "",
@@ -123,7 +127,7 @@ async def maybe_alert(phone_number: str, lead: dict = None) -> bool:
         "score":             lead.get("score") or "",
         "atendido_por":      atendido,
         "resumo":            resumo,
-        "origem":            "Turma Fechada / Corporativo",
+        "origem":            origem,
     }
     ok = await send_turma_fechada_alert(payload, cfg)
     if ok:
@@ -182,16 +186,18 @@ def _b2b_from_logs_sync(days: int, limit: int):
             contact = data.get("contact", {}) if isinstance(data, dict) else {}
             content = data.get("content", {}) if isinstance(data, dict) else {}
             phone = (contact.get("phone") or "") if isinstance(contact, dict) else ""
-            cid = (contact.get("id") or contact.get("_id") or "") if isinstance(contact, dict) else ""
+            cid = str(contact.get("id") or contact.get("_id") or "") if isinstance(contact, dict) else ""
             label = (contact.get("channel_label") or "").strip().lower() if isinstance(contact, dict) else ""
             msg = (content.get("message") or "") if isinstance(content, dict) else ""
-            if not phone or phone in alerted or phone in seen:
+            # chave = telefone (WhatsApp) ou o contact_id (webchat/site, que não tem phone)
+            key = phone or cid
+            if not key or key in alerted or key in seen:
                 continue
-            # só a área corporativa (ignora Faculdade/Cobrança/Sites) — evita ruído e custo de IA
+            # só as áreas corporativas (ignora Faculdade/Cobrança) — evita ruído e custo de IA
             if _CORP_CHANNELS and label not in _CORP_CHANNELS:
                 continue
             if any(h in msg.lower() for h in _B2B_HINTS):
-                seen[phone] = str(cid)
+                seen[key] = cid
             if len(seen) >= limit:
                 break
         return list(seen.items())
