@@ -11,6 +11,7 @@ do CRM do RD (etapa + insights já cacheados nos leads) e monta um email para o 
 Reusa scheduler + email (Gmail) + Claude já existentes. NÃO inclui Faculdade/Cobrança.
 """
 
+import re
 import json
 import logging
 import asyncio
@@ -64,8 +65,22 @@ def _segment(lead: Dict) -> str:
 
 # ── Coleta de dados (síncrona, sqlite direto) ──────────────────────────────
 
+# Atendente se identificando como FACULDADE (não Treinamentos). "graduação/pós" sozinho NÃO
+# vale (consultor de Treinamentos usa pra qualificar), por isso exigimos "da faculdade"/"[Fac]".
+_FAC_AGENT_RE = re.compile(
+    r"consultor[ae]?\s+d[ao]\s+faculdade|faculdade\s+impacta|setor\s+\[?fac|\[fac\b|d[ao]\s+faculdade\s+impacta",
+    re.I,
+)
+_AGENT_ROLES = ("consultant", "operator", "agent", "assistant")
+
+
+def _is_fac_pipeline(pl: str) -> bool:
+    return any(k in (pl or "").lower() for k in ("faculdade", "graduação", "graduacao", "vestibular"))
+
+
 def _corporate_phones_sync(day: str) -> List[str]:
-    """Telefones com atividade no dia (BRT) da área de Treinamentos (canais Treinamentos/Site)."""
+    """Telefones da área de Treinamentos no dia (canais Treinamentos/Site), EXCLUINDO conversas
+    em que o atendente se identifica como faculdade (anti-vazamento da Faculdade)."""
     db = sqlite3.connect(DB_PATH)
     try:
         phones = [
@@ -75,9 +90,22 @@ def _corporate_phones_sync(day: str) -> List[str]:
                 (day,),
             ).fetchall()
         ]
+        corp = []
+        for p in phones:
+            if _channel_of_sync(p) not in _CORP_CHANNELS:
+                continue
+            fac = False
+            for role, msg in db.execute(
+                "SELECT role, message FROM conversations WHERE phone_number=? LIMIT 60", (p,)
+            ):
+                if role in _AGENT_ROLES and msg and _FAC_AGENT_RE.search(msg):
+                    fac = True
+                    break
+            if not fac:
+                corp.append(p)
+        return corp
     finally:
         db.close()
-    return [p for p in phones if _channel_of_sync(p) in _CORP_CHANNELS]
 
 
 def _messages_sync(phone: str) -> List[Tuple[str, str]]:
@@ -201,10 +229,11 @@ async def _gather(day: str) -> Tuple[Dict[str, Any], List[Dict]]:
                     else "Vendedor" if tem_vend else "Bot" if tem_bot else "—")
         records.append({"phone": ph, "lead": lead, "msgs": msgs, "atendido": atendido,
                         "seg": _segment(lead), "curso": _curso(lead)})
-    # Consultor responsável (CRM) para nomear entre parênteses quem está atendendo
-    cons = await _consultores([r["phone"] for r in records])
+    # CRM: consultor (para nomear entre parênteses) + pipeline (anti-faculdade)
+    meta = await _deal_meta([r["phone"] for r in records])
+    records = [r for r in records if not _is_fac_pipeline(meta.get(r["phone"], {}).get("pipeline", ""))]
     for r in records:
-        r["consultor"] = cons.get(r["phone"], "")
+        r["consultor"] = meta.get(r["phone"], {}).get("consultor", "")
     metrics = _compute_metrics(day, records)
     return metrics, records
 
@@ -449,8 +478,8 @@ def _pretty_consultor(s: str) -> str:
     return s
 
 
-async def _consultores(phones: List[str]) -> Dict[str, str]:
-    """Consultor responsável (dono do deal no CRM) por telefone. Best-effort, tolera falhas."""
+async def _deal_meta(phones: List[str]) -> Dict[str, Dict[str, str]]:
+    """{phone: {consultor, pipeline}} do CRM. Best-effort, tolera falhas."""
     from app.services.rd_crm import get_deal_info
     if not phones:
         return {}
@@ -458,7 +487,10 @@ async def _consultores(phones: List[str]) -> Dict[str, str]:
     out = {}
     for p, r in zip(phones, res):
         if not isinstance(r, Exception) and isinstance(r, dict):
-            out[p] = _pretty_consultor(r.get("consultor") or "")
+            out[p] = {"consultor": _pretty_consultor(r.get("consultor") or ""),
+                      "pipeline": (r.get("pipeline") or "").strip()}
+        else:
+            out[p] = {"consultor": "", "pipeline": ""}
     return out
 
 
@@ -520,12 +552,14 @@ async def _analyze_operacional(casos: List[Dict], abandonos: List[Dict], resumo:
 async def build_operacional(day: str) -> Dict[str, Any]:
     """Monta a visão operacional (supervisor) do dia."""
     phones = await asyncio.to_thread(_corporate_phones_sync, day)
+    meta = await _deal_meta(phones)
+    phones = [p for p in phones if not _is_fac_pipeline(meta.get(p, {}).get("pipeline", ""))]
     demoras, abandonos = await asyncio.to_thread(_op_scan_sync, day, phones)
     top_dem = demoras[:_OP_MAX_CASOS]
     top_ab = abandonos[:_OP_MAX_ABANDONOS]
 
     flagged = list({e["phone"] for e in top_dem + top_ab})
-    consultores = await _consultores(flagged)
+    consultores = {p: meta.get(p, {}).get("consultor", "") for p in flagged}
     labels = {p: _label(await asyncio.to_thread(_lead_sync, p), p) for p in flagged}
 
     def _mk(e, is_ab=False):
