@@ -106,6 +106,37 @@ def _label(lead: Dict, phone: str) -> str:
     return (lead.get("company") or lead.get("contact_name") or phone or "Lead").strip()
 
 
+_CURSO_GENERICO = {
+    "curso_individual", "curso individual", "curso_corporativo", "curso corporativo",
+    "treinamento corporativo", "turma_fechada", "turma fechada", "turma_aberta",
+    "não definido", "nao definido", "não especificado", "nao especificado",
+    "a definir", "outro", "locacao", "locação",
+}
+
+
+def _curso(lead: Dict) -> str:
+    """Curso/treinamento específico do lead (Excel, Power BI, Vendas...), best-effort."""
+    for f in ("tema_interesse", "training_interest", "servico"):
+        v = (lead.get(f) or "").strip()
+        if v and v.lower() not in _CURSO_GENERICO:
+            return v
+    return ""
+
+
+def _norm_curso(s: str) -> str:
+    """Normaliza variações para agrupar na contagem (Curso de Power BI → Power BI)."""
+    t = (s or "").lower()
+    for key, label in (("excel", "Excel"), ("power bi", "Power BI"), ("powerbi", "Power BI"),
+                       ("python", "Python"), ("vendas", "Vendas"),
+                       ("lógica", "Lógica de Programação"), ("logica", "Lógica de Programação"),
+                       ("power point", "PowerPoint"), ("powerpoint", "PowerPoint"),
+                       ("word", "Word"), ("sql", "SQL"), ("java", "Java"),
+                       ("marketing", "Marketing"), ("liderança", "Liderança"), ("lideranca", "Liderança")):
+        if key in t:
+            return label
+    return s.strip()[:40]
+
+
 # ── Métricas determinísticas (split PF/PJ + funil) ─────────────────────────
 
 def _blank_seg() -> Dict[str, int]:
@@ -117,6 +148,7 @@ def _compute_metrics(day: str, records: List[Dict]) -> Dict[str, Any]:
     funil: Dict[str, int] = {}
     perdidos: List[str] = []
     temas: Dict[str, int] = {}
+    cursos: Dict[str, int] = {}
     atend: Dict[str, int] = {}
     for r in records:
         lead = r["lead"]
@@ -136,6 +168,10 @@ def _compute_metrics(day: str, records: List[Dict]) -> Dict[str, Any]:
         ti = (lead.get("tipo_interesse") or "").strip()
         if ti:
             temas[ti] = temas.get(ti, 0) + 1
+        cur = r.get("curso") or ""
+        if cur:
+            k = _norm_curso(cur)
+            cursos[k] = cursos.get(k, 0) + 1
         atend[r["atendido"]] = atend.get(r["atendido"], 0) + 1
     return {
         "dia": day,
@@ -146,6 +182,7 @@ def _compute_metrics(day: str, records: List[Dict]) -> Dict[str, Any]:
         "perdidos": perdidos[:8],
         "atendimento": atend,
         "temas": dict(sorted(temas.items(), key=lambda kv: kv[1], reverse=True)),
+        "cursos": dict(sorted(cursos.items(), key=lambda kv: kv[1], reverse=True)),
     }
 
 
@@ -162,8 +199,8 @@ async def _gather(day: str) -> Tuple[Dict[str, Any], List[Dict]]:
         tem_vend = bool({"consultant", "operator", "agent"} & roles)
         atendido = ("Bot + Vendedor" if (tem_bot and tem_vend)
                     else "Vendedor" if tem_vend else "Bot" if tem_bot else "—")
-        records.append({"phone": ph, "lead": lead, "msgs": msgs,
-                        "atendido": atendido, "seg": _segment(lead)})
+        records.append({"phone": ph, "lead": lead, "msgs": msgs, "atendido": atendido,
+                        "seg": _segment(lead), "curso": _curso(lead)})
     metrics = _compute_metrics(day, records)
     return metrics, records
 
@@ -185,9 +222,10 @@ def _transcripts_block(records: List[Dict]) -> str:
         etapa = (lead.get("crm_etapa_cache") or "").strip()
         insight = (lead.get("crm_insights") or "").strip()
         cab = (f"### CONVERSA {i} [{r['seg']}] — {_label(lead, r['phone'])}"
+               f" | CURSO={r.get('curso') or '(ver na conversa)'}"
                f" | trilha={lead.get('trail') or '?'}"
                f" | temp={lead.get('lead_temperature') or '?'}"
-               f" | interesse={lead.get('tipo_interesse') or '?'}"
+               f" | tipo={lead.get('tipo_interesse') or '?'}"
                f" | funil_CRM={etapa or '—'}"
                f" | atendido={r['atendido']}")
         linhas = [f"[{_role_tag(role)}] {(msg or '')[:_MAX_MSG_CHARS]}" for role, msg in r["msgs"]]
@@ -214,23 +252,44 @@ _ANALYST_INSTRUCTION = (
     "{\n"
     '  "destaque": "1-2 frases: o que mais importou no dia (cite PF e/ou PJ)",\n'
     '  "termometro": "leitura geral do dia (aquecido/normal/fraco) e por quê, 1 frase",\n'
+    '  "cursos_procurados": [{"curso": "nome do curso (ex: Excel, Power BI, Python, Vendas)", "qtd": 3, "obs": "PF/PJ, nível, tendência"}],\n'
     '  "funil_leitura": "1-2 frases lendo o pipeline: negociações, gargalos, perdidos e motivos",\n'
-    '  "pf": {"leitura": "1-2 frases sobre o segmento PF", "oportunidades": ["..."], "ligar_hoje": [{"quem":"...","motivo":"..."}]},\n'
-    '  "pj": {"leitura": "1-2 frases sobre o segmento PJ", "oportunidades": ["..."], "ligar_hoje": [{"quem":"...","motivo":"..."}]},\n'
-    '  "temas_em_alta": ["treinamentos/assuntos mais procurados"],\n'
+    '  "pf": {"leitura": "1-2 frases sobre o segmento PF", "oportunidades": ["..."], "ligar_hoje": [{"quem":"...","curso":"...","motivo":"..."}]},\n'
+    '  "pj": {"leitura": "1-2 frases sobre o segmento PJ", "oportunidades": ["..."], "ligar_hoje": [{"quem":"...","curso":"...","motivo":"..."}]},\n'
     '  "objecoes": [{"objecao": "...", "sugestao": "como contornar"}],\n'
     '  "risco_perda": ["leads quentes/corporativos prestes a esfriar ou sem retorno"],\n'
     '  "recomendacoes": ["ações estratégicas para o gestor amanhã"]\n'
     "}\n"
-    "Listas vazias são permitidas. Máx 5 itens por lista. Priorize o que gera receita."
+    "REGRA IMPORTANTE: SEMPRE deixe CLARO qual CURSO/treinamento está em jogo em cada oportunidade, "
+    "ligar_hoje e objeção — extraia da conversa quando o campo CURSO vier vazio (ex: 'Excel Módulo II', "
+    "'Python básico', 'Power BI', 'Treinamento de Vendas'). Em 'cursos_procurados', consolide os cursos "
+    "mais falados no dia, do mais para o menos procurado.\n"
+    "Listas vazias são permitidas. Máx 6 itens por lista. Priorize o que gera receita."
 )
+
+
+def _loads_lenient(raw: str) -> Dict[str, Any]:
+    """Extrai/parseia o JSON da resposta do modelo, tolerando cercas e vírgulas sobrando."""
+    import re
+    s = raw.strip()
+    if s.startswith("```"):
+        s = s.strip("`")
+    if "{" in s and "}" in s:
+        s = s[s.find("{"): s.rfind("}") + 1]
+    try:
+        return json.loads(s)
+    except Exception:
+        # remove vírgulas finais antes de } ou ] e tenta de novo
+        s2 = re.sub(r",\s*([}\]])", r"\1", s)
+        return json.loads(s2)
 
 
 def _empty_analysis(msg: str = "") -> Dict[str, Any]:
     return {"destaque": msg or "Sem conversas de Treinamentos no dia.", "termometro": "", "funil_leitura": "",
+            "cursos_procurados": [],
             "pf": {"leitura": "", "oportunidades": [], "ligar_hoje": []},
             "pj": {"leitura": "", "oportunidades": [], "ligar_hoje": []},
-            "temas_em_alta": [], "objecoes": [], "risco_perda": [], "recomendacoes": []}
+            "objecoes": [], "risco_perda": [], "recomendacoes": []}
 
 
 async def _analyze(metrics: Dict, records: List[Dict]) -> Dict[str, Any]:
@@ -251,7 +310,7 @@ async def _analyze(metrics: Dict, records: List[Dict]) -> Dict[str, Any]:
     model = "claude-sonnet-4-5-20250929"
     try:
         resp = await client.messages.create(
-            model=model, max_tokens=3500, system=_ANALYST_SYSTEM,
+            model=model, max_tokens=4096, system=_ANALYST_SYSTEM,
             messages=[{"role": "user", "content": prompt}],
         )
         try:
@@ -259,12 +318,7 @@ async def _analyze(metrics: Dict, records: List[Dict]) -> Dict[str, Any]:
             asyncio.ensure_future(_track_tokens("sales_digest", "analyze_day", resp.usage, model, ""))
         except Exception:
             pass
-        raw = resp.content[0].text.strip()
-        if raw.startswith("```"):
-            raw = raw.strip("`")
-            raw = raw[raw.find("{"):]
-        raw = raw[raw.find("{"): raw.rfind("}") + 1]
-        data = json.loads(raw)
+        data = _loads_lenient(resp.content[0].text)
         # garante as chaves de segmento
         for seg in ("pf", "pj"):
             if not isinstance(data.get(seg), dict):

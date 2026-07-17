@@ -273,12 +273,16 @@ def _sd_ligar(ligar):
     if not ligar:
         return ""
     rows = ""
-    for l in ligar[:5]:
+    for l in ligar[:6]:
         if isinstance(l, dict):
             tel = _sd_esc(l.get("telefone"))
+            curso = _sd_esc(l.get("curso"))
+            curso_tag = (f'<span style="display:inline-block;background:#fee2e2;color:#991b1b;font-size:11px;'
+                         f'font-weight:700;padding:1px 8px;border-radius:10px;margin-left:6px;">📘 {curso}</span>'
+                         if curso else "")
             rows += (f'<div style="padding:9px 13px;margin:7px 0;background:#fef2f2;border-left:4px solid #dc2626;'
                      f'border-radius:0 8px 8px 0;"><div style="font-weight:700;color:#991b1b;font-size:13.5px;">'
-                     f'📞 {_sd_esc(l.get("quem"))}{f" — {tel}" if tel else ""}</div>'
+                     f'📞 {_sd_esc(l.get("quem"))}{f" — {tel}" if tel else ""}{curso_tag}</div>'
                      f'<div style="font-size:13px;color:#374151;margin-top:2px;">{_sd_esc(l.get("motivo"))}</div></div>')
         else:
             rows += f'<div style="font-size:13.5px;margin:5px 0;">📞 {_sd_esc(l)}</div>'
@@ -408,16 +412,34 @@ def _build_sales_digest_html(digest: Dict) -> str:
                 rows += f'<tr><td colspan="2" style="font-size:14px;padding:6px 0;">{esc(o)}</td></tr>'
         objs_html = f'<table style="width:100%;border-collapse:collapse;">{rows}</table>'
 
-    # Temas
-    temas = a.get("temas_em_alta") or list((m.get("temas") or {}).keys())
-    temas_html = ""
-    if temas:
-        chips = "".join(
-            f'<span style="display:inline-block;background:#eff6ff;color:#1e40af;padding:4px 12px;'
-            f'border-radius:20px;font-size:13px;font-weight:600;margin:3px 4px 3px 0;">{esc(t)}</span>'
-            for t in temas[:8] if t
-        )
-        temas_html = f'<div>{chips}</div>'
+    # Cursos mais procurados (IA consolida; fallback pro contador dos campos)
+    cursos_ia = a.get("cursos_procurados") or []
+    cursos_html = ""
+    if cursos_ia:
+        chips = ""
+        for c in cursos_ia[:10]:
+            if isinstance(c, dict):
+                nome = esc(c.get("curso"))
+                qtd = c.get("qtd")
+                obs = esc(c.get("obs"))
+                if not nome:
+                    continue
+                chips += (f'<span style="display:inline-block;background:#eff6ff;color:#1e40af;padding:5px 12px;'
+                          f'border-radius:20px;font-size:13px;font-weight:600;margin:3px 5px 3px 0;" '
+                          f'title="{obs}">📘 {nome}{f" · <b>{qtd}</b>" if qtd else ""}</span>')
+            elif c:
+                chips += (f'<span style="display:inline-block;background:#eff6ff;color:#1e40af;padding:5px 12px;'
+                          f'border-radius:20px;font-size:13px;font-weight:600;margin:3px 5px 3px 0;">📘 {esc(c)}</span>')
+        cursos_html = f'<div>{chips}</div>'
+    else:
+        cursos_field = m.get("cursos") or {}
+        if cursos_field:
+            chips = "".join(
+                f'<span style="display:inline-block;background:#eff6ff;color:#1e40af;padding:5px 12px;'
+                f'border-radius:20px;font-size:13px;font-weight:600;margin:3px 5px 3px 0;">📘 {esc(k)} · <b>{v}</b></span>'
+                for k, v in list(cursos_field.items())[:10]
+            )
+            cursos_html = f'<div>{chips}</div>'
 
     # Risco de perda (análise + perdidos do CRM)
     risco = list(a.get("risco_perda") or [])
@@ -447,8 +469,8 @@ def _build_sales_digest_html(digest: Dict) -> str:
         <div style="margin:16px 0 4px;">{cards}</div>
         {split_line}
         {f'<div style="font-size:12px;color:#9ca3af;text-align:center;margin-top:8px;">Atendimento — {esc(atend_line)}</div>' if atend_line else ''}
+        {section("📚 Cursos mais procurados", cursos_html)}
         {section("📊 Funil (CRM)", funil_html, "#334155")}
-        {section("🔥 Temas em alta", temas_html)}
         {section("🎯 Por segmento", pf_block + pj_block, "#1e3a8a")}
         {section("⚠️ Risco de perda (dinheiro na mesa)", ul(risco), "#b45309")}
         {section("🚧 Objeções recorrentes", objs_html, "#6b21a8")}
