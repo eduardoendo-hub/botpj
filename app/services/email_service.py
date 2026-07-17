@@ -305,6 +305,97 @@ def _sd_oportunidades(ops):
     return rows
 
 
+def _build_operacional_html(op: Dict) -> str:
+    """Segunda visão do email — OPERACIONAL (supervisor de call center). Estilo escuro, separado."""
+    if not op:
+        return ""
+    esc = _sd_esc
+    resumo = op.get("resumo", {}) or {}
+    sup = op.get("supervisor", {}) or {}
+    casos = op.get("casos", []) or []
+    abandonos = op.get("abandonos", []) or []
+
+    def exp_badge(exp):
+        if exp:
+            return ('<span style="display:inline-block;background:#334155;color:#e2e8f0;font-size:10.5px;'
+                    'font-weight:700;padding:1px 8px;border-radius:10px;">no expediente</span>')
+        return ('<span style="display:inline-block;background:#7c2d12;color:#fed7aa;font-size:10.5px;'
+                'font-weight:700;padding:1px 8px;border-radius:10px;">🌙 fora do expediente</span>')
+
+    # Cards de resumo (operacional)
+    def opcard(num, label, cor="#f59e0b"):
+        return (f'<td style="padding:5px;"><div style="background:#0f172a;border:1px solid #1e293b;border-radius:10px;'
+                f'padding:12px 8px;text-align:center;"><div style="font-size:22px;font-weight:800;color:{cor};">{num}</div>'
+                f'<div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px;">{label}</div></div></td>')
+
+    cards = ("<table style='width:100%;border-collapse:collapse;'><tr>"
+             + opcard(resumo.get("demoras", 0), "Demoras", "#f59e0b")
+             + opcard(resumo.get("abandonos", 0), "Abandonos", "#ef4444")
+             + opcard(resumo.get("maior_espera", "—"), "Maior espera", "#fbbf24")
+             + opcard(f'{resumo.get("demoras_fora",0)+resumo.get("abandonos_fora",0)}', "Fora expediente", "#a78bfa")
+             + "</tr></table>")
+
+    # Casos de demora
+    casos_html = ""
+    for c in casos[:10]:
+        casos_html += (
+            f'<div style="border-left:4px solid #f59e0b;background:#0f172a;border-radius:0 8px 8px 0;padding:10px 14px;margin:8px 0;">'
+            f'<div style="font-size:13.5px;color:#f1f5f9;font-weight:700;">'
+            f'🕐 {esc(c.get("hora"))} · <span style="color:#fbbf24;">esperou {esc(c.get("espera"))}</span> '
+            f'&nbsp;{exp_badge(c.get("exp"))}</div>'
+            f'<div style="font-size:12.5px;color:#cbd5e1;margin-top:4px;">'
+            f'👤 <b style="color:#e2e8f0;">{esc(c.get("consultor") or "consultor não identificado")}</b> '
+            f'· {esc(c.get("label"))}</div>'
+            f'<div style="font-size:12.5px;color:#94a3b8;margin-top:4px;font-style:italic;">'
+            f'cliente: “{esc((c.get("pergunta") or "")[:130])}”</div></div>'
+        )
+    if not casos_html:
+        casos_html = '<div style="font-size:13px;color:#94a3b8;">Nenhuma demora acima do SLA. 👏</div>'
+
+    # Abandonos
+    ab_html = ""
+    for a in abandonos[:8]:
+        ab_html += (
+            f'<div style="border-left:4px solid #ef4444;background:#0f172a;border-radius:0 8px 8px 0;padding:9px 14px;margin:7px 0;">'
+            f'<div style="font-size:13px;color:#fecaca;font-weight:700;">🚪 {esc(a.get("hora"))} · sem resposta &nbsp;{exp_badge(a.get("exp"))}</div>'
+            f'<div style="font-size:12.5px;color:#cbd5e1;margin-top:3px;">👤 <b style="color:#e2e8f0;">{esc(a.get("consultor") or "—")}</b> · {esc(a.get("label"))}</div>'
+            f'<div style="font-size:12.5px;color:#94a3b8;margin-top:3px;font-style:italic;">cliente: “{esc((a.get("pergunta") or "")[:130])}”</div></div>'
+        )
+    if not ab_html:
+        ab_html = '<div style="font-size:13px;color:#94a3b8;">Nenhum abandono registrado. 👏</div>'
+
+    def op_ul(items, cor="#cbd5e1"):
+        if not items:
+            return ""
+        lis = "".join(f'<li style="margin:5px 0;line-height:1.5;">{esc(x)}</li>' for x in items if x)
+        return f'<ul style="margin:6px 0 0;padding-left:20px;font-size:13.5px;color:{cor};">{lis}</ul>'
+
+    def op_section(title, inner):
+        return (f'<div style="font-size:12px;font-weight:800;color:#fbbf24;text-transform:uppercase;'
+                f'letter-spacing:.5px;margin:22px 0 8px;">{title}</div>{inner}') if inner else ""
+
+    leitura = esc(sup.get("leitura"))
+    leitura_box = (f'<div style="background:#1e293b;border-radius:10px;padding:14px 16px;font-size:14px;'
+                   f'color:#e2e8f0;line-height:1.5;">🎧 {leitura}</div>') if leitura else ""
+
+    return f"""
+    <div style="background:#0b1220;padding:2px 0;">
+      <div style="background:#111c34;color:#fff;padding:20px 30px;border-top:3px solid #f59e0b;">
+        <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#fbbf24;font-weight:700;">⏱️ Visão operacional · separada da estratégica</div>
+        <div style="font-size:19px;font-weight:800;margin-top:4px;">Supervisão de Atendimento</div>
+        <div style="font-size:12.5px;color:#94a3b8;margin-top:3px;">Tempos reais de resposta · SLA {op.get('sla_min','?')} min · Expediente {esc(op.get('expediente',''))}</div>
+      </div>
+      <div style="background:#0b1220;padding:22px 30px 28px;">
+        {leitura_box}
+        <div style="margin:16px 0 4px;">{cards}</div>
+        {op_section("⏳ Maiores demoras de resposta", casos_html)}
+        {op_section("🚪 Abandonos (cliente sem resposta)", ab_html)}
+        {op_section("📌 Padrões observados", op_ul(sup.get("padroes")))}
+        {op_section("🛠️ Recomendações operacionais", op_ul(sup.get("recomendacoes")))}
+      </div>
+    </div>"""
+
+
 def _build_sales_digest_html(digest: Dict) -> str:
     """Email 'Copiloto do Gestor' — resumo diário de Treinamentos, separado PF × PJ + funil do CRM."""
     from datetime import datetime as _dt
@@ -451,6 +542,8 @@ def _build_sales_digest_html(digest: Dict) -> str:
     termometro = esc(a.get("termometro"))
     atend_line = " · ".join(f"{k}: {v}" for k, v in atend.items() if v and k != "—")
 
+    op_html = _build_operacional_html(digest.get("operacional"))
+
     return f"""<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>
     body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#f3f4f6; margin:0; padding:20px; }}
     .container {{ max-width:660px; margin:0 auto; background:#fff; border-radius:14px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,.08); }}
@@ -476,7 +569,8 @@ def _build_sales_digest_html(digest: Dict) -> str:
         {section("🚧 Objeções recorrentes", objs_html, "#6b21a8")}
         {section("✅ Recomendações", ul(a.get("recomendacoes")))}
       </div>
-      <div class="footer">Bot SDR PJ · Copiloto do Gestor — análise automática das conversas de Treinamentos (PF + PJ) cruzada com o CRM</div>
+      {op_html}
+      <div class="footer">Bot SDR PJ · Copiloto do Gestor · 1ª visão estratégica (vendas) · 2ª visão operacional (atendimento)</div>
     </div></body></html>"""
 
 
