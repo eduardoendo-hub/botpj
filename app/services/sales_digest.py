@@ -201,6 +201,10 @@ async def _gather(day: str) -> Tuple[Dict[str, Any], List[Dict]]:
                     else "Vendedor" if tem_vend else "Bot" if tem_bot else "—")
         records.append({"phone": ph, "lead": lead, "msgs": msgs, "atendido": atendido,
                         "seg": _segment(lead), "curso": _curso(lead)})
+    # Consultor responsável (CRM) para nomear entre parênteses quem está atendendo
+    cons = await _consultores([r["phone"] for r in records])
+    for r in records:
+        r["consultor"] = cons.get(r["phone"], "")
     metrics = _compute_metrics(day, records)
     return metrics, records
 
@@ -227,7 +231,8 @@ def _transcripts_block(records: List[Dict]) -> str:
                f" | temp={lead.get('lead_temperature') or '?'}"
                f" | tipo={lead.get('tipo_interesse') or '?'}"
                f" | funil_CRM={etapa or '—'}"
-               f" | atendido={r['atendido']}")
+               f" | atendido={r['atendido']}"
+               f" | consultor={r.get('consultor') or '—'}")
         linhas = [f"[{_role_tag(role)}] {(msg or '')[:_MAX_MSG_CHARS]}" for role, msg in r["msgs"]]
         corpo = cab + "\n" + "\n".join(linhas)
         if insight:
@@ -260,10 +265,14 @@ _ANALYST_INSTRUCTION = (
     '  "risco_perda": ["leads quentes/corporativos prestes a esfriar ou sem retorno"],\n'
     '  "recomendacoes": ["ações estratégicas para o gestor amanhã"]\n'
     "}\n"
-    "REGRA IMPORTANTE: SEMPRE deixe CLARO qual CURSO/treinamento está em jogo em cada oportunidade, "
+    "REGRA 1 (CURSO): SEMPRE deixe CLARO qual CURSO/treinamento está em jogo em cada oportunidade, "
     "ligar_hoje e objeção — extraia da conversa quando o campo CURSO vier vazio (ex: 'Excel Módulo II', "
     "'Python básico', 'Power BI', 'Treinamento de Vendas'). Em 'cursos_procurados', consolide os cursos "
     "mais falados no dia, do mais para o menos procurado.\n"
+    "REGRA 2 (CONSULTOR): SEMPRE que se referir a quem está atendendo um lead, coloque o nome do "
+    "consultor ENTRE PARÊNTESES quando souber (use o campo 'consultor=' do cabeçalho, ex: "
+    "'Total Química — Rafael (atendido por Rebeca)'). Se o consultor for '—'/desconhecido, NÃO invente "
+    "nome — pode omitir ou escrever '(consultor não identificado)'.\n"
     "Listas vazias são permitidas. Máx 6 itens por lista. Priorize o que gera receita."
 )
 
@@ -406,8 +415,8 @@ def _op_scan_sync(day: str, phones: List[str]):
     return demoras, abandonos
 
 
-async def _op_consultores(phones: List[str]) -> Dict[str, str]:
-    """Consultor responsável (dono do deal no CRM) por telefone — só p/ casos sinalizados."""
+async def _consultores(phones: List[str]) -> Dict[str, str]:
+    """Consultor responsável (dono do deal no CRM) por telefone. Best-effort, tolera falhas."""
     from app.services.rd_crm import get_deal_info
     if not phones:
         return {}
@@ -480,7 +489,7 @@ async def build_operacional(day: str) -> Dict[str, Any]:
     top_ab = abandonos[:_OP_MAX_ABANDONOS]
 
     flagged = list({e["phone"] for e in top_dem + top_ab})
-    consultores = await _op_consultores(flagged)
+    consultores = await _consultores(flagged)
     labels = {p: _label(await asyncio.to_thread(_lead_sync, p), p) for p in flagged}
 
     def _mk(e, is_ab=False):

@@ -344,7 +344,7 @@ def _build_operacional_html(op: Dict) -> str:
             f'🕐 {esc(c.get("hora"))} · <span style="color:#fbbf24;">esperou {esc(c.get("espera"))}</span> '
             f'&nbsp;{exp_badge(c.get("exp"))}</div>'
             f'<div style="font-size:12.5px;color:#cbd5e1;margin-top:4px;">'
-            f'👤 <b style="color:#e2e8f0;">{esc(c.get("consultor") or "consultor não identificado")}</b> '
+            f'👤 atendido por <b style="color:#e2e8f0;">({esc(c.get("consultor")) or "consultor não identificado"})</b> '
             f'· {esc(c.get("label"))}</div>'
             f'<div style="font-size:12.5px;color:#94a3b8;margin-top:4px;font-style:italic;">'
             f'cliente: “{esc((c.get("pergunta") or "")[:130])}”</div></div>'
@@ -358,7 +358,7 @@ def _build_operacional_html(op: Dict) -> str:
         ab_html += (
             f'<div style="border-left:4px solid #ef4444;background:#0f172a;border-radius:0 8px 8px 0;padding:9px 14px;margin:7px 0;">'
             f'<div style="font-size:13px;color:#fecaca;font-weight:700;">🚪 {esc(a.get("hora"))} · sem resposta &nbsp;{exp_badge(a.get("exp"))}</div>'
-            f'<div style="font-size:12.5px;color:#cbd5e1;margin-top:3px;">👤 <b style="color:#e2e8f0;">{esc(a.get("consultor") or "—")}</b> · {esc(a.get("label"))}</div>'
+            f'<div style="font-size:12.5px;color:#cbd5e1;margin-top:3px;">👤 atendido por <b style="color:#e2e8f0;">({esc(a.get("consultor")) or "não identificado"})</b> · {esc(a.get("label"))}</div>'
             f'<div style="font-size:12.5px;color:#94a3b8;margin-top:3px;font-style:italic;">cliente: “{esc((a.get("pergunta") or "")[:130])}”</div></div>'
         )
     if not ab_html:
