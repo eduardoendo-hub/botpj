@@ -28,15 +28,34 @@ _CORP_CHANNELS = {"treinamentos", "site 1", "site 2"}
 
 
 def is_turma_fechada(lead: dict) -> bool:
-    """True se o lead é turma fechada / corporativo (trilha B)."""
+    """True somente se for turma fechada / corporativa DE VERDADE.
+
+    Exige grupo real (2+) OU empresa nomeada OU menção explícita de 'in company /
+    fechada / exclusiva'. EXCLUI leads individuais (trilha A ou 1 participante) —
+    a IA às vezes marca tipo_interesse='curso_corporativo' por engano, então esse
+    campo sozinho NÃO basta.
+    """
     ti = (lead.get("tipo_interesse") or "").lower()
     fmt = (lead.get("formato") or "").lower()
     trail = (lead.get("trail") or "").strip().upper()
-    if any(k in ti for k in ("fechada", "corporativ", "corporate", "in company", "in_company", "incompany")):
+    company = (lead.get("company") or lead.get("empresa") or "").strip()
+    m = re.search(r"\d+", str(lead.get("qtd_participantes") or lead.get("qtd_colaboradores") or ""))
+    qtd = int(m.group(0)) if m else 0
+
+    # ── Exclusões fortes de individual ──
+    if trail == "A":       # A = individual / turma aberta
+        return False
+    if qtd == 1:           # 1 participante não é turma fechada
+        return False
+
+    explicito = (any(k in ti for k in ("fechada", "in company", "in_company", "incompany"))
+                 or any(k in fmt for k in ("in company", "in_company", "incompany", "fechada", "exclusiva")))
+    if explicito:
         return True
-    if any(k in fmt for k in ("in company", "in_company", "incompany", "fechada", "exclusiva")):
-        return True
-    if trail == "B":
+
+    # sem menção explícita: precisa de grupo (2+) OU empresa, JUNTO com sinal corporativo
+    corporativo = (trail == "B") or ("corporativ" in ti)
+    if corporativo and (qtd >= 2 or bool(company)):
         return True
     return False
 
@@ -205,6 +224,29 @@ def _b2b_from_logs_sync(days: int, limit: int):
         db.close()
 
 
+def _channel_of_sync(phone: str) -> str:
+    """channel_label mais recente desse telefone no webhook_logs (área de onde veio)."""
+    import json
+    db = sqlite3.connect(DB_PATH)
+    try:
+        for (raw,) in db.execute(
+            "SELECT raw_payload FROM webhook_logs WHERE phone_number=? ORDER BY id DESC LIMIT 3", (phone,)
+        ):
+            if not raw:
+                continue
+            try:
+                b = json.loads(raw)
+            except Exception:
+                continue
+            ct = (b.get("data", b).get("contact", {}) if isinstance(b, dict) else {})
+            lbl = (ct.get("channel_label") or "").strip().lower() if isinstance(ct, dict) else ""
+            if lbl:
+                return lbl
+        return ""
+    finally:
+        db.close()
+
+
 async def scan_recent(days: int = 2, max_leads: int = 30) -> int:
     """Classifica conversas B2B recentes e alerta as turmas fechadas.
 
@@ -229,6 +271,12 @@ async def scan_recent(days: int = 2, max_leads: int = 30) -> int:
     alerted = 0
     for phone, cid in list(candidates.items())[:max_leads]:
         try:
+            # filtro de área: se o telefone tem canal conhecido e NÃO é corporativo
+            # (ex: Faculdade/Cobrança), pula — evita falso positivo e custo de IA.
+            if phone and phone.replace("+", "").isdigit():
+                ch = await asyncio.to_thread(_channel_of_sync, phone)
+                if ch and _CORP_CHANNELS and ch not in _CORP_CHANNELS:
+                    continue
             # candidato só do log (sem histórico local) → ingere a conversa primeiro
             if cid:
                 try:
