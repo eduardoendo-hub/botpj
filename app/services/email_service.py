@@ -264,6 +264,192 @@ def _build_turma_fechada_html(lead: Dict) -> str:
     </div></body></html>"""
 
 
+def _build_sales_digest_html(digest: Dict) -> str:
+    """Email 'Copiloto do Gestor' — resumo estratégico diário da área de Treinamentos."""
+    from datetime import datetime as _dt
+    m = digest.get("metrics", {}) or {}
+    a = digest.get("analysis", {}) or {}
+    dia = digest.get("dia", "")
+    try:
+        dia_fmt = _dt.strptime(dia, "%Y-%m-%d").strftime("%d/%m/%Y")
+    except Exception:
+        dia_fmt = dia
+
+    temp = m.get("temperatura", {}) or {}
+    atend = m.get("atendimento", {}) or {}
+
+    def esc(v):
+        return (str(v).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")) if v else ""
+
+    def card(num, label, color="#2563eb"):
+        return (f'<td style="padding:6px;"><div style="background:#f8fafc;border:1px solid #e5e7eb;'
+                f'border-radius:10px;padding:14px 10px;text-align:center;">'
+                f'<div style="font-size:26px;font-weight:800;color:{color};">{num}</div>'
+                f'<div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;">{label}</div>'
+                f'</div></td>')
+
+    cards = (
+        "<table style='width:100%;border-collapse:collapse;'><tr>"
+        + card(m.get("total_conversas", 0), "Conversas")
+        + card(m.get("novos_leads", 0), "Novos leads", "#0891b2")
+        + card(temp.get("quente", 0), "Quentes", "#dc2626")
+        + card(m.get("turma_fechada", 0), "Turma fechada", "#ea580c")
+        + "</tr></table>"
+    )
+
+    def section(title, inner, color="#1e3a8a"):
+        if not inner:
+            return ""
+        return (f'<div style="font-size:12px;font-weight:800;color:{color};text-transform:uppercase;'
+                f'letter-spacing:.5px;margin:22px 0 8px;">{title}</div>{inner}')
+
+    def ul(items):
+        if not items:
+            return ""
+        lis = "".join(f'<li style="margin:5px 0;line-height:1.5;">{esc(x)}</li>' for x in items if x)
+        return f'<ul style="margin:0;padding-left:20px;font-size:14px;color:#374151;">{lis}</ul>'
+
+    # Oportunidades (titulo + detalhe)
+    ops = a.get("oportunidades") or []
+    ops_html = ""
+    if ops:
+        rows = ""
+        for o in ops[:5]:
+            if isinstance(o, dict):
+                rows += (f'<div style="background:#f0fdf4;border-left:4px solid #16a34a;border-radius:0 8px 8px 0;'
+                         f'padding:10px 14px;margin:8px 0;"><div style="font-weight:700;color:#166534;font-size:14px;">'
+                         f'{esc(o.get("titulo"))}</div><div style="font-size:13px;color:#374151;margin-top:2px;">'
+                         f'{esc(o.get("detalhe"))}</div></div>')
+            else:
+                rows += f'<div style="font-size:14px;margin:6px 0;">{esc(o)}</div>'
+        ops_html = rows
+
+    # Objeções
+    objs = a.get("objecoes") or []
+    objs_html = ""
+    if objs:
+        rows = ""
+        for o in objs[:5]:
+            if isinstance(o, dict):
+                rows += (f'<tr><td style="padding:7px 0;border-bottom:1px solid #f3f4f6;font-size:14px;'
+                         f'color:#111827;font-weight:600;width:45%;">🚧 {esc(o.get("objecao"))}</td>'
+                         f'<td style="padding:7px 0 7px 12px;border-bottom:1px solid #f3f4f6;font-size:13px;'
+                         f'color:#374151;">→ {esc(o.get("sugestao"))}</td></tr>')
+            else:
+                rows += f'<tr><td colspan="2" style="font-size:14px;padding:6px 0;">{esc(o)}</td></tr>'
+        objs_html = f'<table style="width:100%;border-collapse:collapse;">{rows}</table>'
+
+    # Ligar hoje
+    ligar = a.get("ligar_hoje") or []
+    ligar_html = ""
+    if ligar:
+        rows = ""
+        for l in ligar[:5]:
+            if isinstance(l, dict):
+                tel = esc(l.get("telefone"))
+                rows += (f'<div style="padding:10px 14px;margin:8px 0;background:#fef2f2;border-left:4px solid #dc2626;'
+                         f'border-radius:0 8px 8px 0;"><div style="font-weight:700;color:#991b1b;font-size:14px;">'
+                         f'📞 {esc(l.get("quem"))}{f" — {tel}" if tel else ""}</div>'
+                         f'<div style="font-size:13px;color:#374151;margin-top:2px;">{esc(l.get("motivo"))}</div></div>')
+            else:
+                rows += f'<div style="font-size:14px;margin:6px 0;">📞 {esc(l)}</div>'
+        ligar_html = rows
+
+    temas = a.get("temas_em_alta") or list((m.get("temas") or {}).keys())
+    temas_html = ""
+    if temas:
+        chips = "".join(
+            f'<span style="display:inline-block;background:#eff6ff;color:#1e40af;padding:4px 12px;'
+            f'border-radius:20px;font-size:13px;font-weight:600;margin:3px 4px 3px 0;">{esc(t)}</span>'
+            for t in temas[:8] if t
+        )
+        temas_html = f'<div>{chips}</div>'
+
+    destaque = esc(a.get("destaque"))
+    termometro = esc(a.get("termometro"))
+    atend_line = " · ".join(f"{k}: {v}" for k, v in atend.items() if v and k != "—")
+
+    return f"""<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>
+    body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#f3f4f6; margin:0; padding:20px; }}
+    .container {{ max-width:640px; margin:0 auto; background:#fff; border-radius:14px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,.08); }}
+    .header {{ background:linear-gradient(135deg,#1e3a8a,#1e40af); color:#fff; padding:26px 30px; }}
+    .header h1 {{ margin:0; font-size:21px; }}
+    .header p {{ margin:6px 0 0; font-size:13px; color:#bfdbfe; }}
+    .body {{ padding:24px 30px; }}
+    .destaque {{ background:#eff6ff; border-radius:10px; padding:16px 18px; font-size:15px; color:#1e3a8a; font-weight:600; line-height:1.5; }}
+    .footer {{ background:#f9fafb; padding:16px 30px; font-size:12px; color:#9ca3af; text-align:center; border-top:1px solid #f3f4f6; }}
+    </style></head><body><div class="container">
+      <div class="header"><h1>🧭 Copiloto do Gestor — Treinamentos</h1>
+        <p>Resumo estratégico do dia {dia_fmt}</p></div>
+      <div class="body">
+        {f'<div class="destaque">💡 {destaque}</div>' if destaque else ''}
+        {f'<div style="font-size:13px;color:#6b7280;margin:10px 2px 4px;">🌡️ {termometro}</div>' if termometro else ''}
+        <div style="margin:16px 0 4px;">{cards}</div>
+        {f'<div style="font-size:12px;color:#9ca3af;text-align:center;margin-top:2px;">Atendimento — {esc(atend_line)}</div>' if atend_line else ''}
+        {section("🔥 Temas em alta", temas_html)}
+        {section("💰 Oportunidades", ops_html, "#166534")}
+        {section("📞 Ligar hoje", ligar_html, "#991b1b")}
+        {section("⚠️ Risco de perda (dinheiro na mesa)", ul(a.get("risco_perda")), "#b45309")}
+        {section("🚧 Objeções recorrentes", objs_html, "#6b21a8")}
+        {section("🎯 Recomendações", ul(a.get("recomendacoes")))}
+      </div>
+      <div class="footer">Bot SDR PJ · Copiloto do Gestor — análise automática das conversas de Treinamentos</div>
+    </div></body></html>"""
+
+
+def _build_sales_digest_plain(digest: Dict) -> str:
+    m = digest.get("metrics", {}) or {}
+    a = digest.get("analysis", {}) or {}
+    lines = [f"Copiloto do Gestor — Treinamentos — dia {digest.get('dia','')}", ""]
+    lines.append(f"Conversas: {m.get('total_conversas',0)} | Novos leads: {m.get('novos_leads',0)} "
+                 f"| Quentes: {(m.get('temperatura') or {}).get('quente',0)} | Turma fechada: {m.get('turma_fechada',0)}")
+    if a.get("destaque"):
+        lines += ["", f"Destaque: {a['destaque']}"]
+    if a.get("recomendacoes"):
+        lines += ["", "Recomendações:"] + [f"- {r}" for r in a["recomendacoes"]]
+    lines += ["", "Veja o email em HTML para o relatório completo."]
+    return "\n".join(lines)
+
+
+async def send_sales_digest(digest: Dict, config: Dict) -> bool:
+    """Envia o resumo estratégico diário para o grupo de gestão (digest_recipients).
+
+    Respeita email_notifications_enabled. Cai para email_recipients se digest_recipients vazio.
+    """
+    import asyncio
+
+    enabled = str(config.get("email_notifications_enabled", "false")).lower()
+    if enabled not in ("true", "1", "yes", "sim"):
+        logger.debug("[SalesDigest] Notificações por email desabilitadas.")
+        return False
+
+    sender   = (config.get("gmail_sender") or "").strip()
+    password = (config.get("gmail_app_password") or "").strip()
+    recipients = _parse_recipients(config.get("digest_recipients") or config.get("email_recipients") or "")
+    if not sender or not password or not recipients:
+        logger.info("[SalesDigest] Não enviado: sender/senha/destinatários incompletos.")
+        return False
+
+    dia = digest.get("dia", "")
+    total = (digest.get("metrics") or {}).get("total_conversas", 0)
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"🧭 Resumo do dia {dia} — {total} conversas (Treinamentos)"
+    msg["From"]    = f"Copiloto do Gestor <{sender}>"
+    msg["To"]      = ", ".join(recipients)
+    msg.attach(MIMEText(_build_sales_digest_plain(digest), "plain", "utf-8"))
+    msg.attach(MIMEText(_build_sales_digest_html(digest),  "html",  "utf-8"))
+
+    loop = asyncio.get_event_loop()
+    try:
+        await loop.run_in_executor(None, _smtp_send, sender, password, recipients, msg)
+        logger.info(f"[SalesDigest] Enviado para {recipients} (dia {dia}, {total} conversas)")
+        return True
+    except Exception as e:
+        logger.error(f"[SalesDigest] Falha ao enviar: {e}")
+        return False
+
+
 async def send_turma_fechada_alert(lead: Dict, config: Dict) -> bool:
     """Alerta de TURMA FECHADA (corporativo/in company) para um grupo separado.
 

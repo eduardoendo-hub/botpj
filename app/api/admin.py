@@ -543,7 +543,8 @@ async def email_config_save(request: Request):
         "true" if form.get("email_notifications_enabled") == "true" else "false"
     )
 
-    for key in ("gmail_sender", "gmail_app_password", "email_recipients", "turma_fechada_recipients"):
+    for key in ("gmail_sender", "gmail_app_password", "email_recipients",
+                "turma_fechada_recipients", "digest_recipients"):
         if key in form:
             updates[key] = str(form[key]).strip()
 
@@ -596,6 +597,19 @@ async def email_config_test_turma_fechada(request: Request):
     if ok:
         return {"ok": True, "message": "Alerta de teste (turma fechada) enviado! Verifique a caixa de entrada do grupo."}
     return {"ok": False, "message": "Não enviado. Preencha 'E-mails de alerta — Turma Fechada' e clique em Salvar antes de testar."}
+
+
+@router.post("/email-config/test-digest")
+async def email_config_test_digest(request: Request):
+    """Gera e envia o resumo estratégico do gestor (Copiloto) do dia anterior — dados REAIS."""
+    await _check_auth(request)
+    from app.services.sales_digest import run_daily_digest
+    form = await request.form()
+    day = (form.get("day") or "").strip() or None  # opcional: YYYY-MM-DD
+    ok = await run_daily_digest(day)
+    if ok:
+        return {"ok": True, "message": "Resumo estratégico enviado! Pode levar ~1 min para gerar a análise. Verifique a caixa do gestor."}
+    return {"ok": False, "message": "Não enviado. Preencha 'E-mails do gestor (resumo diário)' e salve; confirme que há conversas no período."}
 
 
 # ==================== Webhook Logs ====================

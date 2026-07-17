@@ -154,6 +154,17 @@
                     placeholder="comercial.corporativo@empresa.com&#10;diretoria@empresa.com">{{ config.turma_fechada_recipients or '' }}</textarea>
         </div>
       </div>
+
+      <div class="config-row">
+        <div class="config-label">
+          <label>🧭 E-mails do gestor — Resumo diário (Copiloto)</label>
+          <span class="config-hint">Recebem, toda manhã (07h30), o resumo estratégico das conversas de Treinamentos do dia anterior: oportunidades, quem ligar hoje, objeções e recomendações. Um por linha.</span>
+        </div>
+        <div class="config-control">
+          <textarea name="digest_recipients"
+                    placeholder="gestor.treinamentos@empresa.com&#10;diretoria@empresa.com">{{ config.digest_recipients or '' }}</textarea>
+        </div>
+      </div>
     </div>
 
   </div><!-- /card -->
@@ -162,6 +173,7 @@
     <button type="submit" class="btn btn-primary">💾 Salvar configurações</button>
     <button type="button" class="btn btn-secondary" onclick="testEmail()">🧪 Enviar email de teste</button>
     <button type="button" class="btn btn-secondary" onclick="testTurmaFechada()">🎯 Testar alerta Turma Fechada</button>
+    <button type="button" class="btn btn-secondary" onclick="testDigest()">🧭 Testar resumo do gestor</button>
     <a href="{{ prefix }}/admin" class="btn btn-secondary">Cancelar</a>
   </div>
 
@@ -215,6 +227,27 @@ async function testTurmaFechada() {
   result.style.display = 'block';
   btn.disabled = false;
   btn.textContent = '🎯 Testar alerta Turma Fechada';
+}
+
+async function testDigest() {
+  const btn = document.querySelector('button[onclick="testDigest()"]');
+  btn.disabled = true;
+  btn.textContent = '⏳ Gerando análise (~1 min)...';
+  const result = document.getElementById('testResult');
+  result.className = 'test-result';
+  result.style.display = 'none';
+  try {
+    const resp = await fetch(`${prefix}/admin/email-config/test-digest`, { method: 'POST' });
+    const data = await resp.json();
+    result.className = 'test-result ' + (data.ok ? 'ok' : 'err');
+    result.textContent = (data.ok ? '✅ ' : '❌ ') + data.message;
+  } catch (e) {
+    result.className = 'test-result err';
+    result.textContent = '❌ Erro de conexão: ' + e.message;
+  }
+  result.style.display = 'block';
+  btn.disabled = false;
+  btn.textContent = '🧭 Testar resumo do gestor';
 }
 </script>
 {% endblock %}
