@@ -298,10 +298,12 @@ _ANALYST_INSTRUCTION = (
     "ligar_hoje e objeção — extraia da conversa quando o campo CURSO vier vazio (ex: 'Excel Módulo II', "
     "'Python básico', 'Power BI', 'Treinamento de Vendas'). Em 'cursos_procurados', consolide os cursos "
     "mais falados no dia, do mais para o menos procurado.\n"
-    "REGRA 2 (CONSULTOR): SEMPRE que se referir a quem está atendendo um lead, coloque o nome do "
-    "consultor ENTRE PARÊNTESES quando souber (use o campo 'consultor=' do cabeçalho, ex: "
-    "'Total Química — Rafael (atendido por Rebeca)'). Se o consultor for '—'/desconhecido, NÃO invente "
-    "nome — pode omitir ou escrever '(consultor não identificado)'.\n"
+    "REGRA 2 (CONSULTOR): o consultor RESPONSÁVEL pelo lead é APENAS o do campo 'consultor=' do "
+    "cabeçalho (dono do deal no CRM). Cite-o entre parênteses (ex: 'Total Química — Rafael (Rosana)'). "
+    "NUNCA afirme que alguém 'assumiu' ou 'está atendendo' com base em um nome que aparece no TEXTO da "
+    "conversa — vários consultores podem ter respondido (ex: um à noite após transferência), mas o "
+    "RESPONSÁVEL é só o do CRM. Se 'consultor=' vier '—', escreva '(consultor não identificado no CRM)' "
+    "e não invente nome.\n"
     "Listas vazias são permitidas. Máx 6 itens por lista. Priorize o que gera receita."
 )
 
