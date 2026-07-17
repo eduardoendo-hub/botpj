@@ -80,8 +80,9 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.error(f"[REPORT] Erro no scheduler: {e}")
 
-    # Verifica a cada hora cheia se é o horário de envio
-    scheduler.add_job(_scheduled_report, CronTrigger(minute=0), id="daily_report")
+    # Relatório diário via WhatsApp (Radar) — DESATIVADO em favor do Copiloto do Gestor
+    # (resumo estratégico por email, 07h30). Reativar descomentando a linha abaixo.
+    # scheduler.add_job(_scheduled_report, CronTrigger(minute=0), id="daily_report")
 
     # Ingestor automático de conversas do RD Conversas (cliente + consultor)
     from app.services.ingestion import run_full_sync, acquire_singleton_lock

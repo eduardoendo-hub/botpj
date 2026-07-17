@@ -1,13 +1,14 @@
-"""Copiloto do Gestor — resumo estratégico diário das conversas de Treinamentos (PJ).
+"""Copiloto do Gestor — resumo estratégico diário da área de Treinamentos (PF + PJ).
 
-Todo dia de manhã, olha as conversas do dia anterior (área corporativa: Treinamentos +
-Site) e monta um email para o gestor com:
-  • números com significado (volume, novos leads, temperatura, turma fechada, atendimento);
-  • leitura estratégica via IA (temas em alta, objeções, oportunidades, risco de perda);
-  • recomendações acionáveis (onde colocar força, quem ligar hoje).
+Todo dia de manhã, olha as conversas do dia anterior de TODA a área de Treinamentos
+(canais Treinamentos + Site — inclui PF/individual e PJ/corporativo), CRUZA com o funil
+do CRM do RD (etapa + insights já cacheados nos leads) e monta um email para o gestor com:
+  • números com significado, SEPARADOS por PF e PJ (volume, quentes, novos, turma fechada);
+  • leitura do FUNIL (etapas, negociações, perdidos + motivo);
+  • leitura estratégica via IA por segmento (oportunidades, quem ligar hoje);
+  • temas em alta, objeções, risco de perda e recomendações.
 
-Reusa scheduler + email (Gmail) + Claude já existentes. Escopo: canais corporativos
-(`_CORP_CHANNELS` do turma_fechada). NÃO inclui Faculdade/Cobrança.
+Reusa scheduler + email (Gmail) + Claude já existentes. NÃO inclui Faculdade/Cobrança.
 """
 
 import json
@@ -25,9 +26,9 @@ logger = logging.getLogger(__name__)
 BRT = timezone(timedelta(hours=-3))
 
 # Limites de custo/tamanho ao alimentar o Claude
-_MAX_LEADS_ANALYSIS = 40      # nº máx de conversas enviadas para análise
-_MAX_MSGS_PER_LEAD = 18       # mensagens por conversa
-_MAX_MSG_CHARS = 220          # chars por mensagem
+_MAX_LEADS_ANALYSIS = 45      # nº máx de conversas enviadas para análise
+_MAX_MSGS_PER_LEAD = 16       # mensagens por conversa
+_MAX_MSG_CHARS = 200          # chars por mensagem
 
 
 def _yesterday_brt() -> str:
@@ -35,10 +36,36 @@ def _yesterday_brt() -> str:
     return (datetime.now(BRT) - timedelta(days=1)).strftime("%Y-%m-%d")
 
 
+def _is_created_on(lead: Dict, day: str) -> bool:
+    """True se o lead foi criado no dia informado (BRT)."""
+    ca = lead.get("created_at") or ""
+    if not ca:
+        return False
+    try:
+        dt = datetime.fromisoformat(ca.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(BRT).strftime("%Y-%m-%d") == day
+    except Exception:
+        return False
+
+
+# ── Segmentação PF × PJ ─────────────────────────────────────────────────────
+
+def _segment(lead: Dict) -> str:
+    """Classifica o lead como 'PJ' (corporativo) ou 'PF' (individual)."""
+    trail = (lead.get("trail") or "").strip().upper()
+    ti = (lead.get("tipo_interesse") or "").lower()
+    company = (lead.get("company") or lead.get("empresa") or "").strip()
+    if trail == "B" or company or any(k in ti for k in ("fechada", "corporativ")) or is_turma_fechada(lead):
+        return "PJ"
+    return "PF"
+
+
 # ── Coleta de dados (síncrona, sqlite direto) ──────────────────────────────
 
 def _corporate_phones_sync(day: str) -> List[str]:
-    """Telefones com atividade no dia (BRT) cujo canal é corporativo (Treinamentos/Site)."""
+    """Telefones com atividade no dia (BRT) da área de Treinamentos (canais Treinamentos/Site)."""
     db = sqlite3.connect(DB_PATH)
     try:
         phones = [
@@ -50,22 +77,14 @@ def _corporate_phones_sync(day: str) -> List[str]:
         ]
     finally:
         db.close()
-    corp = []
-    for p in phones:
-        ch = _channel_of_sync(p)
-        # estrito: só canal corporativo conhecido (evita contaminar com Faculdade)
-        if ch in _CORP_CHANNELS:
-            corp.append(p)
-    return corp
+    return [p for p in phones if _channel_of_sync(p) in _CORP_CHANNELS]
 
 
 def _messages_sync(phone: str) -> List[Tuple[str, str]]:
-    """Últimas mensagens (role, message) da conversa, mais antigas → recentes."""
     db = sqlite3.connect(DB_PATH)
     try:
         rows = db.execute(
-            "SELECT role, message FROM conversations WHERE phone_number=? "
-            "ORDER BY id DESC LIMIT ?",
+            "SELECT role, message FROM conversations WHERE phone_number=? ORDER BY id DESC LIMIT ?",
             (phone, _MAX_MSGS_PER_LEAD),
         ).fetchall()
     finally:
@@ -83,54 +102,49 @@ def _lead_sync(phone: str) -> Dict[str, Any]:
         db.close()
 
 
-def _new_leads_count_sync(day: str, phones: List[str]) -> int:
-    if not phones:
-        return 0
-    db = sqlite3.connect(DB_PATH)
-    try:
-        marks = ",".join("?" * len(phones))
-        n = db.execute(
-            f"SELECT COUNT(*) FROM leads WHERE date(datetime(created_at,'-3 hours'))=? "
-            f"AND phone_number IN ({marks})",
-            (day, *phones),
-        ).fetchone()[0]
-        return int(n or 0)
-    finally:
-        db.close()
-
-
 def _label(lead: Dict, phone: str) -> str:
     return (lead.get("company") or lead.get("contact_name") or phone or "Lead").strip()
 
 
-# ── Métricas determinísticas ───────────────────────────────────────────────
+# ── Métricas determinísticas (split PF/PJ + funil) ─────────────────────────
+
+def _blank_seg() -> Dict[str, int]:
+    return {"conversas": 0, "quentes": 0, "novos": 0, "turma_fechada": 0}
+
 
 def _compute_metrics(day: str, records: List[Dict]) -> Dict[str, Any]:
-    temp = {"quente": 0, "morno": 0, "frio": 0, "n/i": 0}
-    trail = {}
-    atend = {"Bot": 0, "Vendedor": 0, "Bot + Vendedor": 0, "—": 0}
-    tf = 0
-    temas = {}
+    seg = {"PF": _blank_seg(), "PJ": _blank_seg()}
+    funil: Dict[str, int] = {}
+    perdidos: List[str] = []
+    temas: Dict[str, int] = {}
+    atend: Dict[str, int] = {}
     for r in records:
         lead = r["lead"]
-        t = (lead.get("lead_temperature") or "n/i").lower()
-        temp[t if t in temp else "n/i"] = temp.get(t if t in temp else "n/i", 0) + 1
-        tr = (lead.get("trail") or "—").upper()
-        trail[tr] = trail.get(tr, 0) + 1
-        atend[r["atendido"]] = atend.get(r["atendido"], 0) + 1
-        if is_turma_fechada(lead):
-            tf += 1
+        s = r["seg"]
+        seg[s]["conversas"] += 1
+        if (lead.get("lead_temperature") or "").lower() == "quente":
+            seg[s]["quentes"] += 1
+        if _is_created_on(lead, day):
+            seg[s]["novos"] += 1
+        if s == "PJ" and is_turma_fechada(lead):
+            seg["PJ"]["turma_fechada"] += 1
+        etapa = (lead.get("crm_etapa_cache") or "").strip()
+        if etapa:
+            funil[etapa] = funil.get(etapa, 0) + 1
+            if etapa.lower().startswith("perdido"):
+                perdidos.append(f"{_label(lead, r['phone'])} — {etapa}")
         ti = (lead.get("tipo_interesse") or "").strip()
         if ti:
             temas[ti] = temas.get(ti, 0) + 1
+        atend[r["atendido"]] = atend.get(r["atendido"], 0) + 1
     return {
         "dia": day,
         "total_conversas": len(records),
-        "novos_leads": _new_leads_count_sync(day, [r["phone"] for r in records]),
-        "temperatura": temp,
-        "trail": trail,
+        "pf": seg["PF"],
+        "pj": seg["PJ"],
+        "funil": dict(sorted(funil.items(), key=lambda kv: kv[1], reverse=True)),
+        "perdidos": perdidos[:8],
         "atendimento": atend,
-        "turma_fechada": tf,
         "temas": dict(sorted(temas.items(), key=lambda kv: kv[1], reverse=True)),
     }
 
@@ -148,12 +162,13 @@ async def _gather(day: str) -> Tuple[Dict[str, Any], List[Dict]]:
         tem_vend = bool({"consultant", "operator", "agent"} & roles)
         atendido = ("Bot + Vendedor" if (tem_bot and tem_vend)
                     else "Vendedor" if tem_vend else "Bot" if tem_bot else "—")
-        records.append({"phone": ph, "lead": lead, "msgs": msgs, "atendido": atendido})
+        records.append({"phone": ph, "lead": lead, "msgs": msgs,
+                        "atendido": atendido, "seg": _segment(lead)})
     metrics = _compute_metrics(day, records)
     return metrics, records
 
 
-# ── Transcrições compactas p/ o Claude ─────────────────────────────────────
+# ── Transcrições compactas p/ o Claude (com funil + insight do CRM) ─────────
 
 def _role_tag(role: str) -> str:
     if role == "user":
@@ -167,69 +182,76 @@ def _transcripts_block(records: List[Dict]) -> str:
     blocks = []
     for i, r in enumerate(records, 1):
         lead = r["lead"]
-        cab = (f"### CONVERSA {i} — {_label(lead, r['phone'])}"
+        etapa = (lead.get("crm_etapa_cache") or "").strip()
+        insight = (lead.get("crm_insights") or "").strip()
+        cab = (f"### CONVERSA {i} [{r['seg']}] — {_label(lead, r['phone'])}"
                f" | trilha={lead.get('trail') or '?'}"
                f" | temp={lead.get('lead_temperature') or '?'}"
                f" | interesse={lead.get('tipo_interesse') or '?'}"
+               f" | funil_CRM={etapa or '—'}"
                f" | atendido={r['atendido']}")
         linhas = [f"[{_role_tag(role)}] {(msg or '')[:_MAX_MSG_CHARS]}" for role, msg in r["msgs"]]
-        blocks.append(cab + "\n" + "\n".join(linhas))
+        corpo = cab + "\n" + "\n".join(linhas)
+        if insight:
+            corpo += f"\n(insight CRM: {insight[:280]})"
+        blocks.append(corpo)
     return "\n\n".join(blocks)
 
 
 _ANALYST_SYSTEM = (
-    "Você é o Diretor Comercial da Impacta (escola de tecnologia — treinamentos corporativos, "
-    "turmas abertas, turmas fechadas/in company e locação de laboratório). Recebe as conversas de "
-    "UM dia da área de Treinamentos (canal corporativo) e produz uma leitura ESTRATÉGICA para o "
-    "gestor da área, com foco em ALAVANCAR VENDAS: enxergar oportunidades, objeções, dinheiro na "
-    "mesa e onde colocar força. Seja direto, específico e acionável — cite empresas/leads reais das "
-    "conversas. NÃO invente dados que não estão nas conversas. Escreva em português do Brasil. "
-    "NUNCA cite preços, valores ou descontos específicos (política da empresa)."
+    "Você é o Diretor Comercial da Impacta (escola de tecnologia). A área de Treinamentos vende para "
+    "DOIS públicos: PF (pessoa física — indivíduos comprando cursos/turmas abertas) e PJ (empresas — "
+    "treinamento corporativo, turma fechada/in company, locação). Você recebe as conversas de UM dia "
+    "dessa área, JÁ CRUZADAS com a etapa do funil do CRM, e produz uma leitura ESTRATÉGICA para o gestor, "
+    "SEPARANDO PF e PJ, com foco em ALAVANCAR VENDAS: oportunidades, dinheiro na mesa, onde colocar força. "
+    "Seja direto, específico, cite empresas/leads reais e a etapa do funil quando útil. NÃO invente dados. "
+    "Português do Brasil. NUNCA cite preços/valores/descontos ao CLIENTE, mas você PODE relatar ao gestor "
+    "o que foi praticado nas conversas (é interno)."
 )
 
 _ANALYST_INSTRUCTION = (
-    "Analise as conversas do dia e responda SOMENTE com um objeto JSON válido (sem markdown, sem "
-    "cercas de código), com EXATAMENTE estas chaves:\n"
+    "Analise o dia e responda SOMENTE com um objeto JSON válido (sem markdown/cercas), com EXATAMENTE:\n"
     "{\n"
-    '  "destaque": "1-2 frases: o que mais importou no dia",\n'
-    '  "termometro": "leitura geral do dia (aquecido/normal/fraco) e por quê, em 1 frase",\n'
-    '  "temas_em_alta": ["treinamentos/assuntos mais procurados hoje"],\n'
-    '  "oportunidades": [{"titulo": "...", "detalhe": "empresa/lead + porquê é oportunidade"}],\n'
+    '  "destaque": "1-2 frases: o que mais importou no dia (cite PF e/ou PJ)",\n'
+    '  "termometro": "leitura geral do dia (aquecido/normal/fraco) e por quê, 1 frase",\n'
+    '  "funil_leitura": "1-2 frases lendo o pipeline: negociações, gargalos, perdidos e motivos",\n'
+    '  "pf": {"leitura": "1-2 frases sobre o segmento PF", "oportunidades": ["..."], "ligar_hoje": [{"quem":"...","motivo":"..."}]},\n'
+    '  "pj": {"leitura": "1-2 frases sobre o segmento PJ", "oportunidades": ["..."], "ligar_hoje": [{"quem":"...","motivo":"..."}]},\n'
+    '  "temas_em_alta": ["treinamentos/assuntos mais procurados"],\n'
     '  "objecoes": [{"objecao": "...", "sugestao": "como contornar"}],\n'
-    '  "ligar_hoje": [{"quem": "empresa ou nome", "telefone": "se houver", "motivo": "por que priorizar"}],\n'
-    '  "risco_perda": ["leads quentes/corporativos prestes a esfriar ou sem retorno — dinheiro na mesa"],\n'
-    '  "recomendacoes": ["ações estratégicas para o gestor colocar força amanhã"]\n'
+    '  "risco_perda": ["leads quentes/corporativos prestes a esfriar ou sem retorno"],\n'
+    '  "recomendacoes": ["ações estratégicas para o gestor amanhã"]\n'
     "}\n"
     "Listas vazias são permitidas. Máx 5 itens por lista. Priorize o que gera receita."
 )
 
 
+def _empty_analysis(msg: str = "") -> Dict[str, Any]:
+    return {"destaque": msg or "Sem conversas de Treinamentos no dia.", "termometro": "", "funil_leitura": "",
+            "pf": {"leitura": "", "oportunidades": [], "ligar_hoje": []},
+            "pj": {"leitura": "", "oportunidades": [], "ligar_hoje": []},
+            "temas_em_alta": [], "objecoes": [], "risco_perda": [], "recomendacoes": []}
+
+
 async def _analyze(metrics: Dict, records: List[Dict]) -> Dict[str, Any]:
     """Chama o Claude (Sonnet) para a leitura estratégica. Best-effort — nunca quebra o job."""
     if not records:
-        return {"destaque": "Sem conversas corporativas no dia.", "termometro": "fraco — sem volume",
-                "temas_em_alta": [], "oportunidades": [], "objecoes": [], "ligar_hoje": [],
-                "risco_perda": [], "recomendacoes": []}
+        return _empty_analysis()
     from app.services.ai_engine import client
     transcripts = _transcripts_block(records)
     resumo_metricas = (
-        f"Dia: {metrics['dia']}\n"
-        f"Conversas corporativas: {metrics['total_conversas']} | Novos leads: {metrics['novos_leads']} | "
-        f"Turma fechada detectada: {metrics['turma_fechada']}\n"
-        f"Temperatura: {metrics['temperatura']}\n"
-        f"Atendimento: {metrics['atendimento']}\n"
-        f"Interesses: {metrics['temas']}\n"
+        f"Dia: {metrics['dia']} | Conversas: {metrics['total_conversas']}\n"
+        f"PF: {metrics['pf']}\nPJ: {metrics['pj']}\n"
+        f"Funil (etapa: qtd): {metrics['funil']}\n"
+        f"Perdidos: {metrics['perdidos']}\n"
+        f"Atendimento: {metrics['atendimento']}\nInteresses: {metrics['temas']}\n"
     )
-    prompt = (
-        f"MÉTRICAS DO DIA:\n{resumo_metricas}\n\n"
-        f"CONVERSAS DO DIA:\n{transcripts}\n\n{_ANALYST_INSTRUCTION}"
-    )
+    prompt = (f"MÉTRICAS DO DIA:\n{resumo_metricas}\n\nCONVERSAS DO DIA (cruzadas com funil):\n"
+              f"{transcripts}\n\n{_ANALYST_INSTRUCTION}")
     model = "claude-sonnet-4-5-20250929"
     try:
         resp = await client.messages.create(
-            model=model,
-            max_tokens=3000,
-            system=_ANALYST_SYSTEM,
+            model=model, max_tokens=3500, system=_ANALYST_SYSTEM,
             messages=[{"role": "user", "content": prompt}],
         )
         try:
@@ -238,21 +260,23 @@ async def _analyze(metrics: Dict, records: List[Dict]) -> Dict[str, Any]:
         except Exception:
             pass
         raw = resp.content[0].text.strip()
-        # remove eventuais cercas de código
         if raw.startswith("```"):
             raw = raw.strip("`")
             raw = raw[raw.find("{"):]
         raw = raw[raw.find("{"): raw.rfind("}") + 1]
-        return json.loads(raw)
+        data = json.loads(raw)
+        # garante as chaves de segmento
+        for seg in ("pf", "pj"):
+            if not isinstance(data.get(seg), dict):
+                data[seg] = {"leitura": "", "oportunidades": [], "ligar_hoje": []}
+        return data
     except Exception as e:
         logger.error(f"[SalesDigest] Falha na análise via IA: {e}")
-        return {"destaque": "Não foi possível gerar a análise estratégica automática.",
-                "termometro": "", "temas_em_alta": [], "oportunidades": [], "objecoes": [],
-                "ligar_hoje": [], "risco_perda": [], "recomendacoes": []}
+        return _empty_analysis("Não foi possível gerar a análise estratégica automática.")
 
 
 async def build_digest(day: Optional[str] = None) -> Dict[str, Any]:
-    """Monta o pacote completo do dia: {dia, metrics, analysis, records_count}."""
+    """Monta o pacote completo do dia: {dia, metrics, analysis, records}."""
     day = day or _yesterday_brt()
     metrics, records = await _gather(day)
     analysis = await _analyze(metrics, records)
@@ -270,7 +294,9 @@ async def run_daily_digest(day: Optional[str] = None) -> bool:
         digest = await build_digest(day)
         ok = await send_sales_digest(digest, cfg)
         logger.info(f"[SalesDigest] Resumo {digest['dia']} — "
-                    f"{digest['metrics']['total_conversas']} conversas — enviado={ok}")
+                    f"{digest['metrics']['total_conversas']} conversas "
+                    f"(PF {digest['metrics']['pf']['conversas']} / PJ {digest['metrics']['pj']['conversas']}) "
+                    f"— enviado={ok}")
         return ok
     except Exception as e:
         logger.error(f"[SalesDigest] Erro no job diário: {e}", exc_info=True)

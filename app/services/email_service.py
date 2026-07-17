@@ -264,8 +264,45 @@ def _build_turma_fechada_html(lead: Dict) -> str:
     </div></body></html>"""
 
 
+def _sd_esc(v):
+    return (str(v).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")) if v else ""
+
+
+def _sd_ligar(ligar):
+    """Renderiza a lista 'ligar hoje' de um segmento."""
+    if not ligar:
+        return ""
+    rows = ""
+    for l in ligar[:5]:
+        if isinstance(l, dict):
+            tel = _sd_esc(l.get("telefone"))
+            rows += (f'<div style="padding:9px 13px;margin:7px 0;background:#fef2f2;border-left:4px solid #dc2626;'
+                     f'border-radius:0 8px 8px 0;"><div style="font-weight:700;color:#991b1b;font-size:13.5px;">'
+                     f'📞 {_sd_esc(l.get("quem"))}{f" — {tel}" if tel else ""}</div>'
+                     f'<div style="font-size:13px;color:#374151;margin-top:2px;">{_sd_esc(l.get("motivo"))}</div></div>')
+        else:
+            rows += f'<div style="font-size:13.5px;margin:5px 0;">📞 {_sd_esc(l)}</div>'
+    return rows
+
+
+def _sd_oportunidades(ops):
+    if not ops:
+        return ""
+    rows = ""
+    for o in ops[:5]:
+        if isinstance(o, dict):
+            rows += (f'<div style="background:#f0fdf4;border-left:4px solid #16a34a;border-radius:0 8px 8px 0;'
+                     f'padding:9px 13px;margin:7px 0;"><div style="font-weight:700;color:#166534;font-size:13.5px;">'
+                     f'{_sd_esc(o.get("titulo"))}</div><div style="font-size:13px;color:#374151;margin-top:2px;">'
+                     f'{_sd_esc(o.get("detalhe"))}</div></div>')
+        else:
+            rows += (f'<div style="background:#f0fdf4;border-left:4px solid #16a34a;border-radius:0 8px 8px 0;'
+                     f'padding:9px 13px;margin:7px 0;font-size:13.5px;color:#374151;">{_sd_esc(o)}</div>')
+    return rows
+
+
 def _build_sales_digest_html(digest: Dict) -> str:
-    """Email 'Copiloto do Gestor' — resumo estratégico diário da área de Treinamentos."""
+    """Email 'Copiloto do Gestor' — resumo diário de Treinamentos, separado PF × PJ + funil do CRM."""
     from datetime import datetime as _dt
     m = digest.get("metrics", {}) or {}
     a = digest.get("analysis", {}) or {}
@@ -275,54 +312,86 @@ def _build_sales_digest_html(digest: Dict) -> str:
     except Exception:
         dia_fmt = dia
 
-    temp = m.get("temperatura", {}) or {}
+    esc = _sd_esc
+    pf = m.get("pf", {}) or {}
+    pj = m.get("pj", {}) or {}
     atend = m.get("atendimento", {}) or {}
+    quentes = pf.get("quentes", 0) + pj.get("quentes", 0)
 
-    def esc(v):
-        return (str(v).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")) if v else ""
-
-    def card(num, label, color="#2563eb"):
+    def card(num, label, color):
         return (f'<td style="padding:6px;"><div style="background:#f8fafc;border:1px solid #e5e7eb;'
-                f'border-radius:10px;padding:14px 10px;text-align:center;">'
+                f'border-radius:10px;padding:14px 8px;text-align:center;">'
                 f'<div style="font-size:26px;font-weight:800;color:{color};">{num}</div>'
-                f'<div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;">{label}</div>'
+                f'<div style="font-size:10.5px;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;">{label}</div>'
                 f'</div></td>')
 
     cards = (
         "<table style='width:100%;border-collapse:collapse;'><tr>"
-        + card(m.get("total_conversas", 0), "Conversas")
-        + card(m.get("novos_leads", 0), "Novos leads", "#0891b2")
-        + card(temp.get("quente", 0), "Quentes", "#dc2626")
-        + card(m.get("turma_fechada", 0), "Turma fechada", "#ea580c")
+        + card(m.get("total_conversas", 0), "Conversas", "#1e40af")
+        + card(pf.get("conversas", 0), "PF", "#0891b2")
+        + card(pj.get("conversas", 0), "PJ", "#7c3aed")
+        + card(quentes, "Quentes", "#dc2626")
         + "</tr></table>"
     )
+
+    def seg_line(nome, d, cor):
+        parts = [f"{d.get('novos',0)} novos", f"{d.get('quentes',0)} quentes"]
+        if d.get("turma_fechada"):
+            parts.append(f"{d['turma_fechada']} turma fechada")
+        return (f'<span style="color:{cor};font-weight:700;">{nome}</span> '
+                f'<span style="color:#6b7280;">{d.get("conversas",0)} conversas · {" · ".join(parts)}</span>')
+
+    split_line = (f'<div style="font-size:12.5px;text-align:center;margin-top:8px;line-height:1.9;">'
+                  f'{seg_line("PF", pf, "#0891b2")}<br>{seg_line("PJ", pj, "#7c3aed")}</div>')
 
     def section(title, inner, color="#1e3a8a"):
         if not inner:
             return ""
         return (f'<div style="font-size:12px;font-weight:800;color:{color};text-transform:uppercase;'
-                f'letter-spacing:.5px;margin:22px 0 8px;">{title}</div>{inner}')
+                f'letter-spacing:.5px;margin:24px 0 8px;">{title}</div>{inner}')
 
-    def ul(items):
+    def ul(items, color="#374151"):
         if not items:
             return ""
         lis = "".join(f'<li style="margin:5px 0;line-height:1.5;">{esc(x)}</li>' for x in items if x)
-        return f'<ul style="margin:0;padding-left:20px;font-size:14px;color:#374151;">{lis}</ul>'
+        return f'<ul style="margin:0;padding-left:20px;font-size:14px;color:{color};">{lis}</ul>'
 
-    # Oportunidades (titulo + detalhe)
-    ops = a.get("oportunidades") or []
-    ops_html = ""
-    if ops:
-        rows = ""
-        for o in ops[:5]:
-            if isinstance(o, dict):
-                rows += (f'<div style="background:#f0fdf4;border-left:4px solid #16a34a;border-radius:0 8px 8px 0;'
-                         f'padding:10px 14px;margin:8px 0;"><div style="font-weight:700;color:#166534;font-size:14px;">'
-                         f'{esc(o.get("titulo"))}</div><div style="font-size:13px;color:#374151;margin-top:2px;">'
-                         f'{esc(o.get("detalhe"))}</div></div>')
-            else:
-                rows += f'<div style="font-size:14px;margin:6px 0;">{esc(o)}</div>'
-        ops_html = rows
+    # Funil do CRM (chips) + leitura
+    funil = m.get("funil", {}) or {}
+    funil_chips = ""
+    if funil:
+        funil_chips = "<div>" + "".join(
+            f'<span style="display:inline-block;background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;'
+            f'padding:4px 11px;border-radius:8px;font-size:12.5px;font-weight:600;margin:3px 5px 3px 0;">'
+            f'{esc(k)} <b style="color:#1e40af;">{v}</b></span>'
+            for k, v in list(funil.items())[:10]
+        ) + "</div>"
+    funil_leitura = esc(a.get("funil_leitura"))
+    funil_html = ""
+    if funil_chips or funil_leitura:
+        funil_html = funil_chips + (
+            f'<div style="font-size:13px;color:#475569;margin-top:8px;">🔎 {funil_leitura}</div>' if funil_leitura else "")
+
+    # Blocos por segmento (PF / PJ)
+    def seg_block(a_seg, cor, cor_soft, titulo):
+        leitura = esc((a_seg or {}).get("leitura"))
+        ops = _sd_oportunidades((a_seg or {}).get("oportunidades"))
+        ligar = _sd_ligar((a_seg or {}).get("ligar_hoje"))
+        if not (leitura or ops or ligar):
+            return ""
+        inner = ""
+        if leitura:
+            inner += (f'<div style="background:{cor_soft};border-radius:8px;padding:11px 14px;font-size:13.5px;'
+                      f'color:#334155;line-height:1.5;">{leitura}</div>')
+        if ops:
+            inner += f'<div style="font-size:11.5px;font-weight:700;color:#166534;margin:12px 0 2px;">Oportunidades</div>{ops}'
+        if ligar:
+            inner += f'<div style="font-size:11.5px;font-weight:700;color:#991b1b;margin:12px 0 2px;">Ligar hoje</div>{ligar}'
+        return (f'<div style="border:1px solid #e5e7eb;border-radius:12px;padding:14px 16px;margin:10px 0;">'
+                f'<div style="font-size:13px;font-weight:800;color:{cor};margin-bottom:6px;">{titulo}</div>{inner}</div>')
+
+    pf_block = seg_block(a.get("pf"), "#0891b2", "#ecfeff", "👤 PF · Pessoa Física (individual / turma aberta)")
+    pj_block = seg_block(a.get("pj"), "#7c3aed", "#f5f3ff", "🏢 PJ · Corporativo (turma fechada / in company)")
 
     # Objeções
     objs = a.get("objecoes") or []
@@ -339,22 +408,7 @@ def _build_sales_digest_html(digest: Dict) -> str:
                 rows += f'<tr><td colspan="2" style="font-size:14px;padding:6px 0;">{esc(o)}</td></tr>'
         objs_html = f'<table style="width:100%;border-collapse:collapse;">{rows}</table>'
 
-    # Ligar hoje
-    ligar = a.get("ligar_hoje") or []
-    ligar_html = ""
-    if ligar:
-        rows = ""
-        for l in ligar[:5]:
-            if isinstance(l, dict):
-                tel = esc(l.get("telefone"))
-                rows += (f'<div style="padding:10px 14px;margin:8px 0;background:#fef2f2;border-left:4px solid #dc2626;'
-                         f'border-radius:0 8px 8px 0;"><div style="font-weight:700;color:#991b1b;font-size:14px;">'
-                         f'📞 {esc(l.get("quem"))}{f" — {tel}" if tel else ""}</div>'
-                         f'<div style="font-size:13px;color:#374151;margin-top:2px;">{esc(l.get("motivo"))}</div></div>')
-            else:
-                rows += f'<div style="font-size:14px;margin:6px 0;">📞 {esc(l)}</div>'
-        ligar_html = rows
-
+    # Temas
     temas = a.get("temas_em_alta") or list((m.get("temas") or {}).keys())
     temas_html = ""
     if temas:
@@ -365,14 +419,20 @@ def _build_sales_digest_html(digest: Dict) -> str:
         )
         temas_html = f'<div>{chips}</div>'
 
+    # Risco de perda (análise + perdidos do CRM)
+    risco = list(a.get("risco_perda") or [])
+    perdidos = m.get("perdidos") or []
+    if perdidos:
+        risco = risco + [f"❌ {p} (CRM)" for p in perdidos[:5]]
+
     destaque = esc(a.get("destaque"))
     termometro = esc(a.get("termometro"))
     atend_line = " · ".join(f"{k}: {v}" for k, v in atend.items() if v and k != "—")
 
     return f"""<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>
     body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#f3f4f6; margin:0; padding:20px; }}
-    .container {{ max-width:640px; margin:0 auto; background:#fff; border-radius:14px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,.08); }}
-    .header {{ background:linear-gradient(135deg,#1e3a8a,#1e40af); color:#fff; padding:26px 30px; }}
+    .container {{ max-width:660px; margin:0 auto; background:#fff; border-radius:14px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,.08); }}
+    .header {{ background:linear-gradient(135deg,#16295f,#1e40af); color:#fff; padding:26px 30px; }}
     .header h1 {{ margin:0; font-size:21px; }}
     .header p {{ margin:6px 0 0; font-size:13px; color:#bfdbfe; }}
     .body {{ padding:24px 30px; }}
@@ -380,34 +440,39 @@ def _build_sales_digest_html(digest: Dict) -> str:
     .footer {{ background:#f9fafb; padding:16px 30px; font-size:12px; color:#9ca3af; text-align:center; border-top:1px solid #f3f4f6; }}
     </style></head><body><div class="container">
       <div class="header"><h1>🧭 Copiloto do Gestor — Treinamentos</h1>
-        <p>Resumo estratégico do dia {dia_fmt}</p></div>
+        <p>Resumo estratégico do dia {dia_fmt} · PF + PJ · cruzado com o funil do CRM</p></div>
       <div class="body">
         {f'<div class="destaque">💡 {destaque}</div>' if destaque else ''}
         {f'<div style="font-size:13px;color:#6b7280;margin:10px 2px 4px;">🌡️ {termometro}</div>' if termometro else ''}
         <div style="margin:16px 0 4px;">{cards}</div>
-        {f'<div style="font-size:12px;color:#9ca3af;text-align:center;margin-top:2px;">Atendimento — {esc(atend_line)}</div>' if atend_line else ''}
+        {split_line}
+        {f'<div style="font-size:12px;color:#9ca3af;text-align:center;margin-top:8px;">Atendimento — {esc(atend_line)}</div>' if atend_line else ''}
+        {section("📊 Funil (CRM)", funil_html, "#334155")}
         {section("🔥 Temas em alta", temas_html)}
-        {section("💰 Oportunidades", ops_html, "#166534")}
-        {section("📞 Ligar hoje", ligar_html, "#991b1b")}
-        {section("⚠️ Risco de perda (dinheiro na mesa)", ul(a.get("risco_perda")), "#b45309")}
+        {section("🎯 Por segmento", pf_block + pj_block, "#1e3a8a")}
+        {section("⚠️ Risco de perda (dinheiro na mesa)", ul(risco), "#b45309")}
         {section("🚧 Objeções recorrentes", objs_html, "#6b21a8")}
-        {section("🎯 Recomendações", ul(a.get("recomendacoes")))}
+        {section("✅ Recomendações", ul(a.get("recomendacoes")))}
       </div>
-      <div class="footer">Bot SDR PJ · Copiloto do Gestor — análise automática das conversas de Treinamentos</div>
+      <div class="footer">Bot SDR PJ · Copiloto do Gestor — análise automática das conversas de Treinamentos (PF + PJ) cruzada com o CRM</div>
     </div></body></html>"""
 
 
 def _build_sales_digest_plain(digest: Dict) -> str:
     m = digest.get("metrics", {}) or {}
     a = digest.get("analysis", {}) or {}
+    pf = m.get("pf", {}) or {}
+    pj = m.get("pj", {}) or {}
     lines = [f"Copiloto do Gestor — Treinamentos — dia {digest.get('dia','')}", ""]
-    lines.append(f"Conversas: {m.get('total_conversas',0)} | Novos leads: {m.get('novos_leads',0)} "
-                 f"| Quentes: {(m.get('temperatura') or {}).get('quente',0)} | Turma fechada: {m.get('turma_fechada',0)}")
+    lines.append(f"Total: {m.get('total_conversas',0)} conversas")
+    lines.append(f"PF: {pf.get('conversas',0)} conversas · {pf.get('novos',0)} novos · {pf.get('quentes',0)} quentes")
+    lines.append(f"PJ: {pj.get('conversas',0)} conversas · {pj.get('novos',0)} novos · "
+                 f"{pj.get('quentes',0)} quentes · {pj.get('turma_fechada',0)} turma fechada")
     if a.get("destaque"):
         lines += ["", f"Destaque: {a['destaque']}"]
     if a.get("recomendacoes"):
         lines += ["", "Recomendações:"] + [f"- {r}" for r in a["recomendacoes"]]
-    lines += ["", "Veja o email em HTML para o relatório completo."]
+    lines += ["", "Veja o email em HTML para o relatório completo (PF/PJ + funil)."]
     return "\n".join(lines)
 
 
