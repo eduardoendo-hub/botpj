@@ -21,6 +21,11 @@ _B2B_HINTS = (
     "pessoas", "participantes", "rh", "treinar", "capacita",
 )
 
+# Áreas (contact.channel_label) que contam como corporativo/turma fechada.
+# O broker do RD recebe TUDO (Faculdade, Cobrança, Sites...), mas cada mensagem traz
+# de onde veio — então a varredura de logs filtra só o canal corporativo aqui.
+_CORP_CHANNELS = {"treinamentos"}
+
 
 def is_turma_fechada(lead: dict) -> bool:
     """True se o lead é turma fechada / corporativo (trilha B)."""
@@ -178,8 +183,12 @@ def _b2b_from_logs_sync(days: int, limit: int):
             content = data.get("content", {}) if isinstance(data, dict) else {}
             phone = (contact.get("phone") or "") if isinstance(contact, dict) else ""
             cid = (contact.get("id") or contact.get("_id") or "") if isinstance(contact, dict) else ""
+            label = (contact.get("channel_label") or "").strip().lower() if isinstance(contact, dict) else ""
             msg = (content.get("message") or "") if isinstance(content, dict) else ""
             if not phone or phone in alerted or phone in seen:
+                continue
+            # só a área corporativa (ignora Faculdade/Cobrança/Sites) — evita ruído e custo de IA
+            if _CORP_CHANNELS and label not in _CORP_CHANNELS:
                 continue
             if any(h in msg.lower() for h in _B2B_HINTS):
                 seen[phone] = str(cid)
