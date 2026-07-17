@@ -406,15 +406,61 @@ def _fmt_dur(secs: float) -> str:
     return f"{m // 60}h{m % 60:02d}"
 
 
-def _op_scan_sync(day: str, phones: List[str]):
-    """Varre as conversas do dia e mede tempos de resposta reais (cliente → atendente).
+# Mensagens AUTOMÁTICAS da RD (não contam como resposta real do atendente).
+_SYS_MSG_RE = re.compile(
+    r"atendimento (iniciado|encerrado|finalizado|reiniciado)|aguardando atendente|"
+    r"foi transferido|transferid[oa]\(a\)|voc[êe] foi transferid|setor \[|"
+    r"conversa (foi )?(encerrada|finalizada)|iniciou o atendimento|assumiu o atendimento|"
+    r"entrou (na conversa|no atendimento)|^\s*>\s*:|^>:",
+    re.I,
+)
 
-    Retorna (demoras, abandonos):
-      demora   = resposta HUMANA que levou >= _SLA_MIN (com hora, espera, trecho, exp).
-      abandono = mensagem do cliente sem resposta até o fim do dia.
+
+def _is_system_msg(msg: str) -> bool:
+    return bool(_SYS_MSG_RE.search(msg or ""))
+
+
+# Despedidas / confirmações do cliente — NÃO são pergunta aguardando resposta.
+_CLOSING_EXACT = {
+    "ok", "okay", "ok!", "okk", "k", "blz", "beleza", "valeu", "vlw", "tá", "ta", "tá bom", "ta bom",
+    "tudo bem", "certo", "perfeito", "combinado", "obrigado", "obrigada", "obg", "obgd", "de nada",
+    "denada", "show", "ótimo", "otimo", "isso", "isso mesmo", "entendi", "aham", "uhum", "joia", "jóia",
+    "ok obrigado", "ok obrigada", "obrigado!", "obrigada!", "valeu!", "sim", "não", "nao", "👍", "🙏",
+    "👏", "💪", "👍🏻", "👍🏼",
+}
+_CLOSING_SUB = (
+    "acabei de responder", "acabei de te responder", "já respondi", "ja respondi", "respondi por la",
+    "respondi por lá", "respondi ali", "respondi lá", "eu que agradeço", "eu q agradeço",
+    "quem agradece", "obrigado pela", "obrigada pela", "agradeço a atenção", "agradeço pela",
+    "muito obrigad",
+)
+
+
+def _is_closing(msg: str) -> bool:
+    t = (msg or "").strip().lower().rstrip(" .!?…")
+    if not t:
+        return True
+    if t in _CLOSING_EXACT:
+        return True
+    if len(t) <= 40 and any(s in t for s in _CLOSING_SUB):
+        return True
+    return False
+
+
+def _op_scan_sync(day: str, phones: List[str]):
+    """Varre as conversas do dia e mede tempos de resposta REAIS (cliente → atendente).
+
+    Um caso só conta como DEMORA quando:
+      • a mensagem do cliente é uma pergunta/pedido de verdade (não "ok"/despedida);
+      • a resposta que fecha a espera é de um HUMANO e NÃO é automação da RD
+        ("atendimento encerrado", "transferido", ">:", etc.);
+      • o intervalo é >= _SLA_MIN.
+    Respostas do bot (rápidas ou não) e automações fecham/ignoram a espera sem gerar demora.
+    ABANDONO = pergunta real do cliente sem NENHUMA resposta real até o fim do dia.
     """
     demoras, abandonos = [], []
-    AG = ("consultant", "operator", "agent")
+    HUMAN = ("consultant", "operator", "agent")
+    RESP = ("consultant", "operator", "agent", "assistant")
     db = sqlite3.connect(DB_PATH)
     try:
         for ph in phones:
@@ -424,24 +470,29 @@ def _op_scan_sync(day: str, phones: List[str]):
                 (ph, day),
             ).fetchall()
             n = len(rows)
-            pending = None  # índice da 1ª mensagem do cliente ainda sem resposta
+            pending = None  # índice da 1ª pergunta REAL do cliente sem resposta
             for idx in range(n):
                 role, msg, ts = rows[idx]
                 if role == "user":
-                    if pending is None:
+                    if pending is None and msg and not _is_closing(msg):
                         pending = idx
-                elif role in AG:
+                elif role in RESP:
+                    if _is_system_msg(msg):
+                        continue  # automação da RD: não é resposta real, espera continua
                     if pending is not None:
                         t0 = _parse_brt(rows[pending][2])
                         t1 = _parse_brt(ts)
                         gap = (t1 - t0).total_seconds() if (t0 and t1) else 0
-                        if gap >= _SLA_MIN * 60:
-                            # 2 últimas falas do cliente (com hora) + 2 primeiras do consultor (com hora)
-                            cli = [(_hhmm(ts2), m) for (r, m, ts2) in rows[:idx] if r == "user" and m][-2:]
+                        if role in HUMAN and gap >= _SLA_MIN * 60:
+                            cli = [(_hhmm(rows[j][2]), rows[j][1]) for j in range(idx)
+                                   if rows[j][0] == "user" and rows[j][1] and not _is_system_msg(rows[j][1])][-2:]
                             con, k = [], idx
-                            while k < n and rows[k][0] in AG and len(con) < 2:
-                                if rows[k][1]:
-                                    con.append((_hhmm(rows[k][2]), rows[k][1]))
+                            while k < n and len(con) < 2:
+                                r2, m2, ts2 = rows[k]
+                                if r2 == "user":
+                                    break
+                                if r2 in RESP and m2 and not _is_system_msg(m2):
+                                    con.append((_hhmm(ts2), m2))
                                 k += 1
                             demoras.append({
                                 "phone": ph, "quando": t0, "espera_s": gap,
@@ -449,12 +500,12 @@ def _op_scan_sync(day: str, phones: List[str]):
                                 "consultor_msgs": con or [(_hhmm(ts), msg or "")],
                                 "exp": _is_expediente(t0),
                             })
-                    pending = None
+                        pending = None  # resposta real fecha a espera (mesmo abaixo do SLA)
             if pending is not None:
                 t0 = _parse_brt(rows[pending][2])
                 if t0 is not None:
-                    # janela de contexto (com hora): até 4 mensagens antes + a sem resposta
-                    ctx = [(r, _hhmm(ts2), m) for (r, m, ts2) in rows[max(0, pending - 3): pending + 1] if m]
+                    ctx = [(r, _hhmm(ts2), m) for (r, m, ts2) in rows[max(0, pending - 3): pending + 1]
+                           if m and not _is_system_msg(m)]
                     abandonos.append({
                         "phone": ph, "quando": t0, "exp": _is_expediente(t0),
                         "pergunta": rows[pending][1] or "", "contexto": ctx,
