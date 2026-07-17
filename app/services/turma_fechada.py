@@ -6,6 +6,7 @@ Monitora tanto conversas do bot quanto do vendedor: em tempo real no _run_lead_a
 e num scan periódico sobre as conversas ingeridas (que incluem consultor).
 """
 
+import re
 import asyncio
 import logging
 import sqlite3
