@@ -482,6 +482,64 @@ async def _sync_crm_cache(leads_raw: list, today_iso: str) -> bool:
     return updated
 
 
+async def scheduled_crm_refresh(days: int = 2, limit: int = 150) -> int:
+    """Job agendado: atualiza crm_etapa_cache/rd_crm_deal_id dos leads ativos nos últimos
+    `days` dias, buscando a etapa atual no CRM (get_deal_info por telefone).
+
+    Mantém o funil fresco para o Copiloto do Gestor (email 07h30) e para o Radar, sem
+    depender de alguém abrir a tela. Roda algumas vezes por dia via APScheduler.
+    """
+    import asyncio
+
+    def _brt_date(ts: str) -> str:
+        try:
+            d = datetime.fromisoformat((ts or "").replace("Z", "+00:00"))
+            if d.tzinfo is None:
+                d = d.replace(tzinfo=timezone.utc)
+            return d.astimezone(_BRT).strftime("%Y-%m-%d")
+        except Exception:
+            return ""
+
+    cutoff = (datetime.now(_BRT) - timedelta(days=days)).strftime("%Y-%m-%d")
+    leads = await get_all_leads()
+    recent = [
+        dict(l) for l in leads
+        if l.get("phone_number") and _brt_date(l.get("updated_at") or l.get("created_at")) >= cutoff
+    ][:limit]
+    if not recent:
+        logger.info("[CRM refresh] nenhum lead ativo recente — nada a atualizar.")
+        return 0
+
+    phones = [l["phone_number"] for l in recent]
+    results = await asyncio.gather(*[get_deal_info(p) for p in phones], return_exceptions=True)
+
+    db = await get_db()
+    updated = 0
+    try:
+        for lead, crm in zip(recent, results):
+            if isinstance(crm, Exception):
+                continue
+            etapa = (crm.get("etapa_status") or crm.get("etapa") or "").strip()
+            deal_id = (crm.get("deal_id") or "").strip()
+            if not etapa or etapa == "—":
+                continue
+            if etapa == (lead.get("crm_etapa_cache") or "") and not deal_id:
+                continue
+            await db.execute(
+                "UPDATE leads SET crm_etapa_cache=?, "
+                "rd_crm_deal_id=COALESCE(NULLIF(?, ''), rd_crm_deal_id) WHERE phone_number=?",
+                (etapa, deal_id, lead["phone_number"]),
+            )
+            updated += 1
+        if updated:
+            await db.commit()
+    finally:
+        await db.close()
+
+    logger.info(f"[CRM refresh] {updated}/{len(recent)} leads com etapa atualizada (últimos {days}d).")
+    return updated
+
+
 @router.get("/data")
 async def radar_data(
     request: Request,
