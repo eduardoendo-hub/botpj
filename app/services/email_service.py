@@ -335,10 +335,15 @@ def _build_operacional_html(op: Dict) -> str:
              + opcard(f'{resumo.get("demoras_fora",0)+resumo.get("abandonos_fora",0)}', "Fora expediente", "#a78bfa")
              + "</tr></table>")
 
+    def _hora_tag(h):
+        return (f'<span style="color:#64748b;font-variant-numeric:tabular-nums;font-weight:600;">{esc(h)}</span> '
+                if h else "")
+
     def _msg_lines(msgs, color, prefix):
+        # msgs = lista de (hora, texto)
         return "".join(
-            f'<div style="font-size:12px;color:{color};margin-top:3px;line-height:1.45;">{prefix} “{esc((m or "")[:170])}”</div>'
-            for m in msgs if m
+            f'<div style="font-size:12px;color:{color};margin-top:3px;line-height:1.45;">{prefix} {_hora_tag(h)}“{esc((m or "")[:170])}”</div>'
+            for h, m in msgs if m
         )
 
     def _rotulo(txt):
@@ -369,8 +374,8 @@ def _build_operacional_html(op: Dict) -> str:
         ctx = a.get("contexto") or []
         ctx_html = "".join(
             f'<div style="font-size:12px;color:{"#cbd5e1" if r == "user" else "#93c5fd"};margin-top:3px;line-height:1.45;">'
-            f'{"🗣️" if r == "user" else "↩️"} “{esc((m or "")[:160])}”</div>'
-            for r, m in ctx[-4:] if m
+            f'{"🗣️" if r == "user" else "↩️"} {_hora_tag(h)}“{esc((m or "")[:160])}”</div>'
+            for r, h, m in ctx[-4:] if m
         )
         ab_html += (
             '<div style="border-left:4px solid #ef4444;background:#0f172a;border-radius:0 8px 8px 0;padding:10px 14px;margin:8px 0;">'

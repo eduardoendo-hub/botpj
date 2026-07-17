@@ -363,6 +363,11 @@ def _is_expediente(dt) -> bool:
     return dt is not None and dt.weekday() < 5 and _EXP_INI <= dt.hour < _EXP_FIM
 
 
+def _hhmm(ts) -> str:
+    d = _parse_brt(ts)
+    return d.strftime("%H:%M") if d else ""
+
+
 def _fmt_dur(secs: float) -> str:
     m = int(secs // 60)
     if m < 60:
@@ -400,25 +405,25 @@ def _op_scan_sync(day: str, phones: List[str]):
                         t1 = _parse_brt(ts)
                         gap = (t1 - t0).total_seconds() if (t0 and t1) else 0
                         if gap >= _SLA_MIN * 60:
-                            # 2 últimas falas do cliente (até a resposta) + 2 primeiras do consultor
-                            cli = [m for (r, m, _) in rows[:idx] if r == "user" and m][-2:]
+                            # 2 últimas falas do cliente (com hora) + 2 primeiras do consultor (com hora)
+                            cli = [(_hhmm(ts2), m) for (r, m, ts2) in rows[:idx] if r == "user" and m][-2:]
                             con, k = [], idx
                             while k < n and rows[k][0] in AG and len(con) < 2:
                                 if rows[k][1]:
-                                    con.append(rows[k][1])
+                                    con.append((_hhmm(rows[k][2]), rows[k][1]))
                                 k += 1
                             demoras.append({
                                 "phone": ph, "quando": t0, "espera_s": gap,
-                                "cliente_msgs": cli or [rows[pending][1] or ""],
-                                "consultor_msgs": con or [msg or ""],
+                                "cliente_msgs": cli or [(_hhmm(rows[pending][2]), rows[pending][1] or "")],
+                                "consultor_msgs": con or [(_hhmm(ts), msg or "")],
                                 "exp": _is_expediente(t0),
                             })
                     pending = None
             if pending is not None:
                 t0 = _parse_brt(rows[pending][2])
                 if t0 is not None:
-                    # janela de contexto: até 4 mensagens antes + a mensagem sem resposta
-                    ctx = [(r, m) for (r, m, _) in rows[max(0, pending - 3): pending + 1] if m]
+                    # janela de contexto (com hora): até 4 mensagens antes + a sem resposta
+                    ctx = [(r, _hhmm(ts2), m) for (r, m, ts2) in rows[max(0, pending - 3): pending + 1] if m]
                     abandonos.append({
                         "phone": ph, "quando": t0, "exp": _is_expediente(t0),
                         "pergunta": rows[pending][1] or "", "contexto": ctx,
@@ -481,16 +486,16 @@ async def _analyze_operacional(casos: List[Dict], abandonos: List[Dict], resumo:
     from app.services.ai_engine import client
     def _linha(c):
         janela = "no expediente" if c.get("exp") else "FORA do expediente"
-        cli = " / ".join((c.get("cliente_msgs") or [])[-2:])
-        con = " / ".join((c.get("consultor_msgs") or [])[:2])
+        cli = " / ".join(f"[{h}] {m}" for h, m in (c.get("cliente_msgs") or [])[-2:])
+        con = " / ".join(f"[{h}] {m}" for h, m in (c.get("consultor_msgs") or [])[:2])
         return (f"- {c.get('data','')} {c.get('hora','')} ({janela}) | consultor: {c.get('consultor') or '—'} | "
                 f"espera: {c.get('espera','')} | lead: {c.get('label','')} | "
-                f"cliente disse: \"{cli[:180]}\" | consultor respondeu: \"{con[:140]}\"")
+                f"cliente disse: \"{cli[:200]}\" | consultor respondeu: \"{con[:160]}\"")
     txt_dem = "\n".join(_linha(c) for c in casos) or "(nenhuma demora acima do SLA)"
     txt_ab = "\n".join(
         f"- {a.get('data','')} {a.get('hora','')} ({'no expediente' if a.get('exp') else 'FORA do expediente'}) | "
         f"consultor: {a.get('consultor') or '—'} | lead: {a.get('label','')} | "
-        f"do que se tratava: \"{' / '.join(m for _, m in (a.get('contexto') or []))[:220]}\""
+        f"do que se tratava: \"{' / '.join(f'[{h}] {m}' for _, h, m in (a.get('contexto') or []))[:240]}\""
         for a in abandonos
     ) or "(nenhum abandono)"
     prompt = (f"RESUMO: {resumo}\nSLA considerado: {_SLA_MIN} min | Expediente: seg-sex {_EXP_INI}h-{_EXP_FIM}h\n\n"
