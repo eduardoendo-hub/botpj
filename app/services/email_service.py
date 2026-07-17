@@ -330,9 +330,9 @@ def _build_operacional_html(op: Dict) -> str:
 
     cards = ("<table style='width:100%;border-collapse:collapse;'><tr>"
              + opcard(resumo.get("demoras", 0), "Demoras", "#f59e0b")
+             + opcard(resumo.get("demoras_sem_retorno", 0), "Sem retorno", "#f87171")
              + opcard(resumo.get("abandonos", 0), "Abandonos", "#ef4444")
              + opcard(resumo.get("maior_espera", "—"), "Maior espera", "#fbbf24")
-             + opcard(f'{resumo.get("demoras_fora",0)+resumo.get("abandonos_fora",0)}', "Fora expediente", "#a78bfa")
              + "</tr></table>")
 
     def _hora_tag(h):
@@ -356,6 +356,15 @@ def _build_operacional_html(op: Dict) -> str:
         cli = _msg_lines((c.get("cliente_msgs") or [])[-2:], "#cbd5e1", "🗣️")
         con = _msg_lines((c.get("consultor_msgs") or [])[:2], "#93c5fd", "↩️")
         cons_nome = esc(c.get("consultor")) or "consultor não identificado"
+        cont = c.get("continuou")
+        if cont is True:
+            desf = ('<div style="margin-top:9px;font-size:12px;font-weight:700;color:#4ade80;">'
+                    '✅ Cliente continuou a conversa depois — a demora não travou o atendimento</div>')
+        elif cont is False:
+            desf = ('<div style="margin-top:9px;font-size:12px;font-weight:700;color:#f87171;">'
+                    '⚠️ Cliente NÃO voltou após a resposta — possível abandono pela demora</div>')
+        else:
+            desf = ''
         casos_html += (
             '<div style="border-left:4px solid #f59e0b;background:#0f172a;border-radius:0 8px 8px 0;padding:11px 14px;margin:9px 0;">'
             f'<div style="font-size:13.5px;color:#f1f5f9;font-weight:700;">🕐 {esc(c.get("hora"))} · '
@@ -363,7 +372,8 @@ def _build_operacional_html(op: Dict) -> str:
             f'<div style="font-size:12.5px;color:#cbd5e1;margin-top:4px;">👤 atendido por '
             f'<b style="color:#e2e8f0;">({cons_nome})</b> · {esc(c.get("label"))}</div>'
             f'<div style="margin-top:8px;padding-top:8px;border-top:1px solid #1e293b;">'
-            f'{_rotulo("Cliente")}{cli}{_rotulo(f"Consultor ({cons_nome})")}{con}</div></div>'
+            f'{_rotulo("Cliente")}{cli}{_rotulo(f"Consultor ({cons_nome})")}{con}</div>'
+            f'{desf}</div>'
         )
     if not casos_html:
         casos_html = '<div style="font-size:13px;color:#94a3b8;">Nenhuma demora acima do SLA. 👏</div>'

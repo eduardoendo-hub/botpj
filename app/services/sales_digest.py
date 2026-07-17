@@ -465,14 +465,14 @@ def _op_scan_sync(day: str, phones: List[str]):
     try:
         for ph in phones:
             rows = db.execute(
-                "SELECT role, message, created_at FROM conversations "
+                "SELECT id, role, message, created_at FROM conversations "
                 "WHERE phone_number=? AND date(datetime(created_at,'-3 hours'))=? ORDER BY id",
                 (ph, day),
             ).fetchall()
             n = len(rows)
             pending = None  # índice da 1ª pergunta REAL do cliente sem resposta
             for idx in range(n):
-                role, msg, ts = rows[idx]
+                _id, role, msg, ts = rows[idx]
                 if role == "user":
                     if pending is None and msg and not _is_closing(msg):
                         pending = idx
@@ -480,35 +480,40 @@ def _op_scan_sync(day: str, phones: List[str]):
                     if _is_system_msg(msg):
                         continue  # automação da RD: não é resposta real, espera continua
                     if pending is not None:
-                        t0 = _parse_brt(rows[pending][2])
+                        t0 = _parse_brt(rows[pending][3])
                         t1 = _parse_brt(ts)
                         gap = (t1 - t0).total_seconds() if (t0 and t1) else 0
                         if role in HUMAN and gap >= _SLA_MIN * 60:
-                            cli = [(_hhmm(rows[j][2]), rows[j][1]) for j in range(idx)
-                                   if rows[j][0] == "user" and rows[j][1] and not _is_system_msg(rows[j][1])][-2:]
+                            cli = [(_hhmm(rows[j][3]), rows[j][2]) for j in range(idx)
+                                   if rows[j][1] == "user" and rows[j][2] and not _is_system_msg(rows[j][2])][-2:]
                             con, k = [], idx
                             while k < n and len(con) < 2:
-                                r2, m2, ts2 = rows[k]
+                                _i2, r2, m2, ts2 = rows[k]
                                 if r2 == "user":
                                     break
                                 if r2 in RESP and m2 and not _is_system_msg(m2):
                                     con.append((_hhmm(ts2), m2))
                                 k += 1
+                            # desfecho: o cliente voltou a falar DEPOIS desta resposta? (inclusive dias após)
+                            voltou = db.execute(
+                                "SELECT 1 FROM conversations WHERE phone_number=? AND role='user' "
+                                "AND id > ? LIMIT 1", (ph, _id),
+                            ).fetchone()
                             demoras.append({
                                 "phone": ph, "quando": t0, "espera_s": gap,
-                                "cliente_msgs": cli or [(_hhmm(rows[pending][2]), rows[pending][1] or "")],
+                                "cliente_msgs": cli or [(_hhmm(rows[pending][3]), rows[pending][2] or "")],
                                 "consultor_msgs": con or [(_hhmm(ts), msg or "")],
-                                "exp": _is_expediente(t0),
+                                "exp": _is_expediente(t0), "continuou": bool(voltou),
                             })
                         pending = None  # resposta real fecha a espera (mesmo abaixo do SLA)
             if pending is not None:
-                t0 = _parse_brt(rows[pending][2])
+                t0 = _parse_brt(rows[pending][3])
                 if t0 is not None:
-                    ctx = [(r, _hhmm(ts2), m) for (r, m, ts2) in rows[max(0, pending - 3): pending + 1]
+                    ctx = [(r, _hhmm(ts2), m) for (_i, r, m, ts2) in rows[max(0, pending - 3): pending + 1]
                            if m and not _is_system_msg(m)]
                     abandonos.append({
                         "phone": ph, "quando": t0, "exp": _is_expediente(t0),
-                        "pergunta": rows[pending][1] or "", "contexto": ctx,
+                        "pergunta": rows[pending][2] or "", "contexto": ctx,
                     })
     finally:
         db.close()
@@ -573,9 +578,10 @@ async def _analyze_operacional(casos: List[Dict], abandonos: List[Dict], resumo:
         janela = "no expediente" if c.get("exp") else "FORA do expediente"
         cli = " / ".join(f"[{h}] {m}" for h, m in (c.get("cliente_msgs") or [])[-2:])
         con = " / ".join(f"[{h}] {m}" for h, m in (c.get("consultor_msgs") or [])[:2])
+        desf = "cliente VOLTOU a falar depois" if c.get("continuou") else "cliente NÃO voltou (possível abandono pela demora)"
         return (f"- {c.get('data','')} {c.get('hora','')} ({janela}) | consultor: {c.get('consultor') or '—'} | "
                 f"espera: {c.get('espera','')} | lead: {c.get('label','')} | "
-                f"cliente disse: \"{cli[:200]}\" | consultor respondeu: \"{con[:160]}\"")
+                f"cliente disse: \"{cli[:200]}\" | consultor respondeu: \"{con[:160]}\" | DESFECHO: {desf}")
     txt_dem = "\n".join(_linha(c) for c in casos) or "(nenhuma demora acima do SLA)"
     txt_ab = "\n".join(
         f"- {a.get('data','')} {a.get('hora','')} ({'no expediente' if a.get('exp') else 'FORA do expediente'}) | "
@@ -632,6 +638,7 @@ async def build_operacional(day: str) -> Dict[str, Any]:
             d["espera_s"] = e["espera_s"]
             d["cliente_msgs"] = e.get("cliente_msgs", [])
             d["consultor_msgs"] = e.get("consultor_msgs", [])
+            d["continuou"] = e.get("continuou")
         return d
 
     casos = [_mk(e) for e in top_dem]
@@ -643,6 +650,7 @@ async def build_operacional(day: str) -> Dict[str, Any]:
         "demoras": len(demoras), "demoras_expediente": dem_exp, "demoras_fora": len(demoras) - dem_exp,
         "abandonos": len(abandonos), "abandonos_expediente": ab_exp, "abandonos_fora": len(abandonos) - ab_exp,
         "maior_espera": _fmt_dur(demoras[0]["espera_s"]) if demoras else "—",
+        "demoras_sem_retorno": sum(1 for e in demoras if not e.get("continuou")),
     }
     supervisor = await _analyze_operacional(casos, abandonos_l, resumo)
     return {
