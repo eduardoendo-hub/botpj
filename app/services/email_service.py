@@ -436,8 +436,10 @@ def _build_sales_digest_html(digest: Dict) -> str:
     m = digest.get("metrics", {}) or {}
     a = digest.get("analysis", {}) or {}
     dia = digest.get("dia", "")
+    _WD = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
     try:
-        dia_fmt = _dt.strptime(dia, "%Y-%m-%d").strftime("%d/%m/%Y")
+        _d = _dt.strptime(dia, "%Y-%m-%d")
+        dia_fmt = f"{_WD[_d.weekday()]}, {_d.strftime('%d/%m/%Y')}"
     except Exception:
         dia_fmt = dia
 
@@ -647,9 +649,15 @@ async def send_sales_digest(digest: Dict, config: Dict) -> bool:
 
     dia = digest.get("dia", "")
     total = (digest.get("metrics") or {}).get("total_conversas", 0)
+    _WD = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo"]
+    try:
+        _d = datetime.strptime(dia, "%Y-%m-%d")
+        dia_label = f"{_WD[_d.weekday()]} {_d.strftime('%d/%m')}"
+    except Exception:
+        dia_label = dia
 
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"🧭 Resumo do dia {dia} — {total} conversas (Treinamentos)"
+    msg["Subject"] = f"🧭 Resumo de {dia_label} — {total} conversas (Treinamentos)"
     msg["From"]    = f"Copiloto do Gestor <{sender}>"
     msg["To"]      = ", ".join(recipients)
     msg.attach(MIMEText(_build_sales_digest_plain(digest), "plain", "utf-8"))

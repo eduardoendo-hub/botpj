@@ -338,14 +338,21 @@ async def _analyze(metrics: Dict, records: List[Dict]) -> Dict[str, Any]:
         return _empty_analysis()
     from app.services.ai_engine import client
     transcripts = _transcripts_block(records)
+    _WD = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
+    try:
+        _wd = _WD[datetime.strptime(metrics["dia"], "%Y-%m-%d").weekday()]
+    except Exception:
+        _wd = ""
     resumo_metricas = (
-        f"Dia: {metrics['dia']} | Conversas: {metrics['total_conversas']}\n"
+        f"Dia: {metrics['dia']} ({_wd}) | Conversas: {metrics['total_conversas']}\n"
         f"PF: {metrics['pf']}\nPJ: {metrics['pj']}\n"
         f"Funil (etapa: qtd): {metrics['funil']}\n"
         f"Perdidos: {metrics['perdidos']}\n"
         f"Atendimento: {metrics['atendimento']}\nInteresses: {metrics['temas']}\n"
     )
-    prompt = (f"MÉTRICAS DO DIA:\n{resumo_metricas}\n\nCONVERSAS DO DIA (cruzadas com funil):\n"
+    prompt = (f"MÉTRICAS DO DIA:\n{resumo_metricas}\n"
+              f"IMPORTANTE: o dia da semana É EXATAMENTE '{_wd}'. Se citar o dia da semana, use este — "
+              f"NUNCA calcule a partir da data.\n\nCONVERSAS DO DIA (cruzadas com funil):\n"
               f"{transcripts}\n\n{_ANALYST_INSTRUCTION}")
     model = "claude-sonnet-4-5-20250929"
     try:
