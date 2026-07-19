@@ -73,6 +73,15 @@ _FAC_AGENT_RE = re.compile(
 )
 _AGENT_ROLES = ("consultant", "operator", "agent", "assistant")
 
+# Cliente falando de GRADUAÇÃO / tecnólogo / ensino superior = Faculdade, NÃO Treinamentos.
+# "tecnologia"/"programação"/"TI" continuam sendo Treinamento (só casa 'tecnólogo/a', não 'tecnologia').
+_GRADUACAO_RE = re.compile(
+    r"tecn[óo]log[oa]s?\b|gradua[çc][ãa]o|graduand|bacharel|licenciatura|vestibular|"
+    r"an[áa]lise e desenvolvimento de sistemas|curso superior|ensino superior|"
+    r"n[íi]vel superior|p[óo]s[-\s]?gradua",
+    re.I,
+)
+
 
 def _is_fac_pipeline(pl: str) -> bool:
     return any(k in (pl or "").lower() for k in ("faculdade", "graduação", "graduacao", "vestibular"))
@@ -94,14 +103,20 @@ def _corporate_phones_sync(day: str) -> List[str]:
         for p in phones:
             if _channel_of_sync(p) not in _CORP_CHANNELS:
                 continue
-            fac = False
+            excluir = False
             for role, msg in db.execute(
                 "SELECT role, message FROM conversations WHERE phone_number=? LIMIT 60", (p,)
             ):
-                if role in _AGENT_ROLES and msg and _FAC_AGENT_RE.search(msg):
-                    fac = True
+                if not msg:
+                    continue
+                # (a) atendente se identifica como faculdade  (b) cliente pede graduação/tecnólogo
+                if role in _AGENT_ROLES and _FAC_AGENT_RE.search(msg):
+                    excluir = True
                     break
-            if not fac:
+                if role == "user" and _GRADUACAO_RE.search(msg):
+                    excluir = True
+                    break
+            if not excluir:
                 corp.append(p)
         return corp
     finally:
