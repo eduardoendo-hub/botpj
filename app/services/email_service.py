@@ -487,21 +487,8 @@ def _build_sales_digest_html(digest: Dict) -> str:
         lis = "".join(f'<li style="margin:5px 0;line-height:1.5;">{esc(x)}</li>' for x in items if x)
         return f'<ul style="margin:0;padding-left:20px;font-size:14px;color:{color};">{lis}</ul>'
 
-    # Funil do CRM (chips) + leitura
-    funil = m.get("funil", {}) or {}
-    funil_chips = ""
-    if funil:
-        funil_chips = "<div>" + "".join(
-            f'<span style="display:inline-block;background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;'
-            f'padding:4px 11px;border-radius:8px;font-size:12.5px;font-weight:600;margin:3px 5px 3px 0;">'
-            f'{esc(k)} <b style="color:#1e40af;">{v}</b></span>'
-            for k, v in list(funil.items())[:10]
-        ) + "</div>"
-    funil_leitura = esc(a.get("funil_leitura"))
+    # (Funil do CRM removido do relatório diário — é estado histórico e confunde a visão do dia.)
     funil_html = ""
-    if funil_chips or funil_leitura:
-        funil_html = funil_chips + (
-            f'<div style="font-size:13px;color:#475569;margin-top:8px;">🔎 {funil_leitura}</div>' if funil_leitura else "")
 
     # Blocos por segmento (PF / PJ)
     def seg_block(a_seg, cor, cor_soft, titulo):
@@ -591,7 +578,7 @@ def _build_sales_digest_html(digest: Dict) -> str:
     .footer {{ background:#f9fafb; padding:16px 30px; font-size:12px; color:#9ca3af; text-align:center; border-top:1px solid #f3f4f6; }}
     </style></head><body><div class="container">
       <div class="header"><h1>🧭 Copiloto do Gestor — Treinamentos</h1>
-        <p>Resumo estratégico do dia {dia_fmt} · PF + PJ · cruzado com o funil do CRM</p></div>
+        <p>Resumo estratégico do dia {dia_fmt} · PF + PJ</p></div>
       <div class="body">
         {f'<div class="destaque">💡 {destaque}</div>' if destaque else ''}
         {f'<div style="font-size:13px;color:#6b7280;margin:10px 2px 4px;">🌡️ {termometro}</div>' if termometro else ''}
@@ -599,7 +586,6 @@ def _build_sales_digest_html(digest: Dict) -> str:
         {split_line}
         {f'<div style="font-size:12px;color:#9ca3af;text-align:center;margin-top:8px;">Atendimento — {esc(atend_line)}</div>' if atend_line else ''}
         {section("📚 Cursos mais procurados", cursos_html)}
-        {section("📊 Funil (CRM)", funil_html, "#334155")}
         {section("🎯 Por segmento", pf_block + pj_block, "#1e3a8a")}
         {section("⚠️ Risco de perda (dinheiro na mesa)", ul(risco), "#b45309")}
         {section("🚧 Objeções recorrentes", objs_html, "#6b21a8")}

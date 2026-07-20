@@ -267,20 +267,15 @@ def _transcripts_block(records: List[Dict]) -> str:
     blocks = []
     for i, r in enumerate(records, 1):
         lead = r["lead"]
-        etapa = (lead.get("crm_etapa_cache") or "").strip()
-        insight = (lead.get("crm_insights") or "").strip()
         cab = (f"### CONVERSA {i} [{r['seg']}] — {_label(lead, r['phone'])}"
                f" | CURSO={r.get('curso') or '(ver na conversa)'}"
                f" | trilha={lead.get('trail') or '?'}"
                f" | temp={lead.get('lead_temperature') or '?'}"
                f" | tipo={lead.get('tipo_interesse') or '?'}"
-               f" | funil_CRM={etapa or '—'}"
                f" | atendido={r['atendido']}"
                f" | consultor={r.get('consultor') or '—'}")
         linhas = [f"[{_role_tag(role)}] {(msg or '')[:_MAX_MSG_CHARS]}" for role, msg in r["msgs"]]
         corpo = cab + "\n" + "\n".join(linhas)
-        if insight:
-            corpo += f"\n(insight CRM: {insight[:280]})"
         blocks.append(corpo)
     return "\n\n".join(blocks)
 
@@ -288,12 +283,15 @@ def _transcripts_block(records: List[Dict]) -> str:
 _ANALYST_SYSTEM = (
     "Você é o Diretor Comercial da Impacta (escola de tecnologia). A área de Treinamentos vende para "
     "DOIS públicos: PF (pessoa física — indivíduos comprando cursos/turmas abertas) e PJ (empresas — "
-    "treinamento corporativo, turma fechada/in company, locação). Você recebe as conversas de UM dia "
-    "dessa área, JÁ CRUZADAS com a etapa do funil do CRM, e produz uma leitura ESTRATÉGICA para o gestor, "
-    "SEPARANDO PF e PJ, com foco em ALAVANCAR VENDAS: oportunidades, dinheiro na mesa, onde colocar força. "
-    "Seja direto, específico, cite empresas/leads reais e a etapa do funil quando útil. NÃO invente dados. "
-    "Português do Brasil. NUNCA cite preços/valores/descontos ao CLIENTE, mas você PODE relatar ao gestor "
-    "o que foi praticado nas conversas (é interno)."
+    "treinamento corporativo, turma fechada/in company, locação). Você recebe as conversas de UM DIA "
+    "dessa área e produz uma leitura ESTRATÉGICA para o gestor, SEPARANDO PF e PJ, com foco em ALAVANCAR "
+    "VENDAS: oportunidades, dinheiro na mesa, onde colocar força. "
+    "REGRA DE OURO: este é o relatório DO DIA — fale SÓ do que aconteceu HOJE nas conversas (o que o "
+    "lead perguntou, o que avançou, o que travou hoje). NÃO traga estado histórico do CRM nem cite "
+    "etapas de funil/cadência (ex: 'Dia 1', 'Dia 3', 'chegou à etapa X') — isso confunde e não é do dia. "
+    "Seja direto, específico, cite empresas/leads reais. NÃO invente dados. Português do Brasil. "
+    "NUNCA cite preços/valores/descontos ao CLIENTE, mas PODE relatar ao gestor o que foi praticado "
+    "nas conversas (é interno)."
 )
 
 _ANALYST_INSTRUCTION = (
@@ -302,8 +300,7 @@ _ANALYST_INSTRUCTION = (
     '  "destaque": "1-2 frases: o que mais importou no dia (cite PF e/ou PJ)",\n'
     '  "termometro": "leitura geral do dia (aquecido/normal/fraco) e por quê, 1 frase",\n'
     '  "cursos_procurados": [{"curso": "nome do curso (ex: Excel, Power BI, Python, Vendas)", "qtd": 3, "obs": "PF/PJ, nível, tendência"}],\n'
-    '  "funil_leitura": "1-2 frases lendo o pipeline: negociações, gargalos, perdidos e motivos",\n'
-    '  "pf": {"leitura": "1-2 frases sobre o segmento PF", "oportunidades": ["..."], "ligar_hoje": [{"quem":"...","curso":"...","motivo":"..."}]},\n'
+    '  "pf": {"leitura": "1-2 frases sobre o segmento PF HOJE", "oportunidades": ["..."], "ligar_hoje": [{"quem":"...","curso":"...","motivo":"..."}]},\n'
     '  "pj": {"leitura": "1-2 frases sobre o segmento PJ", "oportunidades": ["..."], "ligar_hoje": [{"quem":"...","curso":"...","motivo":"..."}]},\n'
     '  "objecoes": [{"objecao": "...", "sugestao": "como contornar"}],\n'
     '  "risco_perda": ["leads quentes/corporativos prestes a esfriar ou sem retorno"],\n'
@@ -340,7 +337,7 @@ def _loads_lenient(raw: str) -> Dict[str, Any]:
 
 
 def _empty_analysis(msg: str = "") -> Dict[str, Any]:
-    return {"destaque": msg or "Sem conversas de Treinamentos no dia.", "termometro": "", "funil_leitura": "",
+    return {"destaque": msg or "Sem conversas de Treinamentos no dia.", "termometro": "",
             "cursos_procurados": [],
             "pf": {"leitura": "", "oportunidades": [], "ligar_hoje": []},
             "pj": {"leitura": "", "oportunidades": [], "ligar_hoje": []},
@@ -361,8 +358,6 @@ async def _analyze(metrics: Dict, records: List[Dict]) -> Dict[str, Any]:
     resumo_metricas = (
         f"Dia: {metrics['dia']} ({_wd}) | Conversas: {metrics['total_conversas']}\n"
         f"PF: {metrics['pf']}\nPJ: {metrics['pj']}\n"
-        f"Funil (etapa: qtd): {metrics['funil']}\n"
-        f"Perdidos: {metrics['perdidos']}\n"
         f"Atendimento: {metrics['atendimento']}\nInteresses: {metrics['temas']}\n"
     )
     prompt = (f"MÉTRICAS DO DIA:\n{resumo_metricas}\n"
