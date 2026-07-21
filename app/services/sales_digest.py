@@ -67,18 +67,24 @@ def _segment(lead: Dict) -> str:
 
 # Atendente se identificando como FACULDADE (não Treinamentos). "graduação/pós" sozinho NÃO
 # vale (consultor de Treinamentos usa pra qualificar), por isso exigimos "da faculdade"/"[Fac]".
+# Atendente sinalizando FACULDADE/graduação (não Treinamentos): identificação como faculdade
+# OU como Secretaria acadêmica (a Secretaria da Impacta cuida de graduação, não de treinamento).
 _FAC_AGENT_RE = re.compile(
-    r"consultor[ae]?\s+d[ao]\s+faculdade|faculdade\s+impacta|setor\s+\[?fac|\[fac\b|d[ao]\s+faculdade\s+impacta",
+    r"consultor[ae]?\s+d[ao]\s+faculdade|faculdade\s+impacta|setor\s+\[?fac|\[fac\b|"
+    r"d[ao]\s+faculdade\s+impacta|secretaria\s+d[ae]\s+impacta|equipe\s+da\s+secretaria|"
+    r"secretaria\s+acad[êe]mica",
     re.I,
 )
 _AGENT_ROLES = ("consultant", "operator", "agent", "assistant")
 
-# Cliente falando de GRADUAÇÃO / tecnólogo / ensino superior = Faculdade, NÃO Treinamentos.
-# "tecnologia"/"programação"/"TI" continuam sendo Treinamento (só casa 'tecnólogo/a', não 'tecnologia').
+# Cliente falando de GRADUAÇÃO / faculdade = NÃO é Treinamentos. Sinais fortes/específicos.
+# "tecnologia"/"programação"/"TI"/"mensalidade do curso" seguem sendo Treinamento
+# (só casa 'tecnólogo/a', não 'tecnologia'; 'mensalidade' sozinho NÃO exclui).
 _GRADUACAO_RE = re.compile(
     r"tecn[óo]log[oa]s?\b|gradua[çc][ãa]o|graduand|bacharel|licenciatura|vestibular|"
     r"an[áa]lise e desenvolvimento de sistemas|curso superior|ensino superior|"
-    r"n[íi]vel superior|p[óo]s[-\s]?gradua",
+    r"n[íi]vel superior|p[óo]s[-\s]?gradua|quero\s*bolsa|querobolsa|"
+    r"registro acad[êe]mico|\br\.?\s?a\.?\s*[:.\-]?\s*\d{4,}",
     re.I,
 )
 
