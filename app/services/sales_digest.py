@@ -67,9 +67,10 @@ def _segment(lead: Dict) -> str:
 
 # Atendente se identificando como FACULDADE (não Treinamentos). "graduação/pós" sozinho NÃO
 # vale (consultor de Treinamentos usa pra qualificar), por isso exigimos "da faculdade"/"[Fac]".
-# Atendente sinalizando FACULDADE/graduação (não Treinamentos): identificação como faculdade
-# OU como Secretaria acadêmica (a Secretaria da Impacta cuida de graduação, não de treinamento).
+# Sinal AUTORITATIVO: o setor de roteamento da RD. [Trei]=Treinamentos (nosso);
+# [FIT]=faculdade/graduação/MBA (fora). Também pega identificação de faculdade/Secretaria.
 _FAC_AGENT_RE = re.compile(
+    r"\[fit\b|setor\s+\[?fit|vendas\s*-\s*grad|vendas\s*-\s*mba|"
     r"consultor[ae]?\s+d[ao]\s+faculdade|faculdade\s+impacta|setor\s+\[?fac|\[fac\b|"
     r"d[ao]\s+faculdade\s+impacta|secretaria\s+d[ae]\s+impacta|equipe\s+da\s+secretaria|"
     r"secretaria\s+acad[êe]mica",
