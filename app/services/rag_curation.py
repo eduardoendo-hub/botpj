@@ -107,12 +107,15 @@ async def _get_transcript(phone: str, limit: int = 60) -> str:
 # ── Extração via IA ───────────────────────────────────────────────────────
 async def _extract(transcript: str):
     prompt = (
-        "Você recebe uma conversa REAL de atendimento de uma faculdade de MBAs. "
-        "Extraia pares REUTILIZÁVEIS que ajudariam um bot a atender melhor: perguntas frequentes "
-        "com boas respostas (tipo 'qa') e objeções com a resposta que funcionou (tipo 'objecao'). "
-        "REGRAS: NÃO inclua preços, valores, descontos, parcelamento nem datas de turma. "
+        "Você recebe uma conversa REAL de atendimento da área de TREINAMENTOS da Impacta "
+        "(cursos livres e treinamentos corporativos — Excel, Power BI, Python, vendas, informática, etc.). "
+        "Extraia pares REUTILIZÁVEIS que ajudariam um bot de Treinamentos a atender melhor: perguntas "
+        "frequentes com boas respostas (tipo 'qa') e objeções com a resposta que funcionou (tipo 'objecao'). "
+        "REGRA CRÍTICA: IGNORE totalmente qualquer coisa de GRADUAÇÃO / FACULDADE / MBA / pós-graduação / "
+        "vestibular / bolsa / matrícula acadêmica — isso é de OUTRA área, não entra na base de Treinamentos. "
+        "NÃO inclua preços, valores, descontos, parcelamento nem datas de turma. "
         "NÃO inclua dados pessoais (nomes, telefones, e-mails). Generalize (nada específico de um aluno). "
-        "Se não houver nada reutilizável, retorne lista vazia. Responda SÓ JSON: "
+        "Se não houver nada reutilizável (ou for de graduação), retorne lista vazia. Responda SÓ JSON: "
         '{"pares":[{"tipo":"qa|objecao","pergunta":"...","resposta":"..."}]}\n\nCONVERSA:\n' + transcript
     )
     try:
@@ -138,11 +141,20 @@ async def curate_recent(days: int = 2, max_convos: int = 25) -> int:
         cur = await db.execute(
             "SELECT DISTINCT phone_number FROM conversations "
             "WHERE role IN ('consultant','operator','agent') AND created_at >= date('now', ?) LIMIT ?",
-            (f"-{days} day", max_convos),
+            (f"-{days} day", max_convos * 2),  # pega mais, pois vamos filtrar faculdade/graduação
         )
         phones = [r[0] for r in await cur.fetchall()]
     finally:
         await db.close()
+
+    # Só aprende com conversas de TREINAMENTOS — exclui faculdade/graduação (mesma régua do digest)
+    from app.services.turma_fechada import _channel_of_sync, _CORP_CHANNELS
+    from app.services.sales_digest import _is_faculdade_phone
+
+    def _filtra(ps):
+        return [p for p in ps if _channel_of_sync(p) in _CORP_CHANNELS and not _is_faculdade_phone(p)]
+
+    phones = (await asyncio.to_thread(_filtra, phones))[:max_convos]
 
     total = 0
     for phone in phones:

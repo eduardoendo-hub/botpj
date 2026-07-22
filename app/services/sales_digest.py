@@ -94,6 +94,25 @@ def _is_fac_pipeline(pl: str) -> bool:
     return any(k in (pl or "").lower() for k in ("faculdade", "graduação", "graduacao", "vestibular"))
 
 
+def _is_faculdade_phone(phone: str) -> bool:
+    """True se a conversa é faculdade/graduação (atendente faculdade OU cliente pede graduação).
+    Reutilizável por outros serviços (ex: curadoria de conhecimento) para não contaminar Treinamentos."""
+    db = sqlite3.connect(DB_PATH)
+    try:
+        for role, msg in db.execute(
+            "SELECT role, message FROM conversations WHERE phone_number=? LIMIT 60", (phone,)
+        ):
+            if not msg:
+                continue
+            if role in _AGENT_ROLES and _FAC_AGENT_RE.search(msg):
+                return True
+            if role == "user" and _GRADUACAO_RE.search(msg):
+                return True
+        return False
+    finally:
+        db.close()
+
+
 def _corporate_phones_sync(day: str) -> List[str]:
     """Telefones da área de Treinamentos no dia (canais Treinamentos/Site), EXCLUINDO conversas
     em que o atendente se identifica como faculdade (anti-vazamento da Faculdade)."""
