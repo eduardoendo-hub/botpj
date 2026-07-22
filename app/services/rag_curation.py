@@ -11,6 +11,7 @@ import json
 import asyncio
 import logging
 import sqlite3
+import unicodedata
 
 from app.core.database import DB_PATH
 from app.services import rag
@@ -58,13 +59,37 @@ def _init_sync():
         db.close()
 
 
+# Dedup por SIMILARIDADE (não só texto idêntico): normaliza em conjunto de palavras-chave
+# (sem acento/pontuação/stopwords) e considera duplicada se uma pergunta "contém" a outra
+# (>=85% das palavras da menor). Mantém 'Módulo I' ≠ 'Módulo II' (i/ii são preservados).
+_DUP_STOP = set(
+    "o a e é u os as de do da dos das no na nos nas em um uma uns umas para por com sem "
+    "que qual quais qual quem como onde quando quanto quanta se ao aos sobre são sao é ser "
+    "voce voces você vocês pela pelo pelas pelos tem teria ha há sua seu suas seus meu minha".split()
+)
+
+
+def _norm_tokens(s: str) -> set:
+    s = unicodedata.normalize("NFKD", (s or "").lower()).encode("ascii", "ignore").decode()
+    s = re.sub(r"[^a-z0-9 ]", " ", s)
+    return {t for t in s.split() if t and t not in _DUP_STOP}
+
+
 def _dup_exists_sync(pergunta: str) -> bool:
+    nova = _norm_tokens(pergunta)
+    if not nova:
+        return False
     db = sqlite3.connect(DB_PATH)
     try:
-        row = db.execute(
-            "SELECT 1 FROM rag_proposals WHERE pergunta=? AND status!='rejected' LIMIT 1", (pergunta,)
-        ).fetchone()
-        return bool(row)
+        for (q,) in db.execute("SELECT pergunta FROM rag_proposals WHERE status!='rejected'"):
+            ex = _norm_tokens(q)
+            if not ex:
+                continue
+            inter = len(nova & ex)
+            menor = min(len(nova), len(ex))
+            if menor and inter / menor >= 0.85:   # uma contém ~toda a outra → redundante
+                return True
+        return False
     finally:
         db.close()
 
