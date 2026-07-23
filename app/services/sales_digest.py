@@ -294,6 +294,7 @@ def _transcripts_block(records: List[Dict]) -> str:
     for i, r in enumerate(records, 1):
         lead = r["lead"]
         cab = (f"### CONVERSA {i} [{r['seg']}] — {_label(lead, r['phone'])}"
+               f" | EMPRESA={(lead.get('company') or lead.get('empresa') or '—')}"
                f" | CURSO={r.get('curso') or '(ver na conversa)'}"
                f" | trilha={lead.get('trail') or '?'}"
                f" | temp={lead.get('lead_temperature') or '?'}"
@@ -342,6 +343,10 @@ _ANALYST_INSTRUCTION = (
     "conversa — vários consultores podem ter respondido (ex: um à noite após transferência), mas o "
     "RESPONSÁVEL é só o do CRM. Se 'consultor=' vier '—', escreva '(consultor não identificado no CRM)' "
     "e não invente nome.\n"
+    "REGRA 3 (EMPRESA): quando o lead for de uma EMPRESA conhecida (campo 'EMPRESA=' do cabeçalho ≠ '—'), "
+    "SEMPRE deixe claro qual empresa — cite o nome dela entre parênteses ou no início do item (ex: "
+    "'Rafael (Total Química)' ou 'Total Química — Rafael'). É essencial o gestor saber qual empresa está "
+    "em questão. Se 'EMPRESA=' vier '—', não invente empresa.\n"
     "Listas vazias são permitidas. Máx 6 itens por lista. Priorize o que gera receita."
 )
 
