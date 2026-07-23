@@ -81,7 +81,9 @@ def _dup_exists_sync(pergunta: str) -> bool:
         return False
     db = sqlite3.connect(DB_PATH)
     try:
-        for (q,) in db.execute("SELECT pergunta FROM rag_proposals WHERE status!='rejected'"):
+        # dedup contra TUDO já visto (aprovada, pendente OU rejeitada) — nada que o
+        # gestor já decidiu volta a aparecer.
+        for (q,) in db.execute("SELECT pergunta FROM rag_proposals"):
             ex = _norm_tokens(q)
             if not ex:
                 continue
