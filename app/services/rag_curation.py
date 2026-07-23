@@ -94,6 +94,34 @@ def _dup_exists_sync(pergunta: str) -> bool:
         db.close()
 
 
+# Dedup SEMÂNTICO contra o conhecimento JÁ APROVADO (indexado no RAG). Pega repetições
+# reformuladas ("tópicos do Python" ≈ "conteúdos do Python") que o dedup por palavras não vê.
+_RAG_DUP_HARD = 2.2   # distância muito baixa → duplicata certa
+_RAG_DUP_SOFT = 2.6   # distância média → duplicata só se as palavras também baterem
+
+
+async def _rag_dup(pergunta: str) -> bool:
+    """True se a pergunta já é coberta por conhecimento aprovado (busca semântica no RAG)."""
+    if not rag.is_enabled():
+        return False
+    try:
+        hits = await rag.search(pergunta, k=1)
+    except Exception:
+        return False
+    if not hits:
+        return False
+    d = hits[0].get("distance", 99)
+    if d < _RAG_DUP_HARD:
+        return True
+    if d < _RAG_DUP_SOFT:
+        a = _norm_tokens(pergunta)
+        b = _norm_tokens(hits[0].get("text", ""))
+        menor = min(len(a), len(b)) or 1
+        if len(a & b) / menor >= 0.4:   # distância média + palavras batendo → duplicata
+            return True
+    return False
+
+
 def _save_sync(tipo, pergunta, resposta, phone):
     db = sqlite3.connect(DB_PATH)
     try:
@@ -196,6 +224,8 @@ async def curate_recent(days: int = 2, max_convos: int = 25) -> int:
                 continue  # descarta qualquer coisa com preço/data
             if await asyncio.to_thread(_dup_exists_sync, q):
                 continue
+            if await _rag_dup(q):
+                continue  # já coberto por conhecimento aprovado (semântico)
             await asyncio.to_thread(_save_sync, tipo, q, a, phone)
             total += 1
         await asyncio.sleep(0.3)  # respeita rate limit
