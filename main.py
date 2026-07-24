@@ -90,13 +90,17 @@ async def lifespan(app: FastAPI):
     from app.services.turma_fechada import scan_recent as tf_scan
     from app.services.sales_digest import run_daily_digest
     from app.api.radar import scheduled_crm_refresh
-    scheduler.add_job(run_full_sync, CronTrigger(hour="1,7,13,19", minute=30), id="ingest_tallos")
-    scheduler.add_job(curate_recent, CronTrigger(hour=3, minute=0), id="curate_knowledge")
-    scheduler.add_job(tf_scan, CronTrigger(hour="2,8,14,20", minute=0), id="turma_fechada_scan")
+    # IMPORTANTE: CronTrigger criado SEM timezone pega o fuso LOCAL do container (UTC) e ignora
+    # o timezone do scheduler → disparava tudo 3h cedo (digest 07:30 caía às 04:30 BRT/madrugada).
+    # Por isso passamos timezone=BRT em CADA trigger.
+    _BRT_TZ = "America/Sao_Paulo"
+    scheduler.add_job(run_full_sync, CronTrigger(hour="1,7,13,19", minute=30, timezone=_BRT_TZ), id="ingest_tallos")
+    scheduler.add_job(curate_recent, CronTrigger(hour=3, minute=0, timezone=_BRT_TZ), id="curate_knowledge")
+    scheduler.add_job(tf_scan, CronTrigger(hour="2,8,14,20", minute=0, timezone=_BRT_TZ), id="turma_fechada_scan")
     # Refresh do funil do CRM (etapa dos leads ativos) — mantém Radar e Copiloto frescos
-    scheduler.add_job(scheduled_crm_refresh, CronTrigger(hour="6,13,19", minute=50), id="crm_refresh")
+    scheduler.add_job(scheduled_crm_refresh, CronTrigger(hour="6,13,19", minute=50, timezone=_BRT_TZ), id="crm_refresh")
     # Copiloto do Gestor — resumo estratégico do dia anterior, 07h30 BRT (após o refresh das 06h50)
-    scheduler.add_job(run_daily_digest, CronTrigger(hour=7, minute=30), id="sales_digest")
+    scheduler.add_job(run_daily_digest, CronTrigger(hour=7, minute=30, timezone=_BRT_TZ), id="sales_digest")
 
     # Trava de instância única: com vários workers, só um roda o scheduler
     # (evita relatório diário e ingestor rodarem em dobro).

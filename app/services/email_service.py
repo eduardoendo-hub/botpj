@@ -9,10 +9,13 @@ import logging
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+# Fuso de São Paulo (UTC-3) — o container roda em UTC, então datas nos emails DEVEM usar isto.
+_BRT = timezone(timedelta(hours=-3))
 
 
 def _build_html(lead: Dict) -> str:
@@ -23,7 +26,7 @@ def _build_html(lead: Dict) -> str:
     cargo      = lead.get("job_title") or lead.get("cargo") or "—"
     produto    = lead.get("produto") or lead.get("training_interest") or lead.get("treinamento") or "—"
     origem     = lead.get("origem") or lead.get("source_channel") or "—"
-    ocorrencia = lead.get("ocorrencia") or datetime.now().strftime("%d/%m/%Y %H:%M")
+    ocorrencia = lead.get("ocorrencia") or datetime.now(_BRT).strftime("%d/%m/%Y %H:%M")
     resumo     = lead.get("resumo") or ""
 
     resumo_block = ""
@@ -101,7 +104,7 @@ def _build_plain(lead: Dict) -> str:
     cargo      = lead.get("job_title") or lead.get("cargo") or "—"
     produto    = lead.get("produto") or lead.get("training_interest") or lead.get("treinamento") or "—"
     origem     = lead.get("origem") or lead.get("source_channel") or "—"
-    ocorrencia = lead.get("ocorrencia") or datetime.now().strftime("%d/%m/%Y %H:%M")
+    ocorrencia = lead.get("ocorrencia") or datetime.now(_BRT).strftime("%d/%m/%Y %H:%M")
     resumo     = lead.get("resumo") or ""
 
     body = (
@@ -217,7 +220,7 @@ def _build_turma_fechada_html(lead: Dict) -> str:
     score     = g("score")
     atendido  = g("atendido_por")
     resumo    = g("resumo")
-    ocorr     = g("ocorrencia") or datetime.now().strftime("%d/%m/%Y %H:%M")
+    ocorr     = g("ocorrencia") or datetime.now(_BRT).strftime("%d/%m/%Y %H:%M")
 
     def row(label, value):
         return f'<tr><td>{label}</td><td>{value}</td></tr>' if value else ""

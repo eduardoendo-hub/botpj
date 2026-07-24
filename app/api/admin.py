@@ -425,7 +425,7 @@ async def leads_export(request: Request):
         writer.writerow(lead)
 
     output.seek(0)
-    filename = f"leads_pj_{__import__('datetime').datetime.now().strftime('%Y%m%d_%H%M')}.csv"
+    filename = f"leads_pj_{datetime.now(timezone(timedelta(hours=-3))).strftime('%Y%m%d_%H%M')}.csv"
     return StreamingResponse(
         iter([output.getvalue()]),
         media_type="text/csv; charset=utf-8",
@@ -567,7 +567,7 @@ async def email_config_test(request: Request):
         "company":            "Empresa Teste LTDA",
         "job_title":          "Gerente de RH",
         "training_interest":  "Treinamento em Liderança",
-        "ocorrencia":         __import__("datetime").datetime.now().strftime("%d/%m/%Y %H:%M"),
+        "ocorrencia":         datetime.now(timezone(timedelta(hours=-3))).strftime("%d/%m/%Y %H:%M"),
     }
 
     ok = await send_lead_notification(test_lead, config)
@@ -591,7 +591,7 @@ async def email_config_test_turma_fechada(request: Request):
         "urgencia": "Alta", "objetivo_negocio": "Capacitar a equipe financeira em análise de dados",
         "lead_temperature": "Quente", "score": "85", "atendido_por": "Bot + Vendedor",
         "resumo": "EXEMPLO — Cliente busca treinamento para 25 pessoas do financeiro, presencial em SP, com orçamento aprovado. Pediu proposta formal.",
-        "ocorrencia": __import__("datetime").datetime.now().strftime("%d/%m/%Y %H:%M"),
+        "ocorrencia": datetime.now(timezone(timedelta(hours=-3))).strftime("%d/%m/%Y %H:%M"),
     }
     ok = await send_turma_fechada_alert(sample, config)
     if ok:
