@@ -232,6 +232,35 @@ def _build_turma_fechada_html(lead: Dict) -> str:
     if resumo:
         resumo_block = f'<div class="resumo-box"><div class="resumo-title">📝 Resumo da Conversa</div><div class="resumo-text">{resumo}</div></div>'
 
+    # Bloco de inteligência da empresa (pesquisa web via Claude, mesmo do Radar) — ~5 linhas
+    intel = lead.get("empresa_intel") or {}
+    desc = (intel.get("descricao") or "").strip()
+    intel_block = ""
+    if desc and "não foram encontradas" not in desc.lower():
+        _func = (intel.get("funcionarios") or "").strip()
+        meta = " · ".join(x for x in [
+            intel.get("setor"),
+            (f"👥 {_func} func." if _func and _func.lower() != "não identificado" else ""),
+            intel.get("porte"), intel.get("cidade"),
+        ] if x)
+        desc_short = desc[:600] + ("…" if len(desc) > 600 else "")
+        intel_block = (
+            '<div class="intel-box"><div class="intel-title">🔎 Sobre a empresa</div>'
+            f'<div class="intel-text">{_sd_esc(desc_short)}</div>'
+            + (f'<div class="intel-meta">{_sd_esc(meta)}</div>' if meta else "")
+            + '</div>'
+        )
+    # Link de busca no LinkedIn (consultor clica e confere a pessoa) — sem raspagem/privacidade
+    linkedin_link = ""
+    if contato and contato != "—":
+        import urllib.parse as _up
+        _q = _up.quote(f"{contato} {empresa if empresa != '—' else ''}".strip())
+        linkedin_link = (
+            f'<a href="https://www.linkedin.com/search/results/people/?keywords={_q}" '
+            'style="display:inline-block;margin:8px 0 4px;font-size:13px;color:#0a66c2;font-weight:700;text-decoration:none;">'
+            '🔗 Buscar esta pessoa no LinkedIn →</a>'
+        )
+
     return f"""<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>
     body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#f3f4f6; margin:0; padding:20px; }}
     .container {{ max-width:580px; margin:0 auto; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.08); }}
@@ -249,6 +278,10 @@ def _build_turma_fechada_html(lead: Dict) -> str:
     .resumo-box {{ margin-top:20px; background:#fff7ed; border-left:4px solid #ea580c; border-radius:0 8px 8px 0; padding:16px 18px; }}
     .resumo-title {{ font-size:13px; font-weight:700; color:#9a3412; margin-bottom:8px; }}
     .resumo-text {{ font-size:14px; color:#374151; line-height:1.6; white-space:pre-wrap; }}
+    .intel-box {{ margin-top:10px; background:#f8faff; border-left:4px solid #2563eb; border-radius:0 8px 8px 0; padding:12px 16px; }}
+    .intel-title {{ font-size:12px; font-weight:700; color:#1e40af; margin-bottom:6px; }}
+    .intel-text {{ font-size:13.5px; color:#374151; line-height:1.55; }}
+    .intel-meta {{ font-size:12px; color:#2563eb; font-weight:600; margin-top:6px; }}
     .footer {{ background:#f9fafb; padding:14px 28px; font-size:12px; color:#9ca3af; text-align:center; border-top:1px solid #f3f4f6; }}
     </style></head><body><div class="container">
     <div class="header"><h1>🎯 Alerta — Turma Fechada</h1><p>Lead corporativo / in company identificado no Bot SDR PJ.</p></div>
@@ -256,6 +289,8 @@ def _build_turma_fechada_html(lead: Dict) -> str:
       <span class="badge">🏢 Oportunidade corporativa</span>
       <div class="section">Empresa & contato</div>
       <table>{row("🏢 Empresa", empresa)}{row("👤 Contato", contato_full)}{row("📱 WhatsApp / E-mail", contato_line)}</table>
+      {linkedin_link}
+      {intel_block}
       <div class="section">Oportunidade</div>
       <table class="highlight">{row("🎓 Treinamento", treino)}{row("👥 Participantes", qtd)}{row("🖥️ Formato", formato)}</table>
       <table>{row("📍 Cidade", cidade)}{row("⏱️ Prazo", prazo)}{row("🔥 Urgência", urgencia)}{row("🎯 Objetivo", objetivo)}</table>

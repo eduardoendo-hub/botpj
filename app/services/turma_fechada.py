@@ -126,11 +126,22 @@ async def maybe_alert(phone_number: str, lead: dict = None) -> bool:
     # "Atendido por" + resumo da conversa (best-effort)
     atendido, resumo = await _contexto_conversa(phone_number)
 
+    # Inteligência da empresa (pesquisa web via Claude, cacheada) — mesmo bloco do Radar
+    empresa_nome = (lead.get("company") or lead.get("empresa") or "").strip()
+    empresa_intel = {}
+    if empresa_nome:
+        try:
+            from app.services.company_intel import get_company_intel
+            empresa_intel = await get_company_intel(empresa_nome) or {}
+        except Exception as e:
+            logger.warning(f"[TurmaFechada] company_intel falhou p/ {empresa_nome!r}: {e}")
+
     # a chave pode ser um telefone (WhatsApp) ou um contact_id (webchat/site)
     is_real_phone = bool(re.match(r"^\+?\d{10,15}$", (phone_number or "").strip()))
     origem = "Turma Fechada / Corporativo" if is_real_phone else "Turma Fechada / Webchat (Site)"
 
     payload = {
+        "empresa_intel":     empresa_intel,
         "contact_name":      lead.get("contact_name") or lead.get("nome") or "",
         "phone_number":      phone_number if is_real_phone else "",
         "email":             lead.get("email") or "",
